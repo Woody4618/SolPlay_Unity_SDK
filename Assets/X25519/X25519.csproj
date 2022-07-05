@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Hirbod Behnam</Authors>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Description>A small library to do X25519 key agreement in C#
+Also includes low level oprations on Curve25519</Description>
+    <PackageProjectUrl>https://github.com/HirbodBehnam/X25519-CSharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HirbodBehnam/X25519-CSharp</RepositoryUrl>
+    <PackageId>Easy-X25519</PackageId>
+    <Product>Easy-X25519</Product>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Copyright>Copyright (c) 2020, Hirbod Behnam</Copyright>
+    <PackageReleaseNotes>Initial Release</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageTags>x25519 curve25519 standard</PackageTags>
+    <PackageIcon>key.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="key.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
