@@ -7,7 +7,7 @@ namespace SolPlay.Deeplinks
     public class NftItemListView : MonoBehaviour
     {
         public GameObject ItemRoot;
-        public NftListItemView listListItemPrefab;
+        public NftItemView itemPrefab;
         public string FilterSymbol;
 
         public void OnEnable()
@@ -56,14 +56,14 @@ namespace SolPlay.Deeplinks
                 return;
             }
 
-            NftListItemView instance = Instantiate(listListItemPrefab, ItemRoot.transform);
+            NftItemView instance = Instantiate(itemPrefab, ItemRoot.transform);
             instance.SetData(nft, OnItemClicked);
         }
 
-        private void OnItemClicked(NftListItemView listItemView)
+        private void OnItemClicked(NftItemView itemView)
         {
-            Debug.Log("Item Clicked: " + listItemView.CurrentNft.MetaplexData.data.name);
-            ServiceFactory.Instance.Resolve<NftContextMenu>().Open(listItemView);
+            Debug.Log("Item Clicked: " + itemView.CurrentNft.MetaplexData.data.name);
+            ServiceFactory.Instance.Resolve<NftContextMenu>().Open(itemView);
         }
     }
 }

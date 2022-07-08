@@ -838,7 +838,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ItemRoot: {fileID: 500421614}
-  ListItemPrefab: {fileID: 910753438568561636, guid: 5038eeda347fc47caa6a0b71b70ee381, type: 3}
+  itemPrefab: {fileID: 910753438568561636, guid: 5038eeda347fc47caa6a0b71b70ee381, type: 3}
   FilterSymbol: 
 --- !u!1 &305120925
 GameObject:
@@ -3164,7 +3164,7 @@ MonoBehaviour:
   YouOwnABeaverRoot: {fileID: 612273291}
   ConnectedRoot: {fileID: 7332436}
   LoadingSpinner: {fileID: 305120925}
-  OwnedBeaverNftItemView: {fileID: 382569756}
+  ownedBeaverNftItemView: {fileID: 382569756}
   BeaverNameText: {fileID: 69934434}
 --- !u!1 &1127384029
 GameObject:

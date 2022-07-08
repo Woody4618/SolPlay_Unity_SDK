@@ -10,7 +10,7 @@ namespace SolPlay.Deeplinks
     /// <summary>
     /// Show the image and the power level of a given Nft and can have a click handler
     /// </summary>
-    public class NftListItemView : MonoBehaviour
+    public class NftItemView : MonoBehaviour
     {
         public Nft CurrentNft;
 
@@ -21,9 +21,9 @@ namespace SolPlay.Deeplinks
         public TextMeshProUGUI PowerLevel;
         public Button Button;
 
-        private Action<NftListItemView> onButtonClickedAction;
+        private Action<NftItemView> onButtonClickedAction;
 
-        public void SetData(Nft nftData, Action<NftListItemView> onButtonClicked)
+        public void SetData(Nft nftData, Action<NftItemView> onButtonClicked)
         {
             Icon.gameObject.SetActive(false);
             DummyIcon.gameObject.SetActive(false);

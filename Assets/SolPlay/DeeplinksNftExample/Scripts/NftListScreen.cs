@@ -23,7 +23,7 @@ namespace SolPlay.Deeplinks
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
         public GameObject LoadingSpinner;
-        public NftListItemView ownedBeaverNftListItemView;
+        public NftItemView ownedBeaverNftItemView;
         public TextMeshProUGUI BeaverNameText;
 
         void Start()
@@ -90,8 +90,8 @@ namespace SolPlay.Deeplinks
             {
                 var allBeavers = nftService.GetAllNftsByMintAuthority(NftService.BeaverNftMintAuthority);
                 var metaPlexNft = allBeavers[0];
-                ownedBeaverNftListItemView.SetData(metaPlexNft,
-                    view => { ServiceFactory.Instance.Resolve<NftContextMenu>().Open(ownedBeaverNftListItemView); });
+                ownedBeaverNftItemView.SetData(metaPlexNft,
+                    view => { ServiceFactory.Instance.Resolve<NftContextMenu>().Open(ownedBeaverNftItemView); });
                 BeaverNameText.text = metaPlexNft.MetaplexData.data.name;
             }
         }
