@@ -1,7 +1,3 @@
-using AllArt.Solana.Utility;
-using Solnet.Rpc;
-using Solnet.Rpc.Models;
-using Solnet.Rpc.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,11 +5,14 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using AllArt.Solana.Utility;
 using Frictionless;
-using Solana.Unity.Rpc.Models;
-using Solana.Unity.Wallet.Utilities;
-using Solplay.Deeplinks;
+using Solnet.Rpc;
+using Solnet.Rpc.Models;
+using Solnet.Rpc.Utilities;
+using SolPlay.Deeplinks;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace AllArt.Solana.Nft
 {
@@ -50,13 +49,13 @@ namespace AllArt.Solana.Nft
 
         public static async Task<NFTProData> TryGetNftPro(string mint, SolanaRpcClient connection)
         {
-            AccountInfo data = await AccountUtility.GetAccountData(mint, connection);
+            AccountInfo accountInfo = await AccountUtility.GetAccountData(mint, connection);
 
-            Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(data));
+            Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountInfo));
 
-            if (data != null && data.Data != null && data.Data.Count > 0)
+            if (accountInfo != null && accountInfo.Data != null && accountInfo.Data.Count > 0)
             {
-                AccountLayout accountlayout = AccountLayout.DeserializeAccountLayout(data.Data[0]);
+                AccountLayout accountlayout = AccountLayout.DeserializeAccountLayout(accountInfo.Data[0]);
                 Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountlayout));
             }
 
@@ -115,7 +114,8 @@ namespace AllArt.Solana.Nft
                         }
 
                         Nft newNft = new Nft(metaPlex);
-                        FileLoader.SaveToPersistenDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"), newNft);
+                        FileLoader.SaveToPersistenDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"),
+                            newNft);
                         return newNft;
                     }
                     catch (Exception e)
@@ -303,6 +303,7 @@ namespace AllArt.Solana.Nft
             Texture2D result = new Texture2D(targetX, targetY);
             result.ReadPixels(new Rect(0, 0, targetX, targetY), 0, 0);
             result.Apply();
+            Object.Destroy(rt);
             return result;
         }
     }

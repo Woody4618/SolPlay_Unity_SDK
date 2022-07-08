@@ -5,23 +5,25 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
-    public class NFTItemView : MonoBehaviour
+    /// <summary>
+    /// Show the image and the power level of a given Nft and can have a click handler
+    /// </summary>
+    public class NftItemView : MonoBehaviour
     {
+        public Nft CurrentNft;
+
         public RawImage Icon;
         public Image DummyIcon;
-
         public TextMeshProUGUI Headline;
         public TextMeshProUGUI Description;
         public TextMeshProUGUI PowerLevel;
         public Button Button;
 
-        public Nft CurrentNft;
+        private Action<NftItemView> onButtonClickedAction;
 
-        private Action<NFTItemView> onButtonClickedAction;
-
-        public void SetData(Nft nftData, Action<NFTItemView> onButtonClicked)
+        public void SetData(Nft nftData, Action<NftItemView> onButtonClicked)
         {
             Icon.gameObject.SetActive(false);
             DummyIcon.gameObject.SetActive(false);

@@ -2,7 +2,7 @@ using AllArt.Solana.Nft;
 using Frictionless;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// Handles all logic related to NFTs and calculating their power level or whatever you like to do with the NFTs

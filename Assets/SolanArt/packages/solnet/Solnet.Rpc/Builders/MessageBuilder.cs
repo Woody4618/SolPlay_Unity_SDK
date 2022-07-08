@@ -229,7 +229,7 @@ namespace Solnet.Rpc.Builders
         private List<AccountMeta> GetAccountKeys()
         {
             var keysList = _accountKeysList.AccountList;
-            var feePayerIndex = FindAccountIndex(keysList, FeePayer.PublicKey);
+            int feePayerIndex = FindAccountIndex(keysList, FeePayer.PublicKey);
 
             var newList = new List<AccountMeta>
             {

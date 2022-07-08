@@ -1,11 +1,13 @@
 using Frictionless;
-using Solplay.Deeplinks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
+    /// <summary>
+    /// When clicking a Nft this context menu opens and shows some information about the Nft
+    /// </summary>
     public class NftContextMenu : MonoBehaviour
     {
         public GameObject Root;
@@ -30,7 +32,7 @@ namespace Solplay.Deeplinks
             Root.gameObject.SetActive(false);
         }
 
-        public void Open(NFTItemView nftItemView)
+        public void Open(NftItemView nftItemView)
         {
             Root.gameObject.SetActive(true);
             NftNameText.text = nftItemView.CurrentNft.MetaplexData.data.name;

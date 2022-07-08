@@ -2,7 +2,7 @@ using Frictionless;
 using TMPro;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// Whenever a new NFT arrives this widget updates the total power level of all Nfts

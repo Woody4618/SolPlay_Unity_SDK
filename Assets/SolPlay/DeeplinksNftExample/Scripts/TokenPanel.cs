@@ -2,7 +2,7 @@ using Frictionless;
 using TMPro;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// Shows the amount of the token "TokenMintAdress" from the connected Wallet.

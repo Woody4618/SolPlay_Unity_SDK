@@ -1,13 +1,22 @@
 using System;
+using System.Buffers.Text;
 using System.Collections.Specialized;
+using System.IO;
 using System.Web;
 using base58;
 using Frictionless;
+using Merkator.BitCoin;
+using Org.BouncyCastle.Utilities;
+using Solana.Unity.Rpc;
+using Solnet.Programs;
+using Solnet.Rpc.Builders;
+using Solnet.Rpc.Models;
+using Solnet.Wallet;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 using X25519;
-
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// Establishes a secure connection with phantom wallet and gets the public key from the wallet. 
@@ -16,17 +25,20 @@ namespace Solplay.Deeplinks
     {
         public string DeeplinkURL;
         public string AppMetaDataUrl = "https://beavercrush.com";
+
         [Header("You can find this in the player settings.")]
         public string DeeplinkUrlSceme = "SolPlay";
 
         public static string SessionId { get; private set; }
-        public string PhantomWalletPublicKey { get; private set; }
+        private string PhantomWalletPublicKey;
 
         private X25519KeyPair localKeyPairForPhantomConnection;
         private string base58PublicKey = "";
         private byte[] publicKey;
         private byte[] privateKey;
-
+        private string EditorExampleWalletPublicKey = "AFEkH2vF1CYGJnPncDw6PzaitjQgdQipL2hxSWLh9iDs";
+        private string phantomNonce;
+        
         private void Awake()
         {
             ServiceFactory.Instance.RegisterSingleton(this);
@@ -42,6 +54,14 @@ namespace Solplay.Deeplinks
             }
         }
 
+        public string GetPhantomPublicKey()
+        {
+            #if UNITY_EDITOR
+            return EditorExampleWalletPublicKey;
+            #endif
+            return PhantomWalletPublicKey;
+        }
+        
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)
         {
             if (!string.IsNullOrEmpty(PhantomWalletPublicKey))
@@ -50,12 +70,12 @@ namespace Solplay.Deeplinks
                 return true;
             }
 #if UNITY_EDITOR
-            phantomPublicKey = "pLAY7z6bY7SRvhCm8hSqyXaerAegsdGWkV1aSgjFpab";
+            phantomPublicKey = EditorExampleWalletPublicKey;
             return true;
 #else
             phantomPublicKey = "";
-#endif
             return false;
+#endif
         }
 
         private void OnDeepLinkActivated(string url)
@@ -67,7 +87,7 @@ namespace Solplay.Deeplinks
 
             NameValueCollection result = HttpUtility.ParseQueryString(phantomResponse);
             string pubKey = result.Get("phantom_encryption_public_key");
-            string nonce = result.Get("nonce");
+            phantomNonce = result.Get("nonce");
             string data = result.Get("data");
 
             if (string.IsNullOrEmpty(data))
@@ -77,7 +97,7 @@ namespace Solplay.Deeplinks
                 return;
             }
 
-            byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58.Decode(data), Base58.Decode(nonce),
+            byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58.Decode(data), Base58.Decode(phantomNonce),
                 Base58.Decode(pubKey), localKeyPairForPhantomConnection.PrivateKey);
             Debug.Log("Decrypted message bytes: " + uncryptedMessage);
 
@@ -120,6 +140,67 @@ namespace Solplay.Deeplinks
             string url =
                 $"https://phantom.app/ul/v1/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}";
 
+            Application.OpenURL(url);
+        }
+
+        [Serializable]
+        private class PhantomTransactionPayload
+        {
+            public string transaction;
+            public string session;
+
+            public PhantomTransactionPayload(string transaction, string session)
+            {
+                this.transaction = transaction;
+                this.session = session;
+            }
+        } 
+        
+        public async void DoTransaction()
+        {
+            #if UNITY_EDITOR
+            CreateNewKey();
+            #endif
+            
+            var nftService = ServiceFactory.Instance.Resolve<NftService>();
+            
+            var blockHash = await nftService.rpcClient.GetRecentBlockHashAsync();
+
+            if (blockHash.Result == null)
+            {
+                ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage("Blockhash null. Connected to internet?"));
+                return;
+            }
+
+            Account account = new Account();
+            
+            string gameTestWallet = "WIP";
+            
+            var transaction = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .AddInstruction(SystemProgram.Transfer(GetPhantomPublicKey(), gameTestWallet, 10000))
+                .SerializeUnsinged();
+            
+            string base58Transaction = Base58.Encode(transaction);
+
+            string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
+
+            byte[] randomNonce = new byte[24]; 
+            TweetNaCl.TweetNaCl.RandomBytes( randomNonce);
+            
+            var transactionPayload = new PhantomTransactionPayload(base58Transaction, SessionId);
+            string transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
+
+            var bytesJson = System.Text.Encoding.UTF8.GetBytes(transactionPayloadJson);
+            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, Base58.Decode(phantomNonce), publicKey, privateKey);
+
+            string base58Payload = Base58.Encode(encryptedMessage);
+
+            string url =
+                $"https://phantom.app/ul/v1/signAndSendTransaction?dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}&payload={base58Payload}";
+
+            Debug.Log("url: " + url);
+            
             Application.OpenURL(url);
         }
 

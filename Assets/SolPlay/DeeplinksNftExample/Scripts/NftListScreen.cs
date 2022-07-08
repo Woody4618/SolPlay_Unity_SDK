@@ -5,8 +5,11 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
+    /// <summary>
+    /// The main screen of the deeplinks example. Handles the login and different application states.
+    /// </summary>
     public class NftListScreen : MonoBehaviour
     {
         public Button PhantomLoginButton;
@@ -14,12 +17,13 @@ namespace Solplay.Deeplinks
         public Button GetNFtsNotCachedButton;
         public Button GetBeaverButton;
         public Button GetSolPlayTokenButton;
+        public Button PhantomTransactionButton;
         public NftItemListView NftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
         public GameObject LoadingSpinner;
-        public NFTItemView OwnedBeaverNftItemView;
+        public NftItemView OwnedBeaverNftItemView;
         public TextMeshProUGUI BeaverNameText;
 
         void Start()
@@ -29,6 +33,7 @@ namespace Solplay.Deeplinks
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
+            PhantomTransactionButton.onClick.AddListener(OnPhantomTransActionButtonClicked);
 
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<PhantomDeeplinkService.PhantomWalletConnectedMessage>(OnPhantomWalletConnectedMessage);
@@ -48,9 +53,14 @@ namespace Solplay.Deeplinks
             UpdateBeaverStatus();
         }
 
+        private void OnPhantomTransActionButtonClicked()
+        {
+            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DoTransaction();
+        }
+
         private void OnGetSolPlayTokenButtonClicked()
         {
-            // To let people buy a token just put the direct raydium link to your toke and open it with a phantom deeplink. 
+            // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
             ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().OpenInPhantomMobileBrowser(
                 UnityWebRequest.EscapeURL(
                     "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in"));
@@ -58,7 +68,7 @@ namespace Solplay.Deeplinks
 
         private void OnGetBeaverButtonClicked()
         {
-            // Just open the link to your minting page within phantom mobile browser
+            // Here you can just open the link to your minting page within phantom mobile browser
             ServiceFactory.Instance.Resolve<PhantomDeeplinkService>()
                 .OpenInPhantomMobileBrowser("https://beavercrush.com");
         }

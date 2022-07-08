@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// A little animated text on the screen, that disappears after some time. 

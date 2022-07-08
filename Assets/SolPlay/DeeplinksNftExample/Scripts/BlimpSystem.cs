@@ -2,7 +2,7 @@ using System.Collections;
 using Frictionless;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     public class BlimpSystem : MonoBehaviour
     {

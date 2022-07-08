@@ -2,12 +2,12 @@ using AllArt.Solana.Nft;
 using Frictionless;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     public class NftItemListView : MonoBehaviour
     {
         public GameObject ItemRoot;
-        public NFTItemView ListItemPrefab;
+        public NftItemView ListItemPrefab;
         public string FilterSymbol;
 
         public void OnEnable()
@@ -56,11 +56,11 @@ namespace Solplay.Deeplinks
                 return;
             }
 
-            NFTItemView instance = Instantiate(ListItemPrefab, ItemRoot.transform);
+            NftItemView instance = Instantiate(ListItemPrefab, ItemRoot.transform);
             instance.SetData(nft, OnItemClicked);
         }
 
-        private void OnItemClicked(NFTItemView itemView)
+        private void OnItemClicked(NftItemView itemView)
         {
             Debug.Log("Item Clicked: " + itemView.CurrentNft.MetaplexData.data.name);
             ServiceFactory.Instance.Resolve<NftContextMenu>().Open(itemView);

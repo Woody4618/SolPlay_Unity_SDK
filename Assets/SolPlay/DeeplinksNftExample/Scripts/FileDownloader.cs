@@ -80,6 +80,7 @@ namespace AllArt.Solana.Utility
                 }
 
                 Texture mainTexture = GetTextureFromGifByteStream(uwr.downloadHandler.data);
+               
                 var changeType = (T) Convert.ChangeType(mainTexture, typeof(T));
                 return changeType;
             }

@@ -11,7 +11,7 @@ using Solana.Unity.Rpc.Models;
 using Solnet.Rpc;
 using UnityEngine;
 
-namespace Solplay.Deeplinks
+namespace SolPlay.Deeplinks
 {
     /// <summary>
     /// Handles all logic related to NFTs and calculating their power level or whatever you like to do with the NFTs
@@ -25,7 +25,7 @@ namespace Solplay.Deeplinks
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
 
-        private IRpcClient rpcClient;
+        public IRpcClient rpcClient;
 
         public void Awake()
         {
@@ -72,7 +72,7 @@ namespace Solplay.Deeplinks
                     if (nft != null)
                     {
                         MetaPlexNFts.Add(nft);
-                        Debug.Log(nft.MetaplexData.data.name);
+                        Debug.Log("NftName:" + nft.MetaplexData.data.name);
                         ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftArrivedMessage(nft));
                     }
                     else
