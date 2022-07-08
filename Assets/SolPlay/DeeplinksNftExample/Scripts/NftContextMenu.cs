@@ -32,13 +32,13 @@ namespace SolPlay.Deeplinks
             Root.gameObject.SetActive(false);
         }
 
-        public void Open(NftItemView nftItemView)
+        public void Open(NftListItemView nftListItemView)
         {
             Root.gameObject.SetActive(true);
-            NftNameText.text = nftItemView.CurrentNft.MetaplexData.data.name;
-            transform.position = nftItemView.transform.position;
+            NftNameText.text = nftListItemView.CurrentNft.MetaplexData.data.name;
+            transform.position = nftListItemView.transform.position;
             var powerLevelService = ServiceFactory.Instance.Resolve<NftPowerLevelService>();
-            PowerLevelText.text = $"Power level {powerLevelService.GetPowerLevelFromNft(nftItemView.CurrentNft)}";
+            PowerLevelText.text = $"Power level {powerLevelService.GetPowerLevelFromNft(nftListItemView.CurrentNft)}";
         }
     }
 }
