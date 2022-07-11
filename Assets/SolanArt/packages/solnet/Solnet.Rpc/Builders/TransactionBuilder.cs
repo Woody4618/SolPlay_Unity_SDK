@@ -63,19 +63,7 @@ namespace Solnet.Rpc.Builders
             
             return buffer.ToArray();
         }
-        
-        public byte[] SerializeUnsinged()
-        {
-            _serializedMessage = _messageBuilder.Build();
 
-            var buffer = new MemoryStream(_serializedMessage.Length);
-            
-            buffer.Write(_serializedMessage, 0 , _serializedMessage.Length);
-            
-            return buffer.ToArray();
-        }
-
-        
         /// <summary>
         /// Sign the transaction message with each of the signer's keys.
         /// </summary>

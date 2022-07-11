@@ -55,7 +55,8 @@ namespace SolPlay.Deeplinks
 
         private void OnPhantomTransActionButtonClicked()
         {
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DoTransaction();
+            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
+            phantomDeeplinkService.SolanaTransferTransaction(phantomDeeplinkService.EditorExampleWalletPublicKey);
         }
 
         private void OnGetSolPlayTokenButtonClicked()
