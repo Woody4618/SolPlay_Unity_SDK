@@ -27,14 +27,13 @@ https://github.com/3DI70R/Unity-GifDecoder
 
 Next up Todo: 
 
-1) Transactions are not working yet
-I saw Solanart has this, maybe we can use it: 
-https://github.com/allartprotocol/unity-solana-wallet/commit/a9928ac8e35f97f43721e439a29f667972cfb30a
-
+1) Transactions are not working yet (Done) 
 2) Animated Gifs
 3) Gtlf models 
 4) Maybe Staking? 
-5) What else would you like?  
+5) Sign message
+6) What else would you like?  
+
 
 
 
