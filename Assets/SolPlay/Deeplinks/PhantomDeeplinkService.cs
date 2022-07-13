@@ -6,14 +6,13 @@ using System.Text;
 using System.Web;
 using base58;
 using Frictionless;
+using Solana.Unity.Rpc.Core.Http;
+using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using Solnet.Programs;
-using Solnet.Rpc.Builders;
 using UnityEngine;
 using UnityEngine.Networking;
 using X25519;
-using Account = Solnet.Wallet.Account;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;
 
 namespace SolPlay.Deeplinks
@@ -42,6 +41,8 @@ namespace SolPlay.Deeplinks
         
         private void Awake()
         {
+            CryptoHelloWorld();
+            
             ServiceFactory.Instance.RegisterSingleton(this);
 
             Application.deepLinkActivated += OnDeepLinkActivated;
@@ -55,14 +56,18 @@ namespace SolPlay.Deeplinks
             }
         }
 
-        public string GetPhantomPublicKey()
+        public void CallPhantomLogin()
         {
-            #if UNITY_EDITOR
-            return EditorExampleWalletPublicKey;
-            #endif
-            return PhantomWalletPublicKey;
+            CreateNewKey();
+
+            string appMetaDataUrl = AppMetaDataUrl;
+            string redirectUri = $"{DeeplinkUrlSceme}://onPhantomConnected";
+            string url =
+                $"https://phantom.app/ul/v1/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}";
+
+            Application.OpenURL(url);
         }
-        
+
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)
         {
             if (!string.IsNullOrEmpty(PhantomWalletPublicKey))
@@ -176,27 +181,15 @@ namespace SolPlay.Deeplinks
             Debug.Log($"Created new keypair: private key {Base58.Encode(privateKey)} public key: {Base58.Encode(publicKey)}");
         }
 
-        public void CallPhantomLogin()
-        {
-            CreateNewKey();
-
-            string appMetaDataUrl = AppMetaDataUrl;
-            string redirectUri = $"{DeeplinkUrlSceme}://onPhantomConnected";
-            string url =
-                $"https://phantom.app/ul/v1/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}";
-
-            Application.OpenURL(url);
-        }
-
         [Serializable]
         private class PhantomTransactionPayload
         {
             public string transaction;
             public string session;
 
-            public PhantomTransactionPayload(string transaction, string session)
+            public PhantomTransactionPayload(string serializedBase58EncodedTransaction, string session)
             {
-                this.transaction = transaction;
+                transaction = serializedBase58EncodedTransaction;
                 this.session = session;
             }
         } 
@@ -220,20 +213,9 @@ namespace SolPlay.Deeplinks
             
             string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
             
-            byte[] randomNonce = new byte[24]; 
-            TweetNaCl.TweetNaCl.RandomBytes(randomNonce);
-
-            
-            Transaction garblesTransaction = new Transaction();
-            garblesTransaction.Instructions = new List<TransactionInstruction>();
-            garblesTransaction.Instructions.Add(SystemProgram.Transfer(new PublicKey(GetPhantomPublicKey()), new PublicKey(toPublicKey), 100000000));
-            garblesTransaction.FeePayer = new PublicKey(GetPhantomPublicKey());
-            garblesTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
-            garblesTransaction.Signatures = new List<SignaturePubKeyPair>();
-            
-            
-            byte[] compileMessage = garblesTransaction.Serialize();
-            string base58Transaction = Base58.Encode(compileMessage);
+            var garblesSdkTransaction = CreateUnsignedTransferSolTransaction(toPublicKey, blockHash);
+            byte[] serializedTransaction = garblesSdkTransaction.Serialize();
+            string base58Transaction = Base58.Encode(serializedTransaction);
 
             
             var transactionPayload = new PhantomTransactionPayload(base58Transaction, SessionId);
@@ -243,6 +225,9 @@ namespace SolPlay.Deeplinks
             
             byte[] bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
          
+                        
+            byte[] randomNonce = new byte[24]; 
+            TweetNaCl.TweetNaCl.RandomBytes(randomNonce);
             byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, randomNonce, Base58.Decode(phantomEncryptionPubKey), privateKey);
             
             string base58Payload = Base58.Encode(encryptedMessage);
@@ -252,6 +237,22 @@ namespace SolPlay.Deeplinks
 
             Debug.Log("Transaction Url: " + url);
             Application.OpenURL(url);
+        }
+
+        private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey, RequestResult<ResponseValue<BlockHash>> blockHash)
+        {
+            if (!TryGetPhantomPublicKey(out string phantomPublicKey))
+            {
+                return null;
+            }
+            Transaction garblesSdkTransaction = new Transaction();
+            garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
+            garblesSdkTransaction.Instructions.Add(SystemProgram.Transfer(new PublicKey(phantomPublicKey),
+                new PublicKey(toPublicKey), 100000000));
+            garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
+            garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
+            garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
+            return garblesSdkTransaction;
         }
 
         private void CryptoHelloWorld()
