@@ -25,15 +25,26 @@ Gif loading:
 https://github.com/3DI70R/Unity-GifDecoder
 
 
+So far the repository is only tested in IOS mobile, Android and WebGl is being worked on.
+
+Done:
+- Login and getting Public key from phantom
+- Loading and caching NFTs
+- Nft meta data parsing + power level calculation
+- Deeplink to minting page
+- Deeplink to raydium token swap
+- Transactions
+- In game token loading 
+
 Next up Todo: 
 
-1) Transactions are not working yet (Done) 
-2) Animated Gifs
-3) Gtlf models 
-4) Maybe Staking? 
-5) Sign message
-6) What else would you like?  
-
+1) Animated Gifs
+2) Gtlf models 
+3) Maybe Staking? 
+4) Sign message
+5) What else would you like?  
+6) Android 
+7) WebGL
 
 
 
