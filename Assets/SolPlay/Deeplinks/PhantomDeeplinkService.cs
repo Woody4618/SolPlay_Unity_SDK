@@ -2,18 +2,28 @@ using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using base58;
 using Frictionless;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using UnityEngine;
 using UnityEngine.Networking;
 using X25519;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit
+    {
+    }
+}
 
 namespace SolPlay.Deeplinks
 {
@@ -22,6 +32,13 @@ namespace SolPlay.Deeplinks
     /// </summary>
     public class PhantomDeeplinkService : MonoBehaviour
     {
+        public enum TransactionResult
+        {
+            processed = 0,
+            confirmed = 1,
+            finalized = 2
+        }
+
         public string DeeplinkURL;
         public string AppMetaDataUrl = "https://beavercrush.com";
 
@@ -38,11 +55,11 @@ namespace SolPlay.Deeplinks
         public string EditorExampleWalletPublicKey = "AFEkH2vF1CYGJnPncDw6PzaitjQgdQipL2hxSWLh9iDs";
         private string phantomNonce;
         private string phantomEncryptionPubKey;
-        
+
         private void Awake()
         {
             CryptoHelloWorld();
-            
+
             ServiceFactory.Instance.RegisterSingleton(this);
 
             Application.deepLinkActivated += OnDeepLinkActivated;
@@ -84,6 +101,17 @@ namespace SolPlay.Deeplinks
 #endif
         }
 
+        public void OpenInPhantomMobileBrowser(string url)
+        {
+#if UNITY_EDITOR
+            string phantomUrl = url;
+#else
+            string refUrl = UnityWebRequest.EscapeURL(AppMetaDataUrl);
+            string phantomUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
+#endif
+            Application.OpenURL(phantomUrl);
+        }
+
         private void OnDeepLinkActivated(string url)
         {
             DeeplinkURL = url;
@@ -94,7 +122,7 @@ namespace SolPlay.Deeplinks
                 ParseSuccessfullTransaction(url);
                 return;
             }
-            
+
             string phantomResponse = url.Split("?"[0])[1];
 
             NameValueCollection result = HttpUtility.ParseQueryString(phantomResponse);
@@ -109,15 +137,16 @@ namespace SolPlay.Deeplinks
                     .RaiseMessage(new BlimpSystem.ShowBlimpMessage(errorMessage));
                 return;
             }
-            
+
             if (string.IsNullOrEmpty(data))
             {
                 ServiceFactory.Instance.Resolve<MessageRouter>()
                     .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Phantom connect canceled."));
                 return;
             }
-            
-            byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58.Decode(data), Base58.Decode(phantomNonce),
+
+            byte[] uncryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(Base58.Decode(data),
+                Base58.Decode(phantomNonce),
                 Base58.Decode(phantomEncryptionPubKey), localKeyPairForPhantomConnection.PrivateKey);
             Debug.Log("Decrypted message bytes: " + uncryptedMessage);
 
@@ -143,7 +172,7 @@ namespace SolPlay.Deeplinks
             }
         }
 
-        private void ParseSuccessfullTransaction(string url)
+        private async void ParseSuccessfullTransaction(string url)
         {
             string phantomResponse = url.Split("?"[0])[1];
 
@@ -166,11 +195,64 @@ namespace SolPlay.Deeplinks
             string bytesToUtf8String = Encoding.UTF8.GetString(uncryptedMessage);
 
             Debug.Log($"data {data} decrypted: " + bytesToUtf8String);
-            
-            PhantomWalletTransactionSuccessfull success = JsonUtility.FromJson<PhantomWalletTransactionSuccessfull>(bytesToUtf8String);
-            
-            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"Phantom transaction sent successfully with signarture: {success.signature}"));
+
+            PhantomWalletTransactionSuccessfull success =
+                JsonUtility.FromJson<PhantomWalletTransactionSuccessfull>(bytesToUtf8String);
+
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(
+                new BlimpSystem.ShowBlimpMessage(
+                    $"Phantom transaction sent successfully with signature: {success.signature}"));
+
+            await CheckSignatureStatus(success.signature);
         }
+
+    private async Task CheckSignatureStatus(string signature)
+    {
+        NftService nftService = ServiceFactory.Instance.Resolve<NftService>();
+        MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
+
+        bool transactionFinalized = false;
+
+        while (!transactionFinalized)
+        {
+            RequestResult<ResponseValue<List<SignatureStatusInfo>>> signatureResult =
+                await nftService.GarblesRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
+
+            if (signatureResult.Result == null)
+            {
+                messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
+                await Task.Delay(2000);
+                continue;
+            }
+
+            foreach (var signatureStatusInfo in signatureResult.Result.Value)
+            {
+                if (signatureStatusInfo == null)
+                {
+                    messageRouter.RaiseMessage(
+                        new BlimpSystem.ShowBlimpMessage("Signature is not yet processed. Retry in 2 seconds."));
+                }
+                else
+                {
+                    if (signatureStatusInfo.ConfirmationStatus == nameof(TransactionResult.finalized))
+                    {
+                        transactionFinalized = true;
+                        messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                    }
+                    else
+                    {
+                        messageRouter.RaiseMessage(
+                            new BlimpSystem.ShowBlimpMessage($"Signature result {signatureStatusInfo.Confirmations}/31"));
+                    }
+                }
+            }
+
+            if (!transactionFinalized)
+            {
+                await Task.Delay(2000);
+            }
+        }
+    }
 
         private void CreateNewKey()
         {
@@ -178,58 +260,47 @@ namespace SolPlay.Deeplinks
             publicKey = localKeyPairForPhantomConnection.PublicKey;
             privateKey = localKeyPairForPhantomConnection.PrivateKey;
             base58PublicKey = Base58.Encode(publicKey);
-            Debug.Log($"Created new keypair: private key {Base58.Encode(privateKey)} public key: {Base58.Encode(publicKey)}");
+            Debug.Log(
+                $"Created new keypair: private key {Base58.Encode(privateKey)} public key: {Base58.Encode(publicKey)}");
         }
 
-        [Serializable]
-        private class PhantomTransactionPayload
-        {
-            public string transaction;
-            public string session;
-
-            public PhantomTransactionPayload(string serializedBase58EncodedTransaction, string session)
-            {
-                transaction = serializedBase58EncodedTransaction;
-                this.session = session;
-            }
-        } 
-        
         public async void SolanaTransferTransaction(string toPublicKey)
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             CreateNewKey();
             phantomEncryptionPubKey = EditorExampleWalletPublicKey;
-            #endif
-            
+#endif
+
             var nftService = ServiceFactory.Instance.Resolve<NftService>();
-            
-            var blockHash = await nftService.rpcClient.GetRecentBlockHashAsync();
+
+            var blockHash = await nftService.GarblesRpcClient.GetRecentBlockHashAsync();
 
             if (blockHash.Result == null)
             {
-                ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage("Blockhash null. Connected to internet?"));
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Blockhash null. Connected to internet?"));
                 return;
             }
-            
+
             string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
-            
+
             var garblesSdkTransaction = CreateUnsignedTransferSolTransaction(toPublicKey, blockHash);
             byte[] serializedTransaction = garblesSdkTransaction.Serialize();
             string base58Transaction = Base58.Encode(serializedTransaction);
 
-            
             var transactionPayload = new PhantomTransactionPayload(base58Transaction, SessionId);
             string transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
             Debug.Log(transactionPayloadJson);
 
-            
+
             byte[] bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
-         
-                        
-            byte[] randomNonce = new byte[24]; 
+
+
+            byte[] randomNonce = new byte[24];
             TweetNaCl.TweetNaCl.RandomBytes(randomNonce);
-            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, randomNonce, Base58.Decode(phantomEncryptionPubKey), privateKey);
-            
+            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, randomNonce,
+                Base58.Decode(phantomEncryptionPubKey), privateKey);
+
             string base58Payload = Base58.Encode(encryptedMessage);
 
             string url =
@@ -239,12 +310,14 @@ namespace SolPlay.Deeplinks
             Application.OpenURL(url);
         }
 
-        private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey, RequestResult<ResponseValue<BlockHash>> blockHash)
+        private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
+            RequestResult<ResponseValue<BlockHash>> blockHash)
         {
             if (!TryGetPhantomPublicKey(out string phantomPublicKey))
             {
                 return null;
             }
+
             Transaction garblesSdkTransaction = new Transaction();
             garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
             garblesSdkTransaction.Instructions.Add(SystemProgram.Transfer(new PublicKey(phantomPublicKey),
@@ -261,28 +334,32 @@ namespace SolPlay.Deeplinks
             var keyPair_phantom = X25519KeyAgreement.GenerateKeyPair();
 
             string halloWeltString = "Hallo Welt";
-            
-            byte[] randomNonce = new byte[24]; 
+
+            byte[] randomNonce = new byte[24];
             TweetNaCl.TweetNaCl.RandomBytes(randomNonce);
-            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(Encoding.UTF8.GetBytes(halloWeltString), randomNonce, keyPair_phantom.PublicKey, keyPair_local.PrivateKey);
-            string utfString2 = Encoding.UTF8.GetString(encryptedMessage, 0, encryptedMessage.Length);   
+            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(Encoding.UTF8.GetBytes(halloWeltString),
+                randomNonce, keyPair_phantom.PublicKey, keyPair_local.PrivateKey);
+            string utfString2 = Encoding.UTF8.GetString(encryptedMessage, 0, encryptedMessage.Length);
             Debug.Log(utfString2);
 
-            byte[] decryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(encryptedMessage, randomNonce, keyPair_local.PublicKey, keyPair_phantom.PrivateKey);
-            string utfString = Encoding.UTF8.GetString(decryptedMessage, 0, decryptedMessage.Length);   
+            byte[] decryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(encryptedMessage, randomNonce,
+                keyPair_local.PublicKey, keyPair_phantom.PrivateKey);
+            string utfString = Encoding.UTF8.GetString(decryptedMessage, 0, decryptedMessage.Length);
 
             Debug.Log(utfString);
         }
-        
-        public void OpenInPhantomMobileBrowser(string url)
+
+        [Serializable]
+        private class PhantomTransactionPayload
         {
-#if UNITY_EDITOR
-            string phantomUrl = url;
-#else
-            string refUrl = UnityWebRequest.EscapeURL(AppMetaDataUrl);
-            string phantomUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
-#endif
-            Application.OpenURL(phantomUrl);
+            public string transaction;
+            public string session;
+
+            public PhantomTransactionPayload(string serializedBase58EncodedTransaction, string session)
+            {
+                transaction = serializedBase58EncodedTransaction;
+                this.session = session;
+            }
         }
 
         [Serializable]

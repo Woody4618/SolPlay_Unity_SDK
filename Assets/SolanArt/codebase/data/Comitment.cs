@@ -1,11 +1,14 @@
-[System.Serializable]
-public class Commitment
+namespace AllArt.Solana
 {
-    public string commitment;
-}
+    [System.Serializable]
+    public class Commitment
+    {
+        public string commitment;
+    }
 
-[System.Serializable]
-public enum ECommitment
-{
-    Finalized
+    [System.Serializable]
+    public enum ECommitment
+    {
+        Finalized
+    }
 }

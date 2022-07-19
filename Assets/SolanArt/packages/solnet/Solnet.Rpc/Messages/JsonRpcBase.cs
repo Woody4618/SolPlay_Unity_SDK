@@ -1,9 +1,12 @@
-﻿namespace Solnet.Rpc.Messages
+﻿using System;
+
+namespace Solnet.Rpc.Messages
 {
+    [Serializable]
     public class JsonRpcBase
     {
-        public string jsonrpc { get; protected set; }
+        public string jsonrpc;
 
-        public int id { get; set; }
+        public int id;
     }
 }

@@ -7,7 +7,7 @@ namespace Chaos.NaCl
     {
         private const int PublicKeySizeInBytes = 32;
         private const int SignatureSizeInBytes = 64;
-        private const int ExpandedPrivateKeySizeInBytes = 32 * 2;
+        public const int ExpandedPrivateKeySizeInBytes = 32 * 2;
         public const int PrivateKeySeedSizeInBytes = 32;
         private const int SharedKeySizeInBytes = 32;
 

@@ -8,8 +8,10 @@ using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solnet.Rpc;
 using UnityEngine;
+using SolanaRpcClient = Solnet.Rpc.SolanaRpcClient;
 
 namespace SolPlay.Deeplinks
 {
@@ -20,17 +22,19 @@ namespace SolPlay.Deeplinks
     {
         public List<Nft> MetaPlexNFts = new List<Nft>();
         public List<TokenAccount> TokenAccounts = new List<TokenAccount>();
-        public string RpcUrl = "https://api.mainnet-beta.solana.com";
+        public string SolanaMainNetRpcUrl = "https://api.mainnet-beta.solana.com";
         public int NftImageSize = 75;
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
 
-        public IRpcClient rpcClient;
-
+        public IRpcClient GarblesRpcClient;
+        public SolanaRpcClient SolanArtRpcClient;
+        
         public void Awake()
         {
             ServiceFactory.Instance.RegisterSingleton(this);
-            rpcClient = ClientFactory.GetClient(Cluster.MainNet);
+            GarblesRpcClient = ClientFactory.GetClient(Cluster.MainNet);
+            SolanArtRpcClient = new SolanaRpcClient(SolanaMainNetRpcUrl);
         }
 
         public async Task RequestNftsFromPublicKey(string publicKey, bool tryUseLocalContent = true)
@@ -61,12 +65,15 @@ namespace SolPlay.Deeplinks
             string result = $"{tokenAccounts.Length} token accounts loaded. Getting data now.";
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(result));
 
+            var tokenAccountResult =
+                await GarblesRpcClient.GetTokenAccountBalanceAsync("J3Lw33iBvMLHdCua4MXohTx3HD4JcajQmogQEr2Y7pej", Commitment.Finalized);
+
+            
             foreach (var item in tokenAccounts)
             {
                 if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                 {
-                    var solanaRpcClient = new SolanaRpcClient(RpcUrl);
-                    Nft nft = await Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, solanaRpcClient,
+                    Nft nft = await Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SolanArtRpcClient,
                         tryUseLocalContent);
 
                     if (nft != null)
@@ -92,11 +99,11 @@ namespace SolPlay.Deeplinks
         public async Task<TokenBalance> RequestTokenAccountBalance(string publicKey, string tokenAdress)
         {
             RequestResult<ResponseValue<List<TokenAccount>>> tokenAccountResult =
-                await rpcClient.GetTokenAccountsByOwnerAsync(publicKey, tokenAdress, TokenProgram.ProgramIdKey);
+                await GarblesRpcClient.GetTokenAccountsByOwnerAsync(publicKey, tokenAdress, TokenProgram.ProgramIdKey);
 
             if (tokenAccountResult.WasSuccessful)
             {
-                var result = await rpcClient.GetTokenAccountBalanceAsync(tokenAccountResult.Result.Value[0].PublicKey);
+                var result = await GarblesRpcClient.GetTokenAccountBalanceAsync(tokenAccountResult.Result.Value[0].PublicKey);
 
                 if (result.Result != null && result.Result.Value != null)
                 {
@@ -112,7 +119,7 @@ namespace SolPlay.Deeplinks
             try
             {
                 RequestResult<ResponseValue<List<TokenAccount>>> result =
-                    await rpcClient.GetTokenAccountsByOwnerAsync(publicKey, null, TokenProgram.ProgramIdKey);
+                    await GarblesRpcClient.GetTokenAccountsByOwnerAsync(publicKey, null, TokenProgram.ProgramIdKey);
 
                 if (result.Result != null && result.Result.Value != null)
                 {
