@@ -75,14 +75,19 @@ namespace SolPlay.Deeplinks
 
         public void CallPhantomLogin()
         {
+#if UNITY_WEBGL
+            ServiceFactory.Instance.Resolve<JavaScriptWrapperService>().ConnectPhantomWallet();
+#else
             CreateNewKey();
 
             string appMetaDataUrl = AppMetaDataUrl;
-            string redirectUri = $"{DeeplinkUrlSceme}://onPhantomConnected";
+            string redirectUri = UnityWebRequest.EscapeURL($"{DeeplinkUrlSceme}://onPhantomConnected");
+            Debug.Log(redirectUri);
             string url =
                 $"https://phantom.app/ul/v1/connect?app_url={appMetaDataUrl}&dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}";
 
             Application.OpenURL(url);
+#endif
         }
 
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)
@@ -103,10 +108,11 @@ namespace SolPlay.Deeplinks
 
         public void OpenInPhantomMobileBrowser(string url)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_WEBGL
             string phantomUrl = url;
 #else
             string refUrl = UnityWebRequest.EscapeURL(AppMetaDataUrl);
+            string escapedUrl = UnityWebRequest.EscapeURL(url);
             string phantomUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
 #endif
             Application.OpenURL(phantomUrl);
@@ -159,9 +165,8 @@ namespace SolPlay.Deeplinks
             if (!string.IsNullOrEmpty(success.public_key))
             {
                 Debug.Log("Pub key: " + success.public_key);
-                PhantomWalletPublicKey = success.public_key;
                 SessionId = success.session;
-                ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new PhantomWalletConnectedMessage());
+                SetPhantomPublicKeyAndSendMessage(success.public_key);
             }
             else
             {
@@ -170,6 +175,12 @@ namespace SolPlay.Deeplinks
                     Debug.LogError("Error: " + error.errorCode);
                 }
             }
+        }
+
+        public void SetPhantomPublicKeyAndSendMessage(string publicKey)
+        {
+            PhantomWalletPublicKey = publicKey;
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new PhantomWalletConnectedMessage());
         }
 
         private async void ParseSuccessfullTransaction(string url)
@@ -184,7 +195,7 @@ namespace SolPlay.Deeplinks
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 ServiceFactory.Instance.Resolve<MessageRouter>()
-                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage(errorMessage));
+                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage(errorMessage + data));
                 return;
             }
 
@@ -206,53 +217,55 @@ namespace SolPlay.Deeplinks
             await CheckSignatureStatus(success.signature);
         }
 
-    private async Task CheckSignatureStatus(string signature)
-    {
-        NftService nftService = ServiceFactory.Instance.Resolve<NftService>();
-        MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
-
-        bool transactionFinalized = false;
-
-        while (!transactionFinalized)
+        private async Task CheckSignatureStatus(string signature)
         {
-            RequestResult<ResponseValue<List<SignatureStatusInfo>>> signatureResult =
-                await nftService.GarblesRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
+            NftService nftService = ServiceFactory.Instance.Resolve<NftService>();
+            MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
 
-            if (signatureResult.Result == null)
-            {
-                messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
-                await Task.Delay(2000);
-                continue;
-            }
+            bool transactionFinalized = false;
 
-            foreach (var signatureStatusInfo in signatureResult.Result.Value)
+            while (!transactionFinalized)
             {
-                if (signatureStatusInfo == null)
+                RequestResult<ResponseValue<List<SignatureStatusInfo>>> signatureResult =
+                    await nftService.GarblesRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
+
+                if (signatureResult.Result == null)
                 {
                     messageRouter.RaiseMessage(
-                        new BlimpSystem.ShowBlimpMessage("Signature is not yet processed. Retry in 2 seconds."));
+                        new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
+                    await Task.Delay(2000);
+                    continue;
                 }
-                else
+
+                foreach (var signatureStatusInfo in signatureResult.Result.Value)
                 {
-                    if (signatureStatusInfo.ConfirmationStatus == nameof(TransactionResult.finalized))
+                    if (signatureStatusInfo == null)
                     {
-                        transactionFinalized = true;
-                        messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                        messageRouter.RaiseMessage(
+                            new BlimpSystem.ShowBlimpMessage("Signature is not yet processed. Retry in 2 seconds."));
                     }
                     else
                     {
-                        messageRouter.RaiseMessage(
-                            new BlimpSystem.ShowBlimpMessage($"Signature result {signatureStatusInfo.Confirmations}/31"));
+                        if (signatureStatusInfo.ConfirmationStatus == nameof(TransactionResult.finalized))
+                        {
+                            transactionFinalized = true;
+                            messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                        }
+                        else
+                        {
+                            messageRouter.RaiseMessage(
+                                new BlimpSystem.ShowBlimpMessage(
+                                    $"Signature result {signatureStatusInfo.Confirmations}/31"));
+                        }
                     }
                 }
-            }
 
-            if (!transactionFinalized)
-            {
-                await Task.Delay(2000);
+                if (!transactionFinalized)
+                {
+                    await Task.Delay(2000);
+                }
             }
         }
-    }
 
         private void CreateNewKey()
         {
@@ -310,6 +323,55 @@ namespace SolPlay.Deeplinks
             Application.OpenURL(url);
         }
 
+        /// <summary>
+        ///  WIP: Preparation for interacting with a custom smart contract on main net to save player data
+        /// </summary>
+        public async void SolanaHelloWorldTransaction()
+        {
+#if UNITY_EDITOR
+            CreateNewKey();
+            phantomEncryptionPubKey = EditorExampleWalletPublicKey;
+#endif
+
+            var nftService = ServiceFactory.Instance.Resolve<NftService>();
+
+            var blockHash = await nftService.GarblesRpcClient.GetRecentBlockHashAsync();
+
+            if (blockHash.Result == null)
+            {
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Blockhash null. Connected to internet?"));
+                return;
+            }
+
+            string redirectUri = $"{DeeplinkUrlSceme}://transactionSuccessful";
+
+            var garblesSdkTransaction = CreateUnsignedHelloWorldTransaction(blockHash);
+            byte[] serializedTransaction = garblesSdkTransaction.Serialize();
+            string base58Transaction = Base58.Encode(serializedTransaction);
+
+            var transactionPayload = new PhantomTransactionPayload(base58Transaction, SessionId);
+            string transactionPayloadJson = JsonUtility.ToJson(transactionPayload);
+            Debug.Log(transactionPayloadJson);
+
+
+            byte[] bytesJson = Encoding.UTF8.GetBytes(transactionPayloadJson);
+
+
+            byte[] randomNonce = new byte[24];
+            TweetNaCl.TweetNaCl.RandomBytes(randomNonce);
+            byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(bytesJson, randomNonce,
+                Base58.Decode(phantomEncryptionPubKey), privateKey);
+
+            string base58Payload = Base58.Encode(encryptedMessage);
+
+            string url =
+                $"https://phantom.app/ul/v1/signAndSendTransaction?dapp_encryption_public_key={base58PublicKey}&redirect_link={redirectUri}&nonce={Base58.Encode(randomNonce)}&payload={base58Payload}";
+
+            Debug.Log("Transaction Url: " + url);
+            Application.OpenURL(url);
+        }
+
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
             RequestResult<ResponseValue<BlockHash>> blockHash)
         {
@@ -322,6 +384,35 @@ namespace SolPlay.Deeplinks
             garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
             garblesSdkTransaction.Instructions.Add(SystemProgram.Transfer(new PublicKey(phantomPublicKey),
                 new PublicKey(toPublicKey), 100000000));
+            garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
+            garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
+            garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
+            return garblesSdkTransaction;
+        }
+
+        // TODO: Does not work yet, since it needs a program account first: probably SystemProgram.createAccountWithSeed
+        private Transaction CreateUnsignedHelloWorldTransaction(RequestResult<ResponseValue<BlockHash>> blockHash)
+        {
+            if (!TryGetPhantomPublicKey(out string phantomPublicKey))
+            {
+                return null;
+            }
+
+            List<AccountMeta> accountMetaList = new List<AccountMeta>()
+            {
+                AccountMeta.Writable(new PublicKey(phantomPublicKey), true)
+            };
+
+            TransactionInstruction helloWorldTransactionInstruction = new TransactionInstruction()
+            {
+                ProgramId = Base58.Decode("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo"),
+                Keys = (IList<AccountMeta>) accountMetaList,
+                Data = new byte[0]
+            };
+
+            Transaction garblesSdkTransaction = new Transaction();
+            garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
+            garblesSdkTransaction.Instructions.Add(helloWorldTransactionInstruction);
             garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
             garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
             garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();

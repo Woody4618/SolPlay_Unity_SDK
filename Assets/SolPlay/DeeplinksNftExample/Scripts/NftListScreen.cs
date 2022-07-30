@@ -18,6 +18,7 @@ namespace SolPlay.Deeplinks
         public Button GetBeaverButton;
         public Button GetSolPlayTokenButton;
         public Button PhantomTransactionButton;
+        public Button PhantomHelloWorldTransactionButton;
         public NftItemListView NftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
@@ -34,6 +35,7 @@ namespace SolPlay.Deeplinks
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
             PhantomTransactionButton.onClick.AddListener(OnPhantomTransActionButtonClicked);
+            PhantomHelloWorldTransactionButton.onClick.AddListener(OnPhantomHelloWorldButtonClicked);
 
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<PhantomDeeplinkService.PhantomWalletConnectedMessage>(OnPhantomWalletConnectedMessage);
@@ -59,12 +61,18 @@ namespace SolPlay.Deeplinks
             phantomDeeplinkService.SolanaTransferTransaction(phantomDeeplinkService.EditorExampleWalletPublicKey);
         }
 
+        private void OnPhantomHelloWorldButtonClicked()
+        {
+            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
+            phantomDeeplinkService.SolanaHelloWorldTransaction();
+        }
+
         private void OnGetSolPlayTokenButtonClicked()
         {
             // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
             ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().OpenInPhantomMobileBrowser(
-                UnityWebRequest.EscapeURL(
-                    "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in"));
+                
+                    "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
         }
 
         private void OnGetBeaverButtonClicked()
