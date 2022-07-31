@@ -1,4 +1,3 @@
-using AllArt.Solana.Nft;
 using Frictionless;
 using UnityEngine;
 
@@ -33,36 +32,36 @@ namespace SolPlay.Deeplinks
 
             Clear();
 
-            foreach (Nft nft in nftService.MetaPlexNFts)
+            foreach (SolPlayNft nft in nftService.MetaPlexNFts)
             {
                 InstantiateListNftItem(nft);
             }
         }
 
-        public void AddNFt(Nft newNft)
+        public void AddNFt(SolPlayNft newSolPlayNft)
         {
-            InstantiateListNftItem(newNft);
+            InstantiateListNftItem(newSolPlayNft);
         }
 
-        private void InstantiateListNftItem(Nft nft)
+        private void InstantiateListNftItem(SolPlayNft solPlayNft)
         {
-            if (string.IsNullOrEmpty(nft.MetaplexData.mint))
+            if (string.IsNullOrEmpty(solPlayNft.MetaplexData.mint))
             {
                 return;
             }
 
-            if (!string.IsNullOrEmpty(FilterSymbol) && nft.MetaplexData.data.symbol != FilterSymbol)
+            if (!string.IsNullOrEmpty(FilterSymbol) && solPlayNft.MetaplexData.data.symbol != FilterSymbol)
             {
                 return;
             }
 
             NftItemView instance = Instantiate(itemPrefab, ItemRoot.transform);
-            instance.SetData(nft, OnItemClicked);
+            instance.SetData(solPlayNft, OnItemClicked);
         }
 
         private void OnItemClicked(NftItemView itemView)
         {
-            Debug.Log("Item Clicked: " + itemView.CurrentNft.MetaplexData.data.name);
+            Debug.Log("Item Clicked: " + itemView.currentSolPlayNft.MetaplexData.data.name);
             ServiceFactory.Instance.Resolve<NftContextMenu>().Open(itemView);
         }
     }

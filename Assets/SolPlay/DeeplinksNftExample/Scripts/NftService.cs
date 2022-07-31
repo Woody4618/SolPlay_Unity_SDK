@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AllArt.Solana.Nft;
 using Frictionless;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
@@ -9,9 +8,7 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
-using Solnet.Rpc;
 using UnityEngine;
-using SolanaRpcClient = Solnet.Rpc.SolanaRpcClient;
 
 namespace SolPlay.Deeplinks
 {
@@ -20,7 +17,7 @@ namespace SolPlay.Deeplinks
     /// </summary>
     public class NftService : MonoBehaviour
     {
-        public List<Nft> MetaPlexNFts = new List<Nft>();
+        public List<SolPlayNft> MetaPlexNFts = new List<SolPlayNft>();
         public List<TokenAccount> TokenAccounts = new List<TokenAccount>();
         public string SolanaMainNetRpcUrl = "https://api.mainnet-beta.solana.com";
         public int NftImageSize = 75;
@@ -28,13 +25,11 @@ namespace SolPlay.Deeplinks
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
 
         public IRpcClient GarblesRpcClient;
-        public SolanaRpcClient SolanArtRpcClient;
         
         public void Awake()
         {
             ServiceFactory.Instance.RegisterSingleton(this);
             GarblesRpcClient = ClientFactory.GetClient(Cluster.MainNet);
-            SolanArtRpcClient = new SolanaRpcClient(SolanaMainNetRpcUrl);
         }
 
         public async Task RequestNftsFromPublicKey(string publicKey, bool tryUseLocalContent = true)
@@ -73,14 +68,14 @@ namespace SolPlay.Deeplinks
             {
                 if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                 {
-                    Nft nft = await Nft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, SolanArtRpcClient,
+                    SolPlayNft solPlayNft = await SolPlayNft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, GarblesRpcClient,
                         tryUseLocalContent);
 
-                    if (nft != null)
+                    if (solPlayNft != null)
                     {
-                        MetaPlexNFts.Add(nft);
-                        Debug.Log("NftName:" + nft.MetaplexData.data.name);
-                        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftArrivedMessage(nft));
+                        MetaPlexNFts.Add(solPlayNft);
+                        Debug.Log("NftName:" + solPlayNft.MetaplexData.data.name);
+                        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftArrivedMessage(solPlayNft));
                     }
                     else
                     {
@@ -148,9 +143,9 @@ namespace SolPlay.Deeplinks
             return false;
         }
 
-        public List<Nft> GetAllNftsByMintAuthority(string mintAuthority)
+        public List<SolPlayNft> GetAllNftsByMintAuthority(string mintAuthority)
         {
-            List<Nft> result = new List<Nft>();
+            List<SolPlayNft> result = new List<SolPlayNft>();
             foreach (var nftData in MetaPlexNFts)
             {
                 if (nftData.MetaplexData.authority != mintAuthority)
@@ -164,17 +159,17 @@ namespace SolPlay.Deeplinks
             return result;
         }
 
-        public bool IsBeaverNft(Nft nft)
+        public bool IsBeaverNft(SolPlayNft solPlayNft)
         {
-            return nft.MetaplexData.authority == BeaverNftMintAuthority;
+            return solPlayNft.MetaplexData.authority == BeaverNftMintAuthority;
         }
     }
 
     public class NftArrivedMessage
     {
-        public Nft NewNFt;
+        public SolPlayNft NewNFt;
 
-        public NftArrivedMessage(Nft newNFt)
+        public NftArrivedMessage(SolPlayNft newNFt)
         {
             NewNFt = newNFt;
         }

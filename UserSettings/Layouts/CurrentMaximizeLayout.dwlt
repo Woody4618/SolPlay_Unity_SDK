@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 200}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 133
+  controlID: 72
 --- !u!114 &2
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -46,9 +46,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 949
-    width: 1998
-    height: 392
+    y: 714
+    width: 1866
+    height: 627
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -72,12 +72,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1999
+    width: 1867
     height: 1279
   m_MinSize: {x: 300, y: 200}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 134
+  controlID: 73
 --- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -98,12 +98,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 1999
-    height: 866
+    width: 1867
+    height: 631
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 8096}
   vertical: 0
-  controlID: 113
+  controlID: 18
 --- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -121,8 +121,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-    width: 279
-    height: 866
+    width: 331
+    height: 631
   m_MinSize: {x: 201, y: 221}
   m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 6}
@@ -152,8 +152,8 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 83
-    width: 278
-    height: 845
+    width: 330
+    height: 610
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -202,10 +202,10 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 279
+    x: 331
     y: 0
-    width: 860
-    height: 866
+    width: 692
+    height: 631
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 8}
@@ -233,10 +233,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 279
+    x: 331
     y: 83
-    width: 858
-    height: 845
+    width: 690
+    height: 610
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -257,9 +257,9 @@ MonoBehaviour:
       floating: 0
       collapsed: 0
       displayed: 1
-      snapOffset: {x: -141, y: 149}
+      snapOffset: {x: -141, y: -116}
       snapOffsetDelta: {x: 0, y: 0}
-      snapCorner: 1
+      snapCorner: 3
       id: unity-grid-and-snap-toolbar
       index: 1
       layout: 1
@@ -438,9 +438,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 387.1778, y: 350.02106, z: -4.427505}
+    m_Target: {x: 463.81497, y: 671.25653, z: -2.250555}
     speed: 2
-    m_Value: {x: 311.4442, y: 439.4552, z: -1.6455374}
+    m_Value: {x: 463.81497, y: 671.25653, z: -2.250555}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -491,9 +491,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 1050.6259
+    m_Target: 813.5074
     speed: 2
-    m_Value: 772.4286
+    m_Value: 813.5074
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -533,10 +533,10 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1139
+    x: 1023
     y: 0
-    width: 860
-    height: 866
+    width: 844
+    height: 631
   m_MinSize: {x: 202, y: 221}
   m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 10}
@@ -564,10 +564,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1139
+    x: 1023
     y: 83
-    width: 858
-    height: 845
+    width: 842
+    height: 610
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -578,7 +578,7 @@ MonoBehaviour:
   m_ShowGizmos: 0
   m_TargetDisplay: 0
   m_ClearColor: {r: 0, g: 0, b: 0, a: 0}
-  m_TargetSize: {x: 858, y: 824}
+  m_TargetSize: {x: 842, y: 589}
   m_TextureFilterMode: 0
   m_TextureHideFlags: 61
   m_RenderIMGUI: 1
@@ -593,10 +593,10 @@ MonoBehaviour:
     m_VRangeLocked: 0
     hZoomLockedByDefault: 0
     vZoomLockedByDefault: 0
-    m_HBaseRangeMin: -429
-    m_HBaseRangeMax: 429
-    m_VBaseRangeMin: -412
-    m_VBaseRangeMax: 412
+    m_HBaseRangeMin: -421
+    m_HBaseRangeMax: 421
+    m_VBaseRangeMin: -294.5
+    m_VBaseRangeMax: 294.5
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
@@ -614,23 +614,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 858
-      height: 824
+      width: 842
+      height: 589
     m_Scale: {x: 1, y: 1}
-    m_Translation: {x: 429, y: 412}
+    m_Translation: {x: 421, y: 294.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -429
-      y: -412
-      width: 858
-      height: 824
+      x: -421
+      y: -294.5
+      width: 842
+      height: 589
     m_MinimalGUI: 1
   m_defaultScale: 1
-  m_LastWindowPixelSize: {x: 858, y: 845}
+  m_LastWindowPixelSize: {x: 842, y: 610}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000
@@ -652,9 +652,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-    y: 866
-    width: 1999
-    height: 413
+    y: 631
+    width: 1867
+    height: 648
   m_MinSize: {x: 101, y: 121}
   m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 2}
@@ -685,9 +685,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 949
-    width: 1691
-    height: 392
+    y: 714
+    width: 1866
+    height: 627
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -705,22 +705,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Plugins/Android
+    - Assets
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/Plugins/Android
+  - Assets/StreamingAssets
   m_LastFoldersGridSize: -1
   m_LastProjectPath: /Users/jonasmac2/Documents/GitHub/SolanaUnityDeeplinkExample
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 32690100
-    m_LastClickedID: 92466
-    m_ExpandedIDs: 000000000e61000010610000126100001461000016610000186100001a610000
+    m_SelectedIDs: 36610000
+    m_LastClickedID: 24886
+    m_ExpandedIDs: 0000000036610000386100003a6100003c6100003e61000040610000426100004461000046610000486100004a6100004c6100004e6100005061000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -748,7 +748,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000000e61000010610000126100001461000016610000186100001a610000
+    m_ExpandedIDs: 0000000036610000386100003a6100003c6100003e61000040610000426100004461000046610000486100004a6100004c6100004e61000050610000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -792,7 +792,7 @@ MonoBehaviour:
       m_IsRenaming: 0
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
-      m_ClientGUIView: {fileID: 0}
+      m_ClientGUIView: {fileID: 11}
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
       m_InstanceID: 0
@@ -803,7 +803,7 @@ MonoBehaviour:
     m_ScrollPosition: {x: 0, y: 0}
     m_GridSize: 16
   m_SkipHiddenPackages: 0
-  m_DirectoriesAreaWidth: 243
+  m_DirectoriesAreaWidth: 329
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -825,91 +825,122 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 686
-    width: 1758
-    height: 655
+    y: 714
+    width: 1866
+    height: 627
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
     m_SaveData: []
   hasRefreshed: 1
   availablePackages:
-  - Id: Solana.Unity.Wallet
-    Version: 2.6.0.8
-    Title: Solana.Unity.Wallet
-    Description: Solana.Unity is Solana's .NET standard 2.0 integration library.
+  - Id: Portable.BouncyCastle
+    Version: 1.9.0
+    Title: Bouncy Castle Portable
+    Description: BouncyCastle portable version with support for .NET 4, .NET Standard
+      2.0
     Summary: 
-    ReleaseNotes: https://github.com/garbles-dev/Solana.Unity/releases
-    LicenseUrl: https://www.nuget.org/packages/Solana.Unity.Wallet/2.6.0.8/license
-    DownloadUrl: https://www.nuget.org/api/v2/package/Solana.Unity.Wallet/2.6.0.8
-    DownloadCount: 250
-    Authors: garbles-dev
+    ReleaseNotes: https://www.bouncycastle.org/csharp/#DOWNLOAD1900
+    LicenseUrl: https://www.bouncycastle.org/csharp/licence.html
+    DownloadUrl: https://www.nuget.org/api/v2/package/Portable.BouncyCastle/1.9.0
+    DownloadCount: 116242525
+    Authors: Claire Novotny
+    Icon: {fileID: 0}
+    ProjectUrl: https://www.bouncycastle.org/csharp/
+    RepositoryUrl: 
+    RepositoryType: 0
+    RepositoryBranch: 
+    RepositoryCommit: 
+  - Id: Portable.BouncyCastle-Signed
+    Version: 1.7.0.2
+    Title: Bouncy Castle PCL Signed
+    Description: "BouncyCastle.Crypto is a cryptography API providing:\n -Generation
+      and parsing of PKCS#12 files.\n -X.509: Generators and parsers for V1 and V3
+      certificates, V2 CRLs and attribute certificates.\n -PBE algorithms supported
+      by PBEUtil: PBEwithMD2andDES-CBC, PBEwithMD2andRC2-CBC, PBEwithMD5andDES-CBC,
+      PBEwithMD5andRC2-CBC, PBEwithSHA1andDES-CBC, PBEwithSHA1andRC2-CBC, PBEwithSHA-1and128bitRC4,
+      PBEwithSHA-1and40bitRC4, PBEwithSHA-1and3-keyDESEDE-CBC, PBEwithSHA-1and2-keyDESEDE-CBC,
+      PBEwithSHA-1and128bitRC2-CBC, PBEwithSHA-1and40bitRC2-CBC, PBEwithHmacSHA-1,
+      PBEwithHmacSHA-224, PBEwithHmacSHA-256, PBEwithHmacRIPEMD128, PBEwithHmacRIPEMD160,
+      and PBEwithHmacRIPEMD256.\n -Signature algorithms supported by SignerUtilities:
+      MD2withRSA, MD4withRSA, MD5withRSA, RIPEMD128withRSA, RIPEMD160withRSA, RIPEMD256withRSA,
+      SHA-1withRSA, SHA-224withRSA, SHA-256withRSAandMGF1, SHA-384withRSAandMGF1,
+      SHA-512withRSAandMGF1, SHA-1withDSA, and SHA-1withECDSA.\n -Symmetric key algorithms:
+      AES, Blowfish, Camellia, CAST5, CAST6, DESede, DES, GOST28147, HC-128, HC-256,
+      IDEA, NaccacheStern, RC2, RC4, RC5-32, RC5-64, RC6, Rijndael, Serpent, Skipjack,
+      TEA/XTEA, Twofish, and VMPC.\n -Symmetric key modes: CBC, CFB, CTS, GOFB, OFB,
+      OpenPGPCFB, and SIC (or CTR).\n -Symmetric key paddings: ISO10126d2, ISO7816d4,
+      PKCS#5/7, TBC, X.923, and Zero Byte.\n -Asymmetric key algorithms: RSA (with
+      blinding), ElGamal, DSA, ECDSA.\n -Asymmetric key paddings/encodings: ISO9796d1,
+      OAEP, and PKCS#1.\n -Digests: GOST3411, MD2, MD4, MD5, RIPEMD128, RIPEMD160,
+      RIPEMD256, RIPEMD320, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, Tiger, and
+      Whirlpool.\n -Signer mechanisms: DSA, ECDSA, ECGOST3410, GOST3410, ISO9796d2,
+      PSS, RSA.\n -Key Agreement: Diffie-Hellman and EC-DH.\n -Macs: CBCBlockCipher,
+      CFBBlockCipher, GOST28147, HMac, and ISO9797 Alg. 3.\n -PBE generators: PKCS#12,
+      and PKCS#5 - schemes 1 and 2.\n -OpenPGP (RFC 2440)\n -Cryptographic Message
+      Syntax (CMS, RFC 3852), including streaming API.\n -Online Certificate Status
+      Protocol (OCSP, RFC 2560).\n -Time Stamp Protocol (TSP, RFC 3161).\n -TLS/SSL
+      Client with support for client side authentication.\n \nSupport for .NET 4,
+      Windows Phone 8, Windows Phone App 8.1, Windows 8, Silverlight 5, MonoTouch,
+      MonoAndroid"
+    Summary: PCL port of BouncyCastle with a signed assembly
+    ReleaseNotes: 
+    LicenseUrl: 
+    DownloadUrl: https://www.nuget.org/api/v2/package/Portable.BouncyCastle-Signed/1.7.0.2
+    DownloadCount: 382659
+    Authors: Mark Junker
+    Icon: {fileID: 0}
+    ProjectUrl: https://github.com/fubar-coder/BouncyCastle-PCL
+    RepositoryUrl: 
+    RepositoryType: 0
+    RepositoryBranch: 
+    RepositoryCommit: 
+  - Id: Portable.BouncyCastle-GOST2012
+    Version: 1.8.6.11
+    Title: Bouncy Castle Portable
+    Description: BouncyCastle portable version with support for .NET 4, .NET Standard
+      2.0. The fork of Claire Novotny work with support for GOST-2012
+    Summary: 
+    ReleaseNotes: https://www.bouncycastle.org/csharp/#RELEASENOTES186
+    LicenseUrl: https://www.bouncycastle.org/csharp/licence.html
+    DownloadUrl: https://www.nuget.org/api/v2/package/Portable.BouncyCastle-GOST2012/1.8.6.11
+    DownloadCount: 6054
+    Authors: Ilya Turkin
+    Icon: {fileID: 0}
+    ProjectUrl: https://github.com/63l06ri5/bc-csharp
+    RepositoryUrl: 
+    RepositoryType: 0
+    RepositoryBranch: 
+    RepositoryCommit: 
+  - Id: bc-xml-security-portable
+    Version: 1.0.2
+    Title: XML Security using Bouncy Castle (portable version)
+    Description: Implementation of the XML Security standards using Bouncy Castle
+    Summary: 
+    ReleaseNotes: 
+    LicenseUrl: https://www.nuget.org/packages/bc-xml-security-portable/1.0.2/license
+    DownloadUrl: https://www.nuget.org/api/v2/package/bc-xml-security-portable/1.0.2
+    DownloadCount: 1405
+    Authors: kmvi
     Icon: {fileID: 0}
     ProjectUrl: 
     RepositoryUrl: 
     RepositoryType: 0
     RepositoryBranch: 
     RepositoryCommit: 
-  - Id: Solana.Unity.Rpc
-    Version: 2.6.0.8
-    Title: Solana.Unity.Rpc
-    Description: Solana.Unity is Solana's .NET standard 2.0 integration library.
+  - Id: GlitchedPolygons.ExtensionMethods.RSAXmlPemStringConverter
+    Version: 1.0.6
+    Title: GlitchedPolygons.ExtensionMethods.RSAXmlPemStringConverter
+    Description: Extension methods for converting string RSA keys from/to XML <-->
+      PEM format (using the Portable.BouncyCastle library).
     Summary: 
-    ReleaseNotes: https://github.com/garbles-dev/Solana.Unity/releases
-    LicenseUrl: https://www.nuget.org/packages/Solana.Unity.Rpc/2.6.0.8/license
-    DownloadUrl: https://www.nuget.org/api/v2/package/Solana.Unity.Rpc/2.6.0.8
-    DownloadCount: 219
-    Authors: garbles-dev
+    ReleaseNotes: 
+    LicenseUrl: https://www.nuget.org/packages/GlitchedPolygons.ExtensionMethods.RSAXmlPemStringConverter/1.0.6/license
+    DownloadUrl: https://www.nuget.org/api/v2/package/GlitchedPolygons.ExtensionMethods.RSAXmlPemStringConverter/1.0.6
+    DownloadCount: 3296
+    Authors: Glitched Polygons
     Icon: {fileID: 0}
-    ProjectUrl: 
-    RepositoryUrl: 
-    RepositoryType: 0
-    RepositoryBranch: 
-    RepositoryCommit: 
-  - Id: Solana.Unity.Programs
-    Version: 2.6.0.8
-    Title: Solana.Unity.Programs
-    Description: Solana.Unity is Solana's .NET standard 2.0 integration library.
-    Summary: 
-    ReleaseNotes: https://github.com/garbles-dev/Solana.Unity/releases
-    LicenseUrl: https://www.nuget.org/packages/Solana.Unity.Programs/2.6.0.8/license
-    DownloadUrl: https://www.nuget.org/api/v2/package/Solana.Unity.Programs/2.6.0.8
-    DownloadCount: 198
-    Authors: garbles-dev
-    Icon: {fileID: 0}
-    ProjectUrl: 
-    RepositoryUrl: 
-    RepositoryType: 0
-    RepositoryBranch: 
-    RepositoryCommit: 
-  - Id: Solana.Unity.Extensions
-    Version: 2.6.0.8
-    Title: Solana.Unity.Extensions
-    Description: Solana.Unity is Solana's .NET standard 2.0 integration library.
-    Summary: 
-    ReleaseNotes: https://github.com/garbles-dev/Solana.Unity/releases
-    LicenseUrl: https://www.nuget.org/packages/Solana.Unity.Extensions/2.6.0.8/license
-    DownloadUrl: https://www.nuget.org/api/v2/package/Solana.Unity.Extensions/2.6.0.8
-    DownloadCount: 194
-    Authors: garbles-dev
-    Icon: {fileID: 0}
-    ProjectUrl: 
-    RepositoryUrl: 
-    RepositoryType: 0
-    RepositoryBranch: 
-    RepositoryCommit: 
-  - Id: Solana.Unity.KeyStore
-    Version: 2.6.0.8
-    Title: Solana.Unity.KeyStore
-    Description: Solana.Unity is Solana's .NET standard 2.0 integration library.
-    Summary: 
-    ReleaseNotes: https://github.com/garbles-dev/Solana.Unity/releases
-    LicenseUrl: https://www.nuget.org/packages/Solana.Unity.KeyStore/2.6.0.8/license
-    DownloadUrl: https://www.nuget.org/api/v2/package/Solana.Unity.KeyStore/2.6.0.8
-    DownloadCount: 199
-    Authors: garbles-dev
-    Icon: {fileID: 0}
-    ProjectUrl: 
+    ProjectUrl: https://github.com/GlitchedPolygons/RSAXmlPemStringConverter
     RepositoryUrl: 
     RepositoryType: 0
     RepositoryBranch: 
@@ -932,9 +963,9 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-    x: 1999
+    x: 1867
     y: 0
-    width: 561
+    width: 693
     height: 1279
   m_MinSize: {x: 311, y: 221}
   m_MaxSize: {x: 4001, y: 4021}
@@ -964,10 +995,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 2038
-    y: 83
-    width: 521
-    height: 1258
+    x: 1100.5
+    y: 96
+    width: 410.5
+    height: 787
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
@@ -1005,24 +1036,24 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 1999
+    x: 1867
     y: 83
-    width: 560
+    width: 692
     height: 1258
   m_ViewDataDictionary: {fileID: 0}
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
     m_SaveData: []
   m_PosLeft: {x: 0, y: 0}
-  m_PosRight: {x: 0, y: 0}
+  m_PosRight: {x: 0, y: 295.99915}
   m_Scope: 1
-  m_SplitterFlex: 0.2
+  m_SplitterFlex: 0.17325582
   m_SearchText: 
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 4dcf9b58
     m_LastClickedID: 1486606157
-    m_ExpandedIDs: a01a5fa600000000c53aba5a
+    m_ExpandedIDs: a01a5fa600000000bd8e5e4dc53aba5a
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

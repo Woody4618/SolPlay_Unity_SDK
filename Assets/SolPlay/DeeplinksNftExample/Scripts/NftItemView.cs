@@ -1,5 +1,4 @@
 using System;
-using AllArt.Solana.Nft;
 using Frictionless;
 using TMPro;
 using UnityEngine;
@@ -12,7 +11,7 @@ namespace SolPlay.Deeplinks
     /// </summary>
     public class NftItemView : MonoBehaviour
     {
-        public Nft CurrentNft;
+        public SolPlayNft currentSolPlayNft;
 
         public RawImage Icon;
         public Image DummyIcon;
@@ -23,7 +22,7 @@ namespace SolPlay.Deeplinks
 
         private Action<NftItemView> onButtonClickedAction;
 
-        public void SetData(Nft nftData, Action<NftItemView> onButtonClicked)
+        public void SetData(SolPlayNft solPlayNftData, Action<NftItemView> onButtonClicked)
         {
             Icon.gameObject.SetActive(false);
             DummyIcon.gameObject.SetActive(false);
@@ -31,19 +30,19 @@ namespace SolPlay.Deeplinks
             if (gameObject.activeInHierarchy)
             {
                 Icon.gameObject.SetActive(true);
-                if (nftData.MetaplexData.nftImage != null)
+                if (solPlayNftData.MetaplexData.nftImage != null)
                 {
-                    Icon.texture = nftData.MetaplexData.nftImage.File;
+                    Icon.texture = solPlayNftData.MetaplexData.nftImage.file;
                 }
             }
 
-            Headline.text = nftData.MetaplexData.data.name;
-            Description.text = nftData.MetaplexData.data.json.description;
+            Headline.text = solPlayNftData.MetaplexData.data.name;
+            Description.text = solPlayNftData.MetaplexData.data.json.description;
             PowerLevel.text =
-                $"Power: {ServiceFactory.Instance.Resolve<NftPowerLevelService>().GetPowerLevelFromNft(nftData)}";
+                $"Power: {ServiceFactory.Instance.Resolve<NftPowerLevelService>().GetPowerLevelFromNft(solPlayNftData)}";
             Button.onClick.AddListener(OnButtonClicked);
             onButtonClickedAction = onButtonClicked;
-            CurrentNft = nftData;
+            currentSolPlayNft = solPlayNftData;
         }
 
         private void OnButtonClicked()

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.solana.unity_sdk": "https://github.com/garbles-labs/Solana.Unity-SDK.git",
     "com.unity.collab-proxy": "1.15.18",
     "com.unity.feature.development": "1.0.1",
     "com.unity.ide.rider": "3.0.14",

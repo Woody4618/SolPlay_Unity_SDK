@@ -49,8 +49,8 @@ namespace SolPlay.Deeplinks
             ConnectedRoot.gameObject.SetActive(true);
             PhantomLoginButton.gameObject.SetActive(false);
 #else
-        ConnectedRoot.gameObject.SetActive(false);
-        PhantomLoginButton.gameObject.SetActive(true);
+            ConnectedRoot.gameObject.SetActive(false);
+            PhantomLoginButton.gameObject.SetActive(true);
 #endif
             UpdateBeaverStatus();
         }
@@ -58,7 +58,7 @@ namespace SolPlay.Deeplinks
         private void OnPhantomTransActionButtonClicked()
         {
             var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
-            phantomDeeplinkService.SolanaTransferTransaction(phantomDeeplinkService.EditorExampleWalletPublicKey);
+            phantomDeeplinkService.TransferSolanaToPubkey(phantomDeeplinkService.EditorExampleWalletPublicKey);
         }
 
         private void OnPhantomHelloWorldButtonClicked()
@@ -70,16 +70,15 @@ namespace SolPlay.Deeplinks
         private void OnGetSolPlayTokenButtonClicked()
         {
             // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().OpenInPhantomMobileBrowser(
-                
-                    "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
+            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DeeplinkWallet.OpenUrlInWalletBrowser(
+                "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
         }
 
         private void OnGetBeaverButtonClicked()
         {
             // Here you can just open the link to your minting page within phantom mobile browser
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>()
-                .OpenInPhantomMobileBrowser("https://beavercrush.com");
+            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DeeplinkWallet
+                .OpenUrlInWalletBrowser("https://beavercrush.com");
         }
 
         private void OnPhantomWalletConnectedMessage(PhantomDeeplinkService.PhantomWalletConnectedMessage message)

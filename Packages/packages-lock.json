@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.solana.unity_sdk": {
+      "version": "https://github.com/garbles-labs/Solana.Unity-SDK.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      },
+      "hash": "eb217d902d0cd5c89c8652b55d042725567bd1b6"
+    },
     "com.unity.collab-proxy": {
       "version": "1.15.18",
       "depth": 0,
@@ -64,7 +73,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.0.2",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

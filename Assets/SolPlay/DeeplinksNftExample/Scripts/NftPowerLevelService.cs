@@ -1,4 +1,3 @@
-using AllArt.Solana.Nft;
 using Frictionless;
 using UnityEngine;
 
@@ -14,12 +13,12 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.RegisterSingleton(this);
         }
 
-        public int GetPowerLevelFromNft(Nft nft)
+        public int GetPowerLevelFromNft(SolPlayNft solPlayNft)
         {
             var nftService = ServiceFactory.Instance.Resolve<NftService>();
-            if (nftService.IsBeaverNft(nft))
+            if (nftService.IsBeaverNft(solPlayNft))
             {
-                return CalculateBeaverPower(nft);
+                return CalculateBeaverPower(solPlayNft);
             }
 
             return 1;
@@ -27,10 +26,10 @@ namespace SolPlay.Deeplinks
 
         // Just some power level calculations, you could to what ever with this. For example take the value from 
         // one of the attributes as damage for you character for example.
-        private int CalculateBeaverPower(Nft beaverNft)
+        private int CalculateBeaverPower(SolPlayNft beaverSolPlayNft)
         {
             int bonusBeaverPower = 0;
-            foreach (var entry in beaverNft.MetaplexData.data.json.attributes)
+            foreach (var entry in beaverSolPlayNft.MetaplexData.data.json.attributes)
             {
                 switch (entry.value)
                 {
@@ -101,7 +100,7 @@ namespace SolPlay.Deeplinks
         {
             var nftService = ServiceFactory.Instance.Resolve<NftService>();
             int result = 0;
-            foreach (Nft nft in nftService.MetaPlexNFts)
+            foreach (SolPlayNft nft in nftService.MetaPlexNFts)
             {
                 result += GetPowerLevelFromNft(nft);
             }

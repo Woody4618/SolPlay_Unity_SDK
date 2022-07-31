@@ -10,6 +10,7 @@ namespace SolPlay.Deeplinks
         [DllImport("__Internal")]
         private static extern void ConnectPhantom();
 #endif
+        public string PublicKey { get; set; }
 
         public void Awake()
         {
@@ -19,7 +20,7 @@ namespace SolPlay.Deeplinks
         public void OnPhantomConnected(string walletPubKey)
         {
             Debug.Log($"Wallet {walletPubKey} connected!");
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().SetPhantomPublicKeyAndSendMessage(walletPubKey);
+            PublicKey = walletPubKey;
         }
 
         public void ConnectPhantomWallet()
@@ -28,5 +29,6 @@ namespace SolPlay.Deeplinks
             ConnectPhantom();
 #endif
         }
+
     }
 }
