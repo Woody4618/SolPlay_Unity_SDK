@@ -25,7 +25,7 @@ Gif loading:
 https://github.com/3DI70R/Unity-GifDecoder
 
 
-So far the repository is only tested in IOS mobile, Android and WebGl is being worked on.
+So far the repository is only tested in IOS mobile, Android and WebGL.
 
 Done:
 - Login and getting Public key from phantom
@@ -34,7 +34,10 @@ Done:
 - Deeplink to minting page
 - Deeplink to raydium token swap
 - Transactions
-- In game token loading 
+- In game token loading
+- WebGL support 
+- IOS Support 
+- Android Support
 
 Next up Todo: 
 
@@ -43,8 +46,6 @@ Next up Todo:
 3) Maybe Staking? 
 4) Sign message
 5) What else would you like?  
-6) Android 
-7) WebGL
 
 
 
