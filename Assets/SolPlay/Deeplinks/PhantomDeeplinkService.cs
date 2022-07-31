@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Web;
 using base58;
 using Frictionless;
+using Solana.Unity.DeeplinkWallet;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
@@ -255,10 +256,12 @@ namespace SolPlay.Deeplinks
             byte[] encryptedMessage = TweetNaCl.TweetNaCl.CryptoBox(Encoding.UTF8.GetBytes(halloWeltString),
                 randomNonce, keyPair_phantom.PublicKey, keyPair_local.PrivateKey);
             string utfString2 = Encoding.UTF8.GetString(encryptedMessage, 0, encryptedMessage.Length);
+            Debug.Log(utfString2);
 
             byte[] decryptedMessage = TweetNaCl.TweetNaCl.CryptoBoxOpen(encryptedMessage, randomNonce,
                 keyPair_local.PublicKey, keyPair_phantom.PrivateKey);
             string utfString = Encoding.UTF8.GetString(decryptedMessage, 0, decryptedMessage.Length);
+            Debug.Log(utfString);
         }
 
         public class PhantomWalletConnectedMessage
