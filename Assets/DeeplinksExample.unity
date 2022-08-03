@@ -255,7 +255,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 626869056}
   m_HandleRect: {fileID: 626869055}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1261,6 +1261,50 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4c804afde22164dbf8f244573e9ac776, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &488510093
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 488510094}
+  - component: {fileID: 488510095}
+  m_Layer: 0
+  m_Name: SmartContractService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &488510094
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488510093}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1667353983}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &488510095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488510093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a52bdde5bcbe4fbda61b3f0375fba468, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &500421614
@@ -4400,6 +4444,7 @@ Transform:
   - {fileID: 1791667332}
   - {fileID: 1471372711}
   - {fileID: 1960244302}
+  - {fileID: 488510094}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5532,9 +5577,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ae66a7ebf51b46419724a9d3cc09d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DeeplinkURL: 
-  AppMetaDataUrl: https://beavercrush.com
-  DeeplinkUrlSceme: SolPlay
   EditorExampleWalletPublicKey: AFEkH2vF1CYGJnPncDw6PzaitjQgdQipL2hxSWLh9iDs
 --- !u!4 &2074573821
 Transform:

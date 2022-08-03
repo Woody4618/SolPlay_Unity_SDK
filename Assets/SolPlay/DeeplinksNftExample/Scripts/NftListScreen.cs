@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using Frictionless;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace SolPlay.Deeplinks

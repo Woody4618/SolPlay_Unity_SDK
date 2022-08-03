@@ -9,11 +9,13 @@ using System.Web;
 using base58;
 using Frictionless;
 using Solana.Unity.DeeplinkWallet;
+using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
+using Solana.Unity.Wallet.Bip39;
 using UnityEngine;
 using UnityEngine.Networking;
 using X25519;
@@ -193,8 +195,7 @@ namespace SolPlay.Deeplinks
                 return;
             }
 
-            var garblesSdkTransaction = CreateUnsignedHelloWorldTransaction(blockHash);
-            DeeplinkWallet.SignAndSendTransaction(garblesSdkTransaction);
+            CreateUnsignedHelloWorldTransaction(blockHash);
         }
 
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
@@ -216,32 +217,65 @@ namespace SolPlay.Deeplinks
         }
 
         // TODO: Does not work yet, since it needs a program account first: probably SystemProgram.createAccountWithSeed
-        private Transaction CreateUnsignedHelloWorldTransaction(RequestResult<ResponseValue<BlockHash>> blockHash)
+        private async void CreateUnsignedHelloWorldTransaction(RequestResult<ResponseValue<BlockHash>> blockHash)
         {
             if (!TryGetPhantomPublicKey(out string phantomPublicKey))
             {
-                return null;
+                return;
             }
 
+            string Account_Seed = "HelloWorld";
+
+            bool createdAccount = PublicKey.TryCreateWithSeed(
+                new PublicKey(phantomPublicKey),
+                Account_Seed,
+                new PublicKey("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo"),
+                out PublicKey tokenDerivedAcressFromSeed);
+
+            var garblesRpcClient = ServiceFactory.Instance.Resolve<NftService>().GarblesRpcClient;
+            RequestResult<ResponseValue<AccountInfo>> accountInfo = await garblesRpcClient.GetAccountInfoAsync(tokenDerivedAcressFromSeed);
+
+            var lamports = await garblesRpcClient.GetMinimumBalanceForRentExemptionAsync(4);
+            
             List<AccountMeta> accountMetaList = new List<AccountMeta>()
             {
+                AccountMeta.Writable(tokenDerivedAcressFromSeed, false),
                 AccountMeta.Writable(new PublicKey(phantomPublicKey), true)
             };
+
+            Transaction createAccountTransaction = new Transaction();
+            createAccountTransaction.Instructions = new List<TransactionInstruction>();
+            if (accountInfo.Result == null)
+            {
+                TransactionInstruction createAccountInstruction = SystemProgram.CreateAccountWithSeed(
+                    new PublicKey(phantomPublicKey),
+                    tokenDerivedAcressFromSeed,
+                    new PublicKey(phantomPublicKey),
+                    Account_Seed,
+                    lamports.Result,
+                    4,
+                    new PublicKey("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo"));
+                
+                createAccountTransaction.Instructions.Add(createAccountInstruction);
+            }
+            else
+            {
+                Debug.Log(accountInfo.Result);
+            }
+            
+            createAccountTransaction.FeePayer = new PublicKey(phantomPublicKey);
+            createAccountTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
+            createAccountTransaction.Signatures = new List<SignaturePubKeyPair>();
 
             TransactionInstruction helloWorldTransactionInstruction = new TransactionInstruction()
             {
                 ProgramId = Base58.Decode("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo"),
                 Keys = (IList<AccountMeta>) accountMetaList,
-                Data = new byte[0]
+                Data = Array.Empty<byte>()
             };
-
-            Transaction garblesSdkTransaction = new Transaction();
-            garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
-            garblesSdkTransaction.Instructions.Add(helloWorldTransactionInstruction);
-            garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
-            garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
-            garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
-            return garblesSdkTransaction;
+            
+            createAccountTransaction.Instructions.Add(helloWorldTransactionInstruction);
+            DeeplinkWallet.SignAndSendTransaction(createAccountTransaction);
         }
 
         private void CryptoHelloWorld()
