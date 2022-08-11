@@ -38,8 +38,9 @@ namespace SolPlay.Deeplinks
 
             Headline.text = solPlayNftData.MetaplexData.data.name;
             Description.text = solPlayNftData.MetaplexData.data.json.description;
+            var nftPowerLevelService = ServiceFactory.Instance.Resolve<NftPowerLevelService>();
             PowerLevel.text =
-                $"Power: {ServiceFactory.Instance.Resolve<NftPowerLevelService>().GetPowerLevelFromNft(solPlayNftData)}";
+                $"Power: {nftPowerLevelService.GetPowerLevelFromNft(solPlayNftData)}";
             Button.onClick.AddListener(OnButtonClicked);
             onButtonClickedAction = onButtonClicked;
             currentSolPlayNft = solPlayNftData;

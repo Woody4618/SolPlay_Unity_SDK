@@ -17,7 +17,6 @@ namespace SolPlay.Deeplinks
         public Button GetBeaverButton;
         public Button GetSolPlayTokenButton;
         public Button PhantomTransactionButton;
-        public Button PhantomHelloWorldTransactionButton;
         public NftItemListView NftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
@@ -33,59 +32,40 @@ namespace SolPlay.Deeplinks
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
-            PhantomTransactionButton.onClick.AddListener(OnPhantomTransActionButtonClicked);
-            PhantomHelloWorldTransactionButton.onClick.AddListener(OnPhantomHelloWorldButtonClicked);
+            PhantomTransactionButton.onClick.AddListener(OnPhantomTransactionButtonClicked);
 
-            ServiceFactory.Instance.Resolve<MessageRouter>()
-                .AddHandler<PhantomDeeplinkService.PhantomWalletConnectedMessage>(OnPhantomWalletConnectedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftArrivedMessage>(OnNftArrivedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<NftLoadingStartedMessage>(OnNftLoadingStartedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
-
-#if UNITY_EDITOR
-            ConnectedRoot.gameObject.SetActive(true);
-            PhantomLoginButton.gameObject.SetActive(false);
-#else
+            
             ConnectedRoot.gameObject.SetActive(false);
             PhantomLoginButton.gameObject.SetActive(true);
-#endif
+
             UpdateBeaverStatus();
         }
 
-        private void OnPhantomTransActionButtonClicked()
+        private void OnPhantomTransactionButtonClicked()
         {
             var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
             phantomDeeplinkService.TransferSolanaToPubkey(phantomDeeplinkService.EditorExampleWalletPublicKey);
         }
 
-        private void OnPhantomHelloWorldButtonClicked()
-        {
-            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
-            phantomDeeplinkService.SolanaHelloWorldTransaction();
-        }
-
         private void OnGetSolPlayTokenButtonClicked()
         {
             // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DeeplinkWallet.OpenUrlInWalletBrowser(
+            ServiceFactory.Instance.Resolve<WalletHolderService>().DeeplinkWallet.OpenUrlInWalletBrowser(
                 "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
         }
 
         private void OnGetBeaverButtonClicked()
         {
             // Here you can just open the link to your minting page within phantom mobile browser
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().DeeplinkWallet
+            ServiceFactory.Instance.Resolve<WalletHolderService>().DeeplinkWallet
                 .OpenUrlInWalletBrowser("https://beavercrush.com");
         }
 
-        private void OnPhantomWalletConnectedMessage(PhantomDeeplinkService.PhantomWalletConnectedMessage message)
-        {
-            ConnectedRoot.gameObject.SetActive(true);
-            PhantomLoginButton.gameObject.SetActive(false);
-            RequestNfts(true);
-        }
 
         private void OnNftArrivedMessage(NftArrivedMessage message)
         {
@@ -147,7 +127,7 @@ namespace SolPlay.Deeplinks
 
         private async Task RequestNfts(bool tryUseLocalCache)
         {
-            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
+            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<WalletHolderService>();
             if (phantomDeeplinkService.TryGetPhantomPublicKey(out string phantomPublicKey))
             {
                 await ServiceFactory.Instance.Resolve<NftService>()
@@ -155,9 +135,12 @@ namespace SolPlay.Deeplinks
             }
         }
 
-        private void OnPhantomButtonClicked()
+        private async void OnPhantomButtonClicked()
         {
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().CallPhantomLogin();
+            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login();
+            ConnectedRoot.gameObject.SetActive(true);
+            PhantomLoginButton.gameObject.SetActive(false);
+            await RequestNfts(true);
         }
     }
 }

@@ -134,7 +134,9 @@ namespace Solana.Unity.SDK.Example
                 else
                 {
                     var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(mnemonicsModel));
+#if UNITY_WEBGL
                     DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
+#endif               
                 }
             }
             else if (SimpleWallet.instance.StorageMethodReference == StorageMethod.SimpleTxt)
@@ -144,16 +146,19 @@ namespace Solana.Unity.SDK.Example
                 else
                 {
                     var bytes = Encoding.UTF8.GetBytes(mnemonics);
+#if UNITY_WEBGL
                     DownloadFile(gameObject.name, "OnFileDownload", _mnemonicsFileTitle + ".txt", bytes, bytes.Length);
+#endif
                 }
             }
         }
         //
         // WebGL
         //
+#if UNITY_WEBGL
         [DllImport("__Internal")]
         private static extern void DownloadFile(string gameObjectName, string methodName, string filename, byte[] byteArray, int byteArraySize);
-
+#endif
         // Called from browser
         private void OnFileDownload()
         {

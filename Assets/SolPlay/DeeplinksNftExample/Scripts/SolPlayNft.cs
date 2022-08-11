@@ -37,6 +37,8 @@ namespace SolPlay.Deeplinks
     public class SolPlayNft
     {
         public Metaplex MetaplexData;
+        public AccountInfo AccountInfo;
+        public TokenAccount TokenAccount;
 
         public SolPlayNft()
         {
@@ -48,6 +50,7 @@ namespace SolPlay.Deeplinks
         {
             this.MetaplexData = metaplexData;
         }
+
 
         public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection)
         {
@@ -67,13 +70,28 @@ namespace SolPlay.Deeplinks
         public static async Task<SolPlayNft> TryGetNftData(string mint, IRpcClient connection,
             bool tryUseLocalContent = true)
         {
+            if (!tryUseLocalContent)
+            {
+                PlayerPrefs.DeleteKey(IgnoredTokenListPlayerPrefsKey);
+            }
+            
             // We put broken tokens on an ignore list so we dont need to load the information every time. 
             if (IsTokenMintIgnored(mint))
             {
                 return null;
             }
 
-            PublicKey metaplexDataPubKey = FindProgramAddress(mint);
+            //PublicKey metaplexDataPubKey = FindProgramAddress(mint);
+
+            var seeds = new List<byte[]>();
+            seeds.Add(Encoding.UTF8.GetBytes("metadata"));
+            seeds.Add(new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").KeyBytes);
+            seeds.Add(new PublicKey(mint).KeyBytes);
+
+            PublicKey.TryFindProgramAddress(
+                seeds, 
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+                out PublicKey metaplexDataPubKey, out var _bump);
 
             if (metaplexDataPubKey != null)
             {
@@ -116,6 +134,7 @@ namespace SolPlay.Deeplinks
                         }
 
                         SolPlayNft newSolPlayNft = new SolPlayNft(metaPlex);
+                        newSolPlayNft.AccountInfo = accountInfo;
                         SolPlayFileLoader.SaveToPersistenDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"),
                             newSolPlayNft);
                         return newSolPlayNft;
@@ -135,7 +154,7 @@ namespace SolPlay.Deeplinks
 
             return null;
         }
-
+        
         private static bool IsTokenMintIgnored(string mint)
         {
             if (GetIgnoreTokenList().TokenList.Contains(mint))
