@@ -6,7 +6,6 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using UnityEditor;
 using UnityEngine;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;
 
@@ -57,6 +56,7 @@ namespace SolPlay.Deeplinks
                 {
                     messageRouter.RaiseMessage(
                         new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
+                    yield return new WaitForSeconds(1.5f);
                     continue;
                 }
 

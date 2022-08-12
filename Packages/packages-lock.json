@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "com.solana.unity_sdk": {
-      "version": "file:/Users/jonasmac2/Documents/GitHub/Solana.Unity-SDK",
+      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git",
       "depth": 0,
-      "source": "local",
+      "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
-      }
+      },
+      "hash": "e77a6b0f07224789b2df73a38817d22cfdd74939"
     },
     "com.unity.collab-proxy": {
       "version": "1.15.18",

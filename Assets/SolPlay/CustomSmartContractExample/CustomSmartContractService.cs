@@ -71,6 +71,9 @@ namespace SolPlay.CustomSmartContractExample
             {
                 var result = await wallet.RequestAirdrop(1000000000);
                 Debug.Log($"Request airdrop: {result} Are you connected to the internet or on mainnet?");
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("You dont have enough sol. Maybe try on dev net."));
+                return;
             }
 
             var blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
@@ -166,12 +169,12 @@ namespace SolPlay.CustomSmartContractExample
 
         private async Task<bool> CheckIfProgramIsDeployed(IRpcClient activeRpcClient)
         {
-            RequestResult<ResponseValue<AccountInfo>> programmAccountInfo =
+            RequestResult<ResponseValue<AccountInfo>> programAccountInfo =
                 await activeRpcClient.GetAccountInfoAsync(HelloWorldProgramPublicKey);
 
-            if (programmAccountInfo.Result != null && programmAccountInfo.Result.Value != null)
+            if (programAccountInfo.Result != null && programAccountInfo.Result.Value != null)
             {
-                Debug.Log("Program is available and executable: " + programmAccountInfo.Result.Value.Executable);
+                Debug.Log("Program is available and executable: " + programAccountInfo.Result.Value.Executable);
             }
             else
             {
