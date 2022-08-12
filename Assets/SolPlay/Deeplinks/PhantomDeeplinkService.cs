@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
@@ -5,6 +6,7 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
+using UnityEditor;
 using UnityEngine;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;
 
@@ -29,7 +31,15 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.RegisterSingleton(this);
         }
 
-        public async Task CheckSignatureStatus(string signature)
+        /// <summary>
+        /// await Task.Delay() does not work properly on webgl so we use a coroutine instead
+        /// </summary>
+        public void CheckSignatureStatus(string signature)
+        {
+            StartCoroutine(CheckSignatureStatusRoutine(signature));
+        }
+
+        private IEnumerator CheckSignatureStatusRoutine(string signature)
         {
             MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
             var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
@@ -38,14 +48,15 @@ namespace SolPlay.Deeplinks
 
             while (!transactionFinalized)
             {
-                RequestResult<ResponseValue<List<SignatureStatusInfo>>> signatureResult =
-                    await wallet.ActiveRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
+                Task<RequestResult<ResponseValue<List<SignatureStatusInfo>>>> task = wallet.ActiveRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
+                yield return new WaitUntil(() => task.IsCompleted);
+
+                RequestResult<ResponseValue<List<SignatureStatusInfo>>> signatureResult = task.Result;
 
                 if (signatureResult.Result == null)
                 {
                     messageRouter.RaiseMessage(
                         new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
-                    await Task.Delay(2000);
                     continue;
                 }
 
@@ -60,8 +71,8 @@ namespace SolPlay.Deeplinks
                     {
                         if (signatureStatusInfo.ConfirmationStatus == nameof(TransactionResult.finalized))
                         {
-                            transactionFinalized = true;
                             messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                            transactionFinalized = true;
                         }
                         else
                         {
@@ -70,22 +81,12 @@ namespace SolPlay.Deeplinks
                                     $"Signature result {signatureStatusInfo.Confirmations}/31"));
                         }
                     }
-                    messageRouter.RaiseMessage(
-                        new BlimpSystem.ShowBlimpMessage("Signature info: " + signatureStatusInfo));
                 }
-                messageRouter.RaiseMessage(
-                    new BlimpSystem.ShowBlimpMessage("Signature inf[ " + transactionFinalized));
-                
-                if (!transactionFinalized)
-                {
-                    await Task.Delay(2000).ConfigureAwait(false);;
-                }
-                
-                messageRouter.RaiseMessage(
-                    new BlimpSystem.ShowBlimpMessage("Signature info: 5"));
-                messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized")); 
+
+                yield return new WaitForSeconds(1.5f);
             }
         }
+
 
         public async void TransferSolanaToPubkey(string toPublicKey)
         {
@@ -104,8 +105,8 @@ namespace SolPlay.Deeplinks
 
             RequestResult<string> requestResult =
                 await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction);
-            
-            await CheckSignatureStatus(requestResult.Result);
+
+            CheckSignatureStatus(requestResult.Result);
         }
 
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,

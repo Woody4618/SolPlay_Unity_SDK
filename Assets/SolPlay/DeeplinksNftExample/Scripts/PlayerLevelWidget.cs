@@ -1,4 +1,5 @@
 using Frictionless;
+using Solana.Unity.Rpc.Models;
 using SolPlay.CustomSmartContractExample;
 using TMPro;
 using UnityEngine;
@@ -30,7 +31,7 @@ namespace SolPlay.Deeplinks
         private async void OnLevelUpButtonClicked()
         {
             await ServiceFactory.Instance.Resolve<CustomSmartContractService>().IncreasePlayerLevel();
-            var account = await ServiceFactory.Instance.Resolve<CustomSmartContractService>().RefreshLevelAccountData();
+            AccountInfo account = await ServiceFactory.Instance.Resolve<CustomSmartContractService>().RefreshLevelAccountData();
         }
 
         private void Update()

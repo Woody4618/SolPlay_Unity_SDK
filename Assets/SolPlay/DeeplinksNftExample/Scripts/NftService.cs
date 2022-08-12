@@ -40,13 +40,13 @@ namespace SolPlay.Deeplinks
             }
 
             var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
-            
+
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftLoadingStartedMessage());
 
             IsLoadingTokenAccounts = true;
 
             TokenAccount[] tokenAccounts = await GetOwnedTokenAccounts(publicKey);
-Debug.Log("" + publicKey);
+
             if (tokenAccounts == null)
             {
                 string error = "Could not load Token Accounts, are you connected to the internet?";
@@ -60,22 +60,21 @@ Debug.Log("" + publicKey);
             string result = $"{tokenAccounts.Length} token accounts loaded. Getting data now.";
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(result));
 
-            var tokenAccountResult =
-                await wallet.ActiveRpcClient.GetTokenAccountBalanceAsync("J3Lw33iBvMLHdCua4MXohTx3HD4JcajQmogQEr2Y7pej", Commitment.Finalized);
-
             foreach (TokenAccount item in tokenAccounts)
             {
                 if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                 {
-                    SolPlayNft solPlayNft = await SolPlayNft.TryGetNftData(item.Account.Data.Parsed.Info.Mint, wallet.ActiveRpcClient,
+                    SolPlayNft solPlayNft = await SolPlayNft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
+                        wallet.ActiveRpcClient,
                         tryUseLocalContent);
-       
+
                     if (solPlayNft != null)
                     {
                         solPlayNft.TokenAccount = item;
                         MetaPlexNFts.Add(solPlayNft);
                         Debug.Log("NftName:" + solPlayNft.MetaplexData.data.name);
-                        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftArrivedMessage(solPlayNft));
+                        ServiceFactory.Instance.Resolve<MessageRouter>()
+                            .RaiseMessage(new NftArrivedMessage(solPlayNft));
                     }
                     else
                     {
@@ -96,7 +95,8 @@ Debug.Log("" + publicKey);
             try
             {
                 RequestResult<ResponseValue<List<TokenAccount>>> result =
-                    await wallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(publicKey, null, TokenProgram.ProgramIdKey);
+                    await wallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(publicKey, null,
+                        TokenProgram.ProgramIdKey);
 
                 if (result.Result != null && result.Result.Value != null)
                 {

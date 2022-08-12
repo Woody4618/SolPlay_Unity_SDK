@@ -140,10 +140,14 @@ namespace SolPlay.CustomSmartContractExample
             var signedTransaction = await walletHolderService.BaseWallet.SignAndSendTransaction(increasePlayerLevelTransaction);
 
             Debug.Log("Signed and send: " + signedTransaction + " checking signature now");
-
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().CheckSignatureStatus(signedTransaction.Result);
+            CheckSignature(signedTransaction.Result);
         }
 
+        private void CheckSignature(string signature)
+        {
+            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().CheckSignatureStatus(signature);
+        }
+        
         private bool GetProgramDerivedAccount(PublicKey localPublicKey,
             string accountSeed, out PublicKey programAccountPublicKey)
         {

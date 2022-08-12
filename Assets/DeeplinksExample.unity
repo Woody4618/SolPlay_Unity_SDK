@@ -843,7 +843,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ded6f69caa7d4c6aa065c4a7c4b7e42d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rpcCluster: 1
+  rpcCluster: 0
   customRpc: 
   autoConnectOnStartup: 1
 --- !u!114 &191733169
@@ -859,8 +859,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DeeplinkWallet: {fileID: 191733171}
-  PhantomDeeplinkWallet: {fileID: 0}
-  PhantomWebGLWallet: {fileID: 0}
   InGameWallet: {fileID: 191733168}
   EditorExampleWalletPublicKey: AFEkH2vF1CYGJnPncDw6PzaitjQgdQipL2hxSWLh9iDs
   BaseWallet: {fileID: 0}
@@ -876,7 +874,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86886b5b62324440870ea00f772204bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rpcCluster: 1
+  rpcCluster: 0
   customRpc: 
   autoConnectOnStartup: 1
   PhantomApiVersion: v1
@@ -2585,7 +2583,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -83, y: 279}
+  m_AnchoredPosition: {x: 9, y: 279}
   m_SizeDelta: {x: 230, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &750565936
@@ -6255,7 +6253,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -328.377, y: 279.00006}
+  m_AnchoredPosition: {x: -236.37704, y: 279.00006}
   m_SizeDelta: {x: 230, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1994493425
@@ -6658,7 +6656,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150.66534, y: 279}
+  m_AnchoredPosition: {x: 242.66531, y: 279}
   m_SizeDelta: {x: 214.9306, y: 61.5163}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2119039963

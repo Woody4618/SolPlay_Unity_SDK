@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Frictionless;
-using Solana.Unity.DeeplinkWallet;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using UnityEngine;
