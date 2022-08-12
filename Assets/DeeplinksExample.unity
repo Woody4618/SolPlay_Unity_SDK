@@ -843,7 +843,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ded6f69caa7d4c6aa065c4a7c4b7e42d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rpcCluster: 0
+  rpcCluster: 1
   customRpc: 
   autoConnectOnStartup: 1
 --- !u!114 &191733169
