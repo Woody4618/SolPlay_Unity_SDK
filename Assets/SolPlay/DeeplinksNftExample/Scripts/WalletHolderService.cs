@@ -4,13 +4,12 @@ using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using UnityEngine;
 
-namespace SolPlay
+namespace SolPlay.Deeplinks
 {
     public class WalletHolderService : MonoBehaviour
     {
         public PhantomWallet DeeplinkWallet;
         public InGameWallet InGameWallet;
-        public string EditorExampleWalletPublicKey;
 
         public WalletBase BaseWallet;
 

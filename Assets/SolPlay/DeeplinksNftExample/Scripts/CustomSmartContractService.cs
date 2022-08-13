@@ -34,6 +34,9 @@ namespace SolPlay.CustomSmartContractExample
             if (!GetProgramDerivedAccount(wallet.Account.PublicKey, AccountSeed, out var programAccountPublicKey))
                 return null;
 
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Request player level."));
+
             RequestResult<ResponseValue<AccountInfo>> accountInfoResult =
                 await wallet.ActiveRpcClient.GetAccountInfoAsync(programAccountPublicKey);
 
@@ -45,7 +48,11 @@ namespace SolPlay.CustomSmartContractExample
                     {
                         byte[] message = Base64.Decode(entry);
                         var uInt32 = BitConverter.ToUInt32(message);
-                        Debug.Log("Player level: " + uInt32);
+                        var playerLevel = "Player level recieved: " + uInt32;
+                        Debug.Log(playerLevel);
+                        ServiceFactory.Instance.Resolve<MessageRouter>()
+                            .RaiseMessage(new BlimpSystem.ShowBlimpMessage(playerLevel));
+
                         CurrentPlayerLevel = (int) uInt32;
                     }
                     catch (Exception e)
@@ -139,16 +146,29 @@ namespace SolPlay.CustomSmartContractExample
 
             increasePlayerLevelTransaction.Instructions.Add(helloWorldTransactionInstruction);
 
-            Debug.Log("Sending transaction using: " + walletHolderService.BaseWallet.GetType());
-            var signedTransaction = await walletHolderService.BaseWallet.SignAndSendTransaction(increasePlayerLevelTransaction);
+            var sendingTransactionUsing = "Sending transaction using: " + walletHolderService.BaseWallet.GetType();
+            Debug.Log(sendingTransactionUsing);
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .RaiseMessage(new BlimpSystem.ShowBlimpMessage(sendingTransactionUsing));
 
-            Debug.Log("Signed and send: " + signedTransaction + " checking signature now");
-            CheckSignature(signedTransaction.Result);
+            var signedTransaction = await walletHolderService.BaseWallet.SignAndSendTransaction(increasePlayerLevelTransaction);
+            
+            var checkingSignatureNow = "Signed and sent: " + signedTransaction + " checking signature now";
+            Debug.Log(checkingSignatureNow);
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .RaiseMessage(new BlimpSystem.ShowBlimpMessage(checkingSignatureNow));
+
+            CheckSignature(signedTransaction.Result, () =>
+            {
+                RefreshLevelAccountData();
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(new SolBalanceChangedMessage());
+            });
         }
 
-        private void CheckSignature(string signature)
+        private void CheckSignature(string signature, Action onSignatureFinalized)
         {
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().CheckSignatureStatus(signature);
+            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>().CheckSignatureStatus(signature, onSignatureFinalized);
         }
         
         private bool GetProgramDerivedAccount(PublicKey localPublicKey,

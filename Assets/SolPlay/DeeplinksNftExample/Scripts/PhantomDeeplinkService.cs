@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -33,12 +34,12 @@ namespace SolPlay.Deeplinks
         /// <summary>
         /// await Task.Delay() does not work properly on webgl so we use a coroutine instead
         /// </summary>
-        public void CheckSignatureStatus(string signature)
+        public void CheckSignatureStatus(string signature, Action onSignatureFinalized)
         {
-            StartCoroutine(CheckSignatureStatusRoutine(signature));
+            StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized));
         }
 
-        private IEnumerator CheckSignatureStatusRoutine(string signature)
+        private IEnumerator CheckSignatureStatusRoutine(string signature, Action onSignatureFinalized)
         {
             MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
             var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
@@ -73,6 +74,7 @@ namespace SolPlay.Deeplinks
                         {
                             messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
                             transactionFinalized = true;
+                            onSignatureFinalized();
                         }
                         else
                         {
@@ -106,7 +108,11 @@ namespace SolPlay.Deeplinks
             RequestResult<string> requestResult =
                 await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction);
 
-            CheckSignatureStatus(requestResult.Result);
+            CheckSignatureStatus(requestResult.Result, () =>
+            {
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(new SolBalanceChangedMessage());
+            });
         }
 
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
@@ -133,5 +139,8 @@ namespace SolPlay.Deeplinks
             garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
             return garblesSdkTransaction;
         }
+    }
+    public class SolBalanceChangedMessage
+    {
     }
 }

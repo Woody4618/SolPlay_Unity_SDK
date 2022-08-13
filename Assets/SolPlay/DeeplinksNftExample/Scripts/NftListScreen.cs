@@ -21,9 +21,11 @@ namespace SolPlay.Deeplinks
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
+        public GameObject NotConnectedRoot;
         public GameObject LoadingSpinner;
-        public NftItemView ownedBeaverNftItemView;
+        public NftItemView OwnedBeaverNftItemView;
         public TextMeshProUGUI BeaverNameText;
+        public TextMeshProUGUI WalletPubKeyText;
 
         void Start()
         {
@@ -41,7 +43,7 @@ namespace SolPlay.Deeplinks
                 .AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
             
             ConnectedRoot.gameObject.SetActive(false);
-            PhantomLoginButton.gameObject.SetActive(true);
+            NotConnectedRoot.gameObject.SetActive(true);
 
             UpdateBeaverStatus();
         }
@@ -77,8 +79,8 @@ namespace SolPlay.Deeplinks
             {
                 var allBeavers = nftService.GetAllNftsByMintAuthority(NftService.BeaverNftMintAuthority);
                 var metaPlexNft = allBeavers[0];
-                ownedBeaverNftItemView.SetData(metaPlexNft,
-                    view => { ServiceFactory.Instance.Resolve<NftContextMenu>().Open(ownedBeaverNftItemView); });
+                OwnedBeaverNftItemView.SetData(metaPlexNft,
+                    view => { ServiceFactory.Instance.Resolve<NftContextMenu>().Open(OwnedBeaverNftItemView); });
                 BeaverNameText.text = metaPlexNft.MetaplexData.data.name;
             }
         }
@@ -138,8 +140,9 @@ namespace SolPlay.Deeplinks
         private async void OnPhantomButtonClicked()
         {
             var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login();
+            WalletPubKeyText.text = account.PublicKey;
             ConnectedRoot.gameObject.SetActive(true);
-            PhantomLoginButton.gameObject.SetActive(false);
+            NotConnectedRoot.gameObject.SetActive(false);
             await RequestNfts(true);
         }
     }

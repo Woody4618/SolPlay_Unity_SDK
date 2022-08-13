@@ -2,14 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
-using Merkator.BitCoin;
-using Org.BouncyCastle.Utilities.Encoders;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.Rpc.Types;
-using Solana.Unity.Wallet.Utilities;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks

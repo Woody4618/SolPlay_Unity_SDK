@@ -11,7 +11,7 @@ using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
 using UnityEngine;
 
-namespace SolPlay
+namespace SolPlay.Deeplinks
 {
     public class MetaPlexInteractionService : MonoBehaviour
     {
