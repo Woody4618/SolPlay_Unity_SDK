@@ -23,13 +23,27 @@ namespace SolPlay.Deeplinks
         void Start()
         {
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<ShowBlimpMessage>(OnShowBlimpMessage);
+            Application.logMessageReceived += OnLogMessage;
+        }
+
+        private void OnLogMessage(string condition, string stacktrace, LogType type)
+        {
+            if (type == LogType.Error || type == LogType.Exception)
+            {
+                SpawnBlimp(condition);
+            }
         }
 
         private void OnShowBlimpMessage(ShowBlimpMessage message)
         {
+            SpawnBlimp(message.BlimpText);
+        }
+
+        private void SpawnBlimp(string message)
+        {
             // TODO: Pool for production
             var instance = Instantiate<TextBlimp>(TextBlimpPrefab, BlimpRoot.transform);
-            instance.SetData(message.BlimpText);
+            instance.SetData(message);
 
             StartCoroutine(DestroyDelayed(instance.gameObject));
         }

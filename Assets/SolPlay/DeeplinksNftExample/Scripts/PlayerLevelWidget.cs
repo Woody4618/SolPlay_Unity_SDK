@@ -25,18 +25,18 @@ namespace SolPlay.Deeplinks
 
         private async void OnRefreshPlayerLevelButtonClicked()
         {
-            var account = await ServiceFactory.Instance.Resolve<CustomSmartContractService>().RefreshLevelAccountData();
+            await ServiceFactory.Instance.Resolve<CustomSmartContractService>().GetHelloWorldAccountData();
         }
 
         private async void OnLevelUpButtonClicked()
         {
             await ServiceFactory.Instance.Resolve<CustomSmartContractService>().IncreasePlayerLevel();
-            AccountInfo account = await ServiceFactory.Instance.Resolve<CustomSmartContractService>().RefreshLevelAccountData();
+            AccountInfo account = await ServiceFactory.Instance.Resolve<CustomSmartContractService>().GetHelloWorldAccountData();
         }
 
         private void Update()
         {
-            CurrentPlayerLevelText.text = "Player level: " + ServiceFactory.Instance.Resolve<CustomSmartContractService>().CurrentPlayerLevel.ToString();
+            CurrentPlayerLevelText.text = "Player level: " + ServiceFactory.Instance.Resolve<CustomSmartContractService>().CurrentPlayerLevel;
         }
     }
 }

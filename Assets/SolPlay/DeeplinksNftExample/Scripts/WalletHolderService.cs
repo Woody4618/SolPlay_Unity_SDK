@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
+using SolPlay.CustomSmartContractExample;
+using SolPlay.DeeplinksNftExample.Utils;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -18,6 +20,11 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.RegisterSingleton(this);
         }
 
+        public void ShowMessage(string message)
+        {
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(message));
+        }
+        
         public async Task<Account> Login()
         {
 #if UNITY_EDITOR
