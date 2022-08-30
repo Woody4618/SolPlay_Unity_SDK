@@ -15,7 +15,7 @@ namespace SolPlay.Deeplinks
     /// <summary>
     /// Establishes a secure connection with phantom wallet and gets the public key from the wallet. 
     /// </summary>
-    public class PhantomDeeplinkService : MonoBehaviour
+    public class TransactionService : MonoBehaviour
     {
         public enum TransactionResult
         {
@@ -36,7 +36,17 @@ namespace SolPlay.Deeplinks
         /// </summary>
         public void CheckSignatureStatus(string signature, Action onSignatureFinalized)
         {
-            StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized));
+            MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
+            
+            if (string.IsNullOrEmpty(signature))
+            {
+                messageRouter.RaiseMessage(
+                    new BlimpSystem.ShowBlimpMessage($"Signature was empty: {signature}."));
+            }
+            else
+            {
+                StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized));
+            }
         }
 
         private IEnumerator CheckSignatureStatusRoutine(string signature, Action onSignatureFinalized)

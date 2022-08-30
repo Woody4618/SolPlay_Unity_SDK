@@ -2,8 +2,7 @@ using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
-using SolPlay.CustomSmartContractExample;
-using SolPlay.DeeplinksNftExample.Utils;
+using SolPlay.Staking;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -25,25 +24,27 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(message));
         }
         
-        public async Task<Account> Login()
+        public async Task<Account> Login(bool devNetLogin)
         {
-#if UNITY_EDITOR
-            BaseWallet = InGameWallet;
-
-            var account = await InGameWallet.Login();
-            if (account == null)
+            if (devNetLogin)
             {
-                account = await InGameWallet.CreateAccount();
-            }
-#endif
+                BaseWallet = InGameWallet;
 
+                Account account = await InGameWallet.Login() ?? await InGameWallet.CreateAccount();
+                // Copy this if you want to import your wallet into phantom. Dont share it with anyone.
+                // var privateKeyString = account.PrivateKey.Key;
+            }
+            else
+            {
 #if (UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL) && !UNITY_EDITOR
             BaseWallet = DeeplinkWallet;
             Debug.Log(BaseWallet.ActiveRpcClient.NodeAddress);
             await BaseWallet.Login();
 #endif
+            }
 
             Debug.Log("Logged in: " + BaseWallet.Account.PublicKey);
+            //ServiceFactory.Instance.Resolve<StakingService>().RefreshFarm();
             return BaseWallet.Account;
         }
         

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
-using Merkator.BitCoin;
 using Org.BouncyCastle.Utilities.Encoders;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Utils;
@@ -20,7 +20,7 @@ namespace SolPlay.CustomSmartContractExample
     {
         public UInt32 CurrentPlayerLevel = 0;
 
-        public long GetAccountSize()
+        public static long GetAccountSize()
         {
             return sizeof(UInt32);
         }
@@ -29,8 +29,6 @@ namespace SolPlay.CustomSmartContractExample
     public class CustomSmartContractService : MonoBehaviour
     {
         public int CurrentPlayerLevel = 0;
-        public HelloWorldAccount HelloWorldAccount = new HelloWorldAccount();
-
         PublicKey HelloWorldProgramPublicKey = new PublicKey("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo");
         string AccountSeed = "HelloWorld";
 
@@ -46,7 +44,8 @@ namespace SolPlay.CustomSmartContractExample
             if (!GetProgramDerivedAccount(wallet.Account.PublicKey, AccountSeed, out var programAccountPublicKey))
                 return null;
 
-            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage("Request player level."));
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Request player level."));
 
             RequestResult<ResponseValue<AccountInfo>> accountInfoResult =
                 await wallet.ActiveRpcClient.GetAccountInfoAsync(programAccountPublicKey);
@@ -87,9 +86,10 @@ namespace SolPlay.CustomSmartContractExample
 
             var blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
+            var messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
             if (blockHash.Result == null)
             {
-                ServiceFactory.Instance.Resolve<MessageRouter>()
+                messageRouter
                     .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Block hash null. Connected to internet?"));
                 return;
             }
@@ -107,12 +107,37 @@ namespace SolPlay.CustomSmartContractExample
 
             if (sol <= fees)
             {
-                string result = await wallet.RequestAirdrop(1000000000);
+                if (wallet.rpcCluster == RpcCluster.MainNet)
+                {
+                    messageRouter
+                        .RaiseMessage(
+                            new BlimpSystem.ShowBlimpMessage(
+                                $"You dont have enough sol to pay for account creation. Need at least: {fees} "));
+                }
+                else
+                {
+                    string result = await wallet.RequestAirdrop(1000000000);
+                    if (string.IsNullOrEmpty(result))
+                    {
+                        messageRouter.RaiseMessage(
+                            new BlimpSystem.ShowBlimpMessage(
+                                $"Air drop request failed. Are connected to the internet?"));
+                        return;
+                    }
 
-                Debug.Log($"Request airdrop: {result} Are you connected to the internet or on mainnet?");
-                ServiceFactory.Instance.Resolve<MessageRouter>()
-                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("You dont have enough sol. Maybe try on dev net."));
-                return;
+                    ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(result, () =>
+                    {
+                        messageRouter.RaiseMessage(new SolBalanceChangedMessage());
+                    });
+                    
+                    sol = await wallet.GetBalance() * SolanaUtils.SolToLamports;
+                    messageRouter.RaiseMessage(new SolBalanceChangedMessage());
+                    if (sol <= fees)
+                    {
+                        Debug.Log($"Request airdrop: {result} Are you connected to the internet or on mainnet?");
+                        return;
+                    }
+                }
             }
 
             await CreateAndSendUnsignedHelloWorldTransaction(blockHash.Result.Value, levelAccount == null);
@@ -144,7 +169,7 @@ namespace SolPlay.CustomSmartContractExample
                     localPublicKey,
                     AccountSeed,
                     costToCreateTheAccount.Result,
-                    (ulong) new HelloWorldAccount().GetAccountSize(),
+                    (ulong) HelloWorldAccount.GetAccountSize(),
                     HelloWorldProgramPublicKey);
 
                 increasePlayerLevelTransaction.Instructions.Add(createAccountInstruction);
@@ -158,7 +183,7 @@ namespace SolPlay.CustomSmartContractExample
 
             TransactionInstruction helloWorldTransactionInstruction = new TransactionInstruction()
             {
-                ProgramId = Base58Encoding.Decode("F3qQ9mJep9hwCkJRtRSUcxov5etdRvQU9NBFpPjh4LKo"),
+                ProgramId = HelloWorldProgramPublicKey,
                 Keys = (IList<AccountMeta>) accountMetaList,
                 Data = Array.Empty<byte>()
             };
@@ -170,25 +195,40 @@ namespace SolPlay.CustomSmartContractExample
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .RaiseMessage(new BlimpSystem.ShowBlimpMessage(sendingTransactionUsing));
 
-            var signedTransaction =
-                await walletHolderService.BaseWallet.SignAndSendTransaction(increasePlayerLevelTransaction);
+            byte[] signedTransaction =
+                await walletHolderService.BaseWallet.SignTransaction(increasePlayerLevelTransaction);
 
-            var checkingSignatureNow = "Signed and sent: " + signedTransaction + " checking signature now";
+            var transactionSignature =
+                await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+                    Convert.ToBase64String(signedTransaction));
+
+            var checkingSignatureNow =
+                "Signed via BaseWallet: " + transactionSignature.Result + " checking signature now";
             Debug.Log(checkingSignatureNow);
-            ServiceFactory.Instance.Resolve<MessageRouter>()
-                .RaiseMessage(new BlimpSystem.ShowBlimpMessage(checkingSignatureNow));
 
-            CheckSignature(signedTransaction.Result, () =>
+            if (transactionSignature.WasSuccessful)
             {
-                GetHelloWorldAccountData();
                 ServiceFactory.Instance.Resolve<MessageRouter>()
-                    .RaiseMessage(new SolBalanceChangedMessage());
-            });
+                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage(checkingSignatureNow));
+
+                CheckSignature(transactionSignature.Result, () =>
+                {
+                    GetHelloWorldAccountData();
+                    ServiceFactory.Instance.Resolve<MessageRouter>()
+                        .RaiseMessage(new SolBalanceChangedMessage());
+                });
+            }
+            else
+            {
+                ServiceFactory.Instance.Resolve<MessageRouter>()
+                    .RaiseMessage(
+                        new BlimpSystem.ShowBlimpMessage($"There was an error: {transactionSignature.Reason}"));
+            }
         }
 
         private void CheckSignature(string signature, Action onSignatureFinalized)
         {
-            ServiceFactory.Instance.Resolve<PhantomDeeplinkService>()
+            ServiceFactory.Instance.Resolve<TransactionService>()
                 .CheckSignatureStatus(signature, onSignatureFinalized);
         }
 

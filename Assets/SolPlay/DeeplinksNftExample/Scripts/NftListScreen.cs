@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Frictionless;
+using SolPlay.Staking;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ namespace SolPlay.Deeplinks
     public class NftListScreen : MonoBehaviour
     {
         public Button PhantomLoginButton;
+        public Button DevnetInGameWalletButton;
         public Button GetNFtsDataButton;
         public Button GetNFtsNotCachedButton;
         public Button GetBeaverButton;
@@ -22,6 +24,7 @@ namespace SolPlay.Deeplinks
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
         public GameObject NotConnectedRoot;
+        public GameObject TabBarRoot;
         public GameObject LoadingSpinner;
         public NftItemView OwnedBeaverNftItemView;
         public TextMeshProUGUI BeaverNameText;
@@ -30,6 +33,7 @@ namespace SolPlay.Deeplinks
         void Start()
         {
             PhantomLoginButton.onClick.AddListener(OnPhantomButtonClicked);
+            DevnetInGameWalletButton.onClick.AddListener(OnDevnetInGameWalletButtonClicked);
             GetNFtsDataButton.onClick.AddListener(OnGetNftButtonClicked);
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
@@ -44,13 +48,24 @@ namespace SolPlay.Deeplinks
             
             ConnectedRoot.gameObject.SetActive(false);
             NotConnectedRoot.gameObject.SetActive(true);
-
+            TabBarRoot.gameObject.SetActive(false);
+            
             UpdateBeaverStatus();
+        }
+
+        private async void OnDevnetInGameWalletButtonClicked()
+        {
+            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login(true);
+            WalletPubKeyText.text = account.PublicKey;
+            ConnectedRoot.gameObject.SetActive(true);
+            NotConnectedRoot.gameObject.SetActive(false);
+            TabBarRoot.gameObject.SetActive(true);
+            await RequestNfts(true);
         }
 
         private void OnPhantomTransactionButtonClicked()
         {
-            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<PhantomDeeplinkService>();
+            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<TransactionService>();
             phantomDeeplinkService.TransferSolanaToPubkey(phantomDeeplinkService.EditorExampleWalletPublicKey);
         }
 
@@ -139,10 +154,11 @@ namespace SolPlay.Deeplinks
 
         private async void OnPhantomButtonClicked()
         {
-            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login();
+            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login(false);
             WalletPubKeyText.text = account.PublicKey;
             ConnectedRoot.gameObject.SetActive(true);
             NotConnectedRoot.gameObject.SetActive(false);
+            TabBarRoot.gameObject.SetActive(true);
             await RequestNfts(true);
         }
     }

@@ -7,7 +7,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
-      "hash": "4d5ef5d60af2d3c957289f48676d4f8997e02fa5"
+      "hash": "8aff7f8e6db682d0ba76fe74dfad3179409c5891"
     },
     "com.unity.collab-proxy": {
       "version": "1.15.18",
@@ -153,6 +153,13 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
+    },
+    "com.unity.uiextensions": {
+      "version": "https://github.com/JohannesDeml/unity-ui-extensions.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "9fadad0f729068b360ce4257df39850a3349f0a4"
     },
     "com.unity.visualscripting": {
       "version": "1.7.8",

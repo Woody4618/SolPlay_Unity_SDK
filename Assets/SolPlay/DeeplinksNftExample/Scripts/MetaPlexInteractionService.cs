@@ -8,7 +8,6 @@ using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Example;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
