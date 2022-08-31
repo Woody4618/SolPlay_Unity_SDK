@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using dotnetstandard_bip32;
 using Frictionless;
+using GemBank.Program;
 using GemFarm.Accounts;
 using GemFarm.Program;
 using Solana.Unity.Programs.Abstract;
@@ -22,6 +23,10 @@ namespace SolPlay.Staking
     {
         PublicKey BankProgrammId = new PublicKey(
             "bankHHdqMuaaST4qQk6mkzxGeKPHWmqdgor6Gs8r88m"
+        );
+        
+        PublicKey BankId = new PublicKey(
+            "6qow2ZSoCNLupaohidmuuNUCoJ8fFpBeddx4JCc9M6at"
         );
 
         private void Awake()
@@ -90,26 +95,12 @@ namespace SolPlay.Staking
             Transaction transaction = await CreateEmptyTransaction();
             if (transaction == null) return null;
 
-            PublicKey farmAddress = GemFarmPDAHelper.FindFarmerPDA(wallet.Account.PublicKey, out byte farmerBump);
+            var depositGemAccounts = new DepositGemAccounts();
+            //depositGemAccounts.Authority = new PublicKey();
+            TransactionInstruction depositGemInstruction = GemBankProgram.DepositGem(depositGemAccounts, 0, 0, 1, BankId);
 
-            List<AccountMeta> accountMetaList = new List<AccountMeta>()
-            {
-                AccountMeta.Writable(GemFarmPDAHelper.Farm, false),
-                AccountMeta.Writable(farmAddress, false),
-                AccountMeta.Writable(wallet.Account.PublicKey, true),
-            };
             
-            byte[] data = Encoding.Default.GetBytes(GemFarmPDAHelper.RefreshFarmInstructionIdentifier);
-            var dataWithHashedInstructionIdentifier = SHA256.Create().ComputeHash(data).Slice(0, 9);
-            dataWithHashedInstructionIdentifier.WriteU8(farmerBump, 8);
-
-            TransactionInstruction refreshFarmerInstruction = new TransactionInstruction()
-            {
-                ProgramId = GemFarmPDAHelper.FarmProgramm,
-                Keys = accountMetaList,
-                Data = dataWithHashedInstructionIdentifier
-            };
-            transaction.Instructions.Add(refreshFarmerInstruction);
+            transaction.Instructions.Add(depositGemInstruction);
             return transaction;
         }
 

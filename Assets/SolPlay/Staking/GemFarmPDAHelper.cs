@@ -20,13 +20,9 @@ namespace SolPlay.Staking
         {
             if (!PublicKey.TryFindProgramAddress(new[]
                     {
-                        Encoding.UTF8.GetBytes("farmer"),
-                        Farm.KeyBytes,
-                        walletPubKey.KeyBytes
+                        Encoding.UTF8.GetBytes("farmer"), Farm.KeyBytes, walletPubKey.KeyBytes
                     },
-                    FarmProgramm,
-                    out PublicKey farmAddress,
-                    out farmerBump))
+                    FarmProgramm, out PublicKey farmAddress, out farmerBump))
             {
                 Debug.LogError("Could not find farmer address");
                 return null;
@@ -35,15 +31,13 @@ namespace SolPlay.Staking
             return farmAddress;
         }        
         
-        public static PublicKey FindFarmAuthorityPDA(out byte farmAuthBump)
+        public static PublicKey FindFarmAuthorityPDA(out byte bump)
         {
             if (!PublicKey.TryFindProgramAddress(new[]
                     {
                         Farm.KeyBytes
                     },
-                    FarmProgramm,
-                    out PublicKey farmAuth,
-                    out farmAuthBump))
+                    FarmProgramm, out PublicKey farmAuth, out bump))
             {
                 Debug.LogError("Could not find farmer address");
                 return null;
@@ -51,5 +45,50 @@ namespace SolPlay.Staking
 
             return farmAuth;
         }
+        
+        public static PublicKey findFarmTreasuryPDA(PublicKey farm, out byte bump)
+        {
+            if (!PublicKey.TryFindProgramAddress(new[]
+                    {
+                        Encoding.UTF8.GetBytes("treasury"), farm.KeyBytes
+                    },
+                    FarmProgramm, out PublicKey farmAddress, out bump))
+            {
+                Debug.LogError("Could not find farmer address");
+                return null;
+            }
+
+            return farmAddress;
+        }        
+        
+        public static PublicKey findAuthorizationProofPDA(PublicKey farm, PublicKey founder, out byte bump)
+        {
+            if (!PublicKey.TryFindProgramAddress(new[]
+                    {
+                        Encoding.UTF8.GetBytes("authorization"), farm.KeyBytes, founder.KeyBytes 
+                    },
+                    FarmProgramm, out PublicKey farmAddress, out bump))
+            {
+                Debug.LogError("Could not find farmer address");
+                return null;
+            }
+
+            return farmAddress;
+        }        
+        
+        public static PublicKey findRewardsPotPDA(PublicKey farm, PublicKey rewardMint, out byte bump)
+        {
+            if (!PublicKey.TryFindProgramAddress(new[]
+                    {
+                        Encoding.UTF8.GetBytes("reward_pot"), farm.KeyBytes, rewardMint.KeyBytes 
+                    },
+                    FarmProgramm, out PublicKey farmAddress, out bump))
+            {
+                Debug.LogError("Could not find farmer address");
+                return null;
+            }
+
+            return farmAddress;
+        }        
     }
 }
