@@ -6,6 +6,7 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -20,6 +21,7 @@ namespace SolPlay.Deeplinks
         public int NftImageSize = 75;
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
+        public SolPlayNft SelectedNft { get; private set; }
 
         public void Awake()
         {
@@ -71,6 +73,11 @@ namespace SolPlay.Deeplinks
                         Debug.Log("NftName:" + solPlayNft.MetaplexData.data.name);
                         ServiceFactory.Instance.Resolve<MessageRouter>()
                             .RaiseMessage(new NftArrivedMessage(solPlayNft));
+                        var lastSelectedNft = GetSelectedNftPubKey();
+                        if (!string.IsNullOrEmpty(lastSelectedNft) && lastSelectedNft == solPlayNft.TokenAccount.PublicKey)
+                        {
+                            SelectNft(solPlayNft);
+                        }
                     }
                     else
                     {
@@ -85,6 +92,16 @@ namespace SolPlay.Deeplinks
             IsLoadingTokenAccounts = false;
         }
 
+        public bool IsNftSelected(SolPlayNft nft)
+        {
+            return nft.TokenAccount?.PublicKey == GetSelectedNftPubKey();
+        }
+
+        private string GetSelectedNftPubKey()
+        {
+            return PlayerPrefs.GetString("SelectedNft");
+        }
+        
         private async Task<TokenAccount[]> GetOwnedTokenAccounts(string publicKey)
         {
             var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
@@ -146,6 +163,17 @@ namespace SolPlay.Deeplinks
         {
             ServiceFactory.Instance.Resolve<MetaPlexInteractionService>().BurnNFt(currentNft);
         }
+        
+        public void SelectNft(SolPlayNft nft)
+        {
+            if (nft == null)
+            {
+                return;
+            }
+            SelectedNft = nft;
+            PlayerPrefs.SetString("SelectedNft", SelectedNft.TokenAccount.PublicKey);
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftSelectedMessage(SelectedNft));
+        }
     }
 
     public class NftArrivedMessage
@@ -153,6 +181,16 @@ namespace SolPlay.Deeplinks
         public SolPlayNft NewNFt;
 
         public NftArrivedMessage(SolPlayNft newNFt)
+        {
+            NewNFt = newNFt;
+        }
+    }
+    
+    public class NftSelectedMessage
+    {
+        public SolPlayNft NewNFt;
+
+        public NftSelectedMessage(SolPlayNft newNFt)
         {
             NewNFt = newNFt;
         }

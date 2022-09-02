@@ -15,6 +15,7 @@ namespace SolPlay.Deeplinks
         public TextMeshProUGUI NftNameText;
         public TextMeshProUGUI PowerLevelText;
         public Button BurnButton;
+        public Button SelectButton;
         public SolPlayNft currentNft;
         
         private void Awake()
@@ -23,6 +24,15 @@ namespace SolPlay.Deeplinks
             Root.gameObject.SetActive(false);
             CloseButton.onClick.AddListener(OnCloseButtonClicked);
             BurnButton.onClick.AddListener(OnBurnClicked);
+            SelectButton.onClick.AddListener(OnSelectClicked);
+        }
+
+        private void OnSelectClicked()
+        {
+            ServiceFactory.Instance.Resolve<NftService>().SelectNft(currentNft);
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"{currentNft.MetaplexData.data.name} selected"));
+            Close();
+            ServiceFactory.Instance.Resolve<TabBarComponent>().HorizontalScrollSnap.ChangePage(1);
         }
 
         private void OnBurnClicked()

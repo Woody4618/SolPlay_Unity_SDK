@@ -7,6 +7,7 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
+using SolPlay.DeeplinksNftExample.Utils;
 using UnityEngine;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;
 
@@ -136,16 +137,13 @@ namespace SolPlay.Deeplinks
 
             Transaction garblesSdkTransaction = new Transaction();
             garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
+            
             var transactionInstruction = SystemProgram.Transfer(new PublicKey(phantomPublicKey),
-                new PublicKey(toPublicKey), 1000000);
+                new PublicKey(toPublicKey), SolanaUtils.SolToLamports / 10);
+            
             garblesSdkTransaction.Instructions.Add(transactionInstruction);
             garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
             garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
-            garblesSdkTransaction.NonceInformation = new NonceInformation()
-            {
-                Instruction = transactionInstruction,
-                Nonce = blockHash.Result.Value.Blockhash
-            };
             garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
             return garblesSdkTransaction;
         }

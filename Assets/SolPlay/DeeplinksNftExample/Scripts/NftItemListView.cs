@@ -1,3 +1,4 @@
+using System;
 using Frictionless;
 using UnityEngine;
 
@@ -8,8 +9,19 @@ namespace SolPlay.Deeplinks
         public GameObject ItemRoot;
         public NftItemView itemPrefab;
         public string FilterSymbol;
+        public string BlackList;
 
         public void OnEnable()
+        {
+            UpdateContent();
+        }
+
+        public void Start()
+        {
+            ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNFtSelectedMessage);
+        }
+
+        private void OnNFtSelectedMessage(NftSelectedMessage message)
         {
             UpdateContent();
         }
@@ -51,6 +63,11 @@ namespace SolPlay.Deeplinks
             }
 
             if (!string.IsNullOrEmpty(FilterSymbol) && solPlayNft.MetaplexData.data.symbol != FilterSymbol)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(BlackList) && solPlayNft.MetaplexData.data.symbol == BlackList)
             {
                 return;
             }

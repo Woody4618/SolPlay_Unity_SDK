@@ -14,18 +14,17 @@ namespace SolPlay.Deeplinks
         public SolPlayNft currentSolPlayNft;
 
         public RawImage Icon;
-        public Image DummyIcon;
         public TextMeshProUGUI Headline;
         public TextMeshProUGUI Description;
         public TextMeshProUGUI PowerLevel;
         public Button Button;
+        public GameObject SelectionGameObject;
 
         private Action<NftItemView> onButtonClickedAction;
 
         public void SetData(SolPlayNft solPlayNftData, Action<NftItemView> onButtonClicked)
         {
             Icon.gameObject.SetActive(false);
-            DummyIcon.gameObject.SetActive(false);
 
             if (gameObject.activeInHierarchy)
             {
@@ -35,7 +34,9 @@ namespace SolPlay.Deeplinks
                     Icon.texture = solPlayNftData.MetaplexData.nftImage.file;
                 }
             }
+            var nftService = ServiceFactory.Instance.Resolve<NftService>();
 
+            SelectionGameObject.gameObject.SetActive(nftService.IsNftSelected(solPlayNftData));
             Headline.text = solPlayNftData.MetaplexData.data.name;
             Description.text = solPlayNftData.MetaplexData.data.json.description;
             var nftPowerLevelService = ServiceFactory.Instance.Resolve<NftPowerLevelService>();
