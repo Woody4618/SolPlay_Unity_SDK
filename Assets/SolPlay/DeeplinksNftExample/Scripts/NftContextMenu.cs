@@ -1,4 +1,5 @@
 using Frictionless;
+using SolPlay.CustomSmartContractExample;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ namespace SolPlay.Deeplinks
         public TextMeshProUGUI NftNameText;
         public TextMeshProUGUI PowerLevelText;
         public Button BurnButton;
+        public Button SelectButton;
         public SolPlayNft currentNft;
         
         private void Awake()
@@ -23,6 +25,15 @@ namespace SolPlay.Deeplinks
             Root.gameObject.SetActive(false);
             CloseButton.onClick.AddListener(OnCloseButtonClicked);
             BurnButton.onClick.AddListener(OnBurnClicked);
+            SelectButton.onClick.AddListener(OnSelectClicked);
+        }
+
+        private void OnSelectClicked()
+        {
+            ServiceFactory.Instance.Resolve<NftService>().SelectNft(currentNft);
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"{currentNft.MetaplexData.data.name} selected"));
+            Close();
+            ServiceFactory.Instance.Resolve<TabBarComponent>().HorizontalScrollSnap.ChangePage(1);
         }
 
         private void OnBurnClicked()
@@ -46,8 +57,8 @@ namespace SolPlay.Deeplinks
             Root.gameObject.SetActive(true);
             NftNameText.text = nftItemView.currentSolPlayNft.MetaplexData.data.name;
             transform.position = nftItemView.transform.position;
-            var powerLevelService = ServiceFactory.Instance.Resolve<NftPowerLevelService>();
-            PowerLevelText.text = $"Power level {powerLevelService.GetPowerLevelFromNft(nftItemView.currentSolPlayNft)}";
+            var powerLevelService = ServiceFactory.Instance.Resolve<HighscoreService>();
+            PowerLevelText.text = $"High score: {powerLevelService.GetHighscoreForPubkey(nftItemView.currentSolPlayNft.MetaplexData.mint).Highscore}";
         }
     }
 }

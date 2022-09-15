@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
-using SolPlay.Staking;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -30,9 +29,21 @@ namespace SolPlay.Deeplinks
             {
                 BaseWallet = InGameWallet;
 
-                Account account = await InGameWallet.Login() ?? await InGameWallet.CreateAccount();
+                var account = await InGameWallet.Login() ?? await InGameWallet.CreateAccount();
                 // Copy this if you want to import your wallet into phantom. Dont share it with anyone.
                 // var privateKeyString = account.PrivateKey.Key;
+                double sol = await BaseWallet.GetBalance();
+                
+                if (sol == 0)
+                {
+                    var messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
+                    messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Requesting airdrop"));
+                    string result = await BaseWallet.RequestAirdrop(1000000000);
+                    ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(result, () =>
+                    {
+                        messageRouter.RaiseMessage(new SolBalanceChangedMessage());
+                    }, TransactionService.TransactionResult.finalized);
+                }
             }
             else
             {
