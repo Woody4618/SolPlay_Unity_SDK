@@ -100,7 +100,7 @@ namespace SolPlay.Staking
             };
             
             byte[] data = Encoding.Default.GetBytes(GemFarmPDAHelper.RefreshFarmInstructionIdentifier);
-            var dataWithHashedInstructionIdentifier = SHA256.Create().ComputeHash(data).Slice(0, 9);
+            byte[] dataWithHashedInstructionIdentifier = SHA256.Create().ComputeHash(data).Slice(0, 9);
             dataWithHashedInstructionIdentifier.WriteU8(farmerBump, 8);
 
             TransactionInstruction refreshFarmerInstruction = new TransactionInstruction()

@@ -1,5 +1,6 @@
 using System;
 using Frictionless;
+using SolPlay.CustomSmartContractExample;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,32 +20,43 @@ namespace SolPlay.Deeplinks
         public TextMeshProUGUI PowerLevel;
         public Button Button;
         public GameObject SelectionGameObject;
+        public SolPlayNft CurrentNft;
 
         private Action<NftItemView> onButtonClickedAction;
 
-        public void SetData(SolPlayNft solPlayNftData, Action<NftItemView> onButtonClicked)
+        public void SetData(SolPlayNft solPlayNft, Action<NftItemView> onButtonClicked)
         {
+            CurrentNft = solPlayNft;
             Icon.gameObject.SetActive(false);
 
             if (gameObject.activeInHierarchy)
             {
                 Icon.gameObject.SetActive(true);
-                if (solPlayNftData.MetaplexData.nftImage != null)
+                if (solPlayNft.MetaplexData.nftImage != null)
                 {
-                    Icon.texture = solPlayNftData.MetaplexData.nftImage.file;
+                    Icon.texture = solPlayNft.MetaplexData.nftImage.file;
                 }
             }
             var nftService = ServiceFactory.Instance.Resolve<NftService>();
 
-            SelectionGameObject.gameObject.SetActive(nftService.IsNftSelected(solPlayNftData));
-            Headline.text = solPlayNftData.MetaplexData.data.name;
-            Description.text = solPlayNftData.MetaplexData.data.json.description;
-            var nftPowerLevelService = ServiceFactory.Instance.Resolve<NftPowerLevelService>();
-            PowerLevel.text =
-                $"Power: {nftPowerLevelService.GetPowerLevelFromNft(solPlayNftData)}";
+            SelectionGameObject.gameObject.SetActive(nftService.IsNftSelected(solPlayNft));
+            Headline.text = solPlayNft.MetaplexData.data.name;
+            Description.text = solPlayNft.MetaplexData.data.json.description;
+            var nftPowerLevelService = ServiceFactory.Instance.Resolve<HighscoreService>();
+            var highscoreForPubkey = nftPowerLevelService.GetHighscoreForPubkey(solPlayNft.MetaplexData.mint);
+            if (highscoreForPubkey != null)
+            {
+                PowerLevel.text =
+                    $"Score: {highscoreForPubkey.Highscore}";
+            }
+            else
+            {
+                PowerLevel.text = "Loading";
+            }
+
             Button.onClick.AddListener(OnButtonClicked);
             onButtonClickedAction = onButtonClicked;
-            currentSolPlayNft = solPlayNftData;
+            currentSolPlayNft = solPlayNft;
         }
 
         private void OnButtonClicked()

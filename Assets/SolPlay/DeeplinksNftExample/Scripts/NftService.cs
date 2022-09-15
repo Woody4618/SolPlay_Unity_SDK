@@ -6,7 +6,9 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
-using Unity.VisualScripting;
+using Solana.Unity.SDK;
+using Solana.Unity.SDK.Nft;
+using SolPlay.CustomSmartContractExample;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -22,7 +24,8 @@ namespace SolPlay.Deeplinks
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
         public SolPlayNft SelectedNft { get; private set; }
-
+        public Texture2D LocalDummyNft;
+        
         public void Awake()
         {
             ServiceFactory.Instance.RegisterSingleton(this);
@@ -55,6 +58,12 @@ namespace SolPlay.Deeplinks
 
             MetaPlexNFts.Clear();
 
+            var dummyLocalNft = CreateDummyLocalNft(wallet);
+            
+            MetaPlexNFts.Add(dummyLocalNft);
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .RaiseMessage(new NftArrivedMessage(dummyLocalNft));
+            
             string result = $"{tokenAccounts.Length} token accounts loaded. Getting data now.";
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(result));
 
@@ -63,21 +72,14 @@ namespace SolPlay.Deeplinks
                 if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                 {
                     SolPlayNft solPlayNft = await SolPlayNft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                        wallet.ActiveRpcClient,
-                        tryUseLocalContent);
+                        wallet.ActiveRpcClient, tryUseLocalContent);
 
                     if (solPlayNft != null)
                     {
                         solPlayNft.TokenAccount = item;
                         MetaPlexNFts.Add(solPlayNft);
-                        Debug.Log("NftName:" + solPlayNft.MetaplexData.data.name);
                         ServiceFactory.Instance.Resolve<MessageRouter>()
                             .RaiseMessage(new NftArrivedMessage(solPlayNft));
-                        var lastSelectedNft = GetSelectedNftPubKey();
-                        if (!string.IsNullOrEmpty(lastSelectedNft) && lastSelectedNft == solPlayNft.TokenAccount.PublicKey)
-                        {
-                            SelectNft(solPlayNft);
-                        }
                     }
                     else
                     {
@@ -88,8 +90,38 @@ namespace SolPlay.Deeplinks
                 }
             }
 
+            foreach (var nft in MetaPlexNFts)
+            {
+                var lastSelectedNft = GetSelectedNftPubKey();
+                if (!string.IsNullOrEmpty(lastSelectedNft) && lastSelectedNft == nft.TokenAccount.PublicKey)
+                {
+                    SelectNft(nft);
+                }
+            }
+
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new NftLoadingFinishedMessage());
             IsLoadingTokenAccounts = false;
+        }
+
+        private SolPlayNft CreateDummyLocalNft(WalletBase wallet)
+        {
+            SolPlayNft dummyLocalNft = new SolPlayNft();
+            dummyLocalNft.TokenAccount = new TokenAccount();
+            dummyLocalNft.TokenAccount.PublicKey = wallet.Account.PublicKey;
+            dummyLocalNft.MetaplexData = new Metaplex();
+            dummyLocalNft.MetaplexData.nftImage = new NftImage()
+            {
+                name = "DummyNft",
+                file = LocalDummyNft
+            };
+            dummyLocalNft.MetaplexData.mint = wallet.Account.PublicKey;
+            dummyLocalNft.MetaplexData.data = new MetaplexData();
+            dummyLocalNft.MetaplexData.data.symbol = "dummy";
+            dummyLocalNft.MetaplexData.data.name = "Dummy Nft";
+            dummyLocalNft.MetaplexData.data.json = new MetaplexJsonData();
+            dummyLocalNft.MetaplexData.data.json.name = "Dummy nft";
+            dummyLocalNft.MetaplexData.data.json.description = "A dummy nft which uses the wallet puy key";
+            return dummyLocalNft;
         }
 
         public bool IsNftSelected(SolPlayNft nft)

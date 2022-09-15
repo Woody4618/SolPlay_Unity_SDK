@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Frictionless;
+using SolPlay.CustomSmartContractExample;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,6 +36,12 @@ namespace SolPlay.Deeplinks
             GetNFtsDataButton.onClick.AddListener(OnGetNftButtonClicked);
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
+#if UNITY_IOS
+            // Not allowed on ios 
+            GetBeaverButton.gameObject.SetActive(false);
+            GetSolPlayTokenButton.gameObject.SetActive(false);
+            PhantomTransactionButton.gameObject.SetActive(false);
+#endif
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
             PhantomTransactionButton.onClick.AddListener(OnPhantomTransactionButtonClicked);
 

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Frictionless;
+using SolPlay.CustomSmartContractExample;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -11,6 +13,8 @@ namespace SolPlay.Deeplinks
         public string FilterSymbol;
         public string BlackList;
 
+        private List<NftItemView> allNftItemViews = new List<NftItemView>();
+
         public void OnEnable()
         {
             UpdateContent();
@@ -19,8 +23,20 @@ namespace SolPlay.Deeplinks
         public void Start()
         {
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNFtSelectedMessage);
+            ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
         }
 
+        private void OnHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
+        {
+            foreach (var itemView in allNftItemViews)
+            {
+                if (itemView.CurrentNft.MetaplexData.mint.Contains(message.HighscoreEntry.Seed))
+                {
+                    itemView.PowerLevel.text = $"Score: {message.HighscoreEntry.Highscore}";
+                }   
+            }
+        }
+        
         private void OnNFtSelectedMessage(NftSelectedMessage message)
         {
             UpdateContent();
@@ -72,8 +88,9 @@ namespace SolPlay.Deeplinks
                 return;
             }
 
-            NftItemView instance = Instantiate(itemPrefab, ItemRoot.transform);
-            instance.SetData(solPlayNft, OnItemClicked);
+            NftItemView nftItemView = Instantiate(itemPrefab, ItemRoot.transform);
+            nftItemView.SetData(solPlayNft, OnItemClicked);
+            allNftItemViews.Add(nftItemView);
         }
 
         private void OnItemClicked(NftItemView itemView)

@@ -35,7 +35,7 @@ namespace SolPlay.Deeplinks
         /// <summary>
         /// await Task.Delay() does not work properly on webgl so we use a coroutine instead
         /// </summary>
-        public void CheckSignatureStatus(string signature, Action onSignatureFinalized)
+        public void CheckSignatureStatus(string signature, Action onSignatureFinalized, TransactionResult transactionResult = TransactionResult.confirmed)
         {
             MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
             
@@ -46,19 +46,23 @@ namespace SolPlay.Deeplinks
             }
             else
             {
-                StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized));
+                StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized, transactionResult));
             }
         }
 
-        private IEnumerator CheckSignatureStatusRoutine(string signature, Action onSignatureFinalized)
+        private IEnumerator CheckSignatureStatusRoutine(string signature, Action onSignatureFinalized, TransactionResult transactionResult = TransactionResult.confirmed)
         {
             MessageRouter messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
             var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
 
             bool transactionFinalized = false;
 
-            while (!transactionFinalized)
+            int counter = 0;
+            int maxTries = 30;
+
+            while (!transactionFinalized && counter < maxTries)
             {
+                counter++;
                 Task<RequestResult<ResponseValue<List<SignatureStatusInfo>>>> task = wallet.ActiveRpcClient.GetSignatureStatusesAsync(new List<string>() {signature}, true);
                 yield return new WaitUntil(() => task.IsCompleted);
 
@@ -77,11 +81,12 @@ namespace SolPlay.Deeplinks
                     if (signatureStatusInfo == null)
                     {
                         messageRouter.RaiseMessage(
-                            new BlimpSystem.ShowBlimpMessage("Signature is not yet processed. Retry in 2 seconds."));
+                            new BlimpSystem.ShowBlimpMessage($"Signature is not yet processed. Try: {counter}. Retry in 2 seconds."));
                     }
                     else
                     {
-                        if (signatureStatusInfo.ConfirmationStatus == nameof(TransactionResult.finalized))
+                        if (signatureStatusInfo.ConfirmationStatus == Enum.GetName(typeof(TransactionResult), transactionResult) ||
+                            signatureStatusInfo.ConfirmationStatus ==  Enum.GetName(typeof(TransactionResult), TransactionResult.finalized))
                         {
                             messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
                             transactionFinalized = true;
@@ -91,12 +96,19 @@ namespace SolPlay.Deeplinks
                         {
                             messageRouter.RaiseMessage(
                                 new BlimpSystem.ShowBlimpMessage(
-                                    $"Signature result {signatureStatusInfo.Confirmations}/31"));
+                                    $"Signature result {signatureStatusInfo.Confirmations}/31 status: {signatureStatusInfo.ConfirmationStatus} target: {Enum.GetName(typeof(TransactionResult), transactionResult)}"));
                         }
                     }
                 }
 
                 yield return new WaitForSeconds(1.5f);
+            }
+
+            if (counter >= maxTries)
+            {
+                messageRouter.RaiseMessage(
+                    new BlimpSystem.ShowBlimpMessage(
+                        $"Tried {counter} times. The transaction probably failed :( "));
             }
         }
 
@@ -123,7 +135,7 @@ namespace SolPlay.Deeplinks
             {
                 ServiceFactory.Instance.Resolve<MessageRouter>()
                     .RaiseMessage(new SolBalanceChangedMessage());
-            });
+            }, TransactionResult.finalized);
         }
 
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
@@ -135,17 +147,17 @@ namespace SolPlay.Deeplinks
                 return null;
             }
 
-            Transaction garblesSdkTransaction = new Transaction();
-            garblesSdkTransaction.Instructions = new List<TransactionInstruction>();
+            Transaction transaction = new Transaction();
+            transaction.Instructions = new List<TransactionInstruction>();
             
             var transactionInstruction = SystemProgram.Transfer(new PublicKey(phantomPublicKey),
                 new PublicKey(toPublicKey), SolanaUtils.SolToLamports / 10);
             
-            garblesSdkTransaction.Instructions.Add(transactionInstruction);
-            garblesSdkTransaction.FeePayer = new PublicKey(phantomPublicKey);
-            garblesSdkTransaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
-            garblesSdkTransaction.Signatures = new List<SignaturePubKeyPair>();
-            return garblesSdkTransaction;
+            transaction.Instructions.Add(transactionInstruction);
+            transaction.FeePayer = new PublicKey(phantomPublicKey);
+            transaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
+            transaction.Signatures = new List<SignaturePubKeyPair>();
+            return transaction;
         }
     }
     public class SolBalanceChangedMessage

@@ -414,6 +414,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 2500695113076223894}
     m_Modifications:
+    - target: {fileID: 4188007469095886181, guid: 67507078cb59b4e4da7ee14f943a39fe, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.643
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188007469095886181, guid: 67507078cb59b4e4da7ee14f943a39fe, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7572994286969063033, guid: 67507078cb59b4e4da7ee14f943a39fe, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -532,10 +540,6 @@ PrefabInstance:
     - target: {fileID: 8371127264225597394, guid: 36278a852524da34093152a447ab4a1d, type: 3}
       propertyPath: m_Name
       value: StartScreen
-      objectReference: {fileID: 0}
-    - target: {fileID: 8371127264225597394, guid: 36278a852524da34093152a447ab4a1d, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8371127264225597395, guid: 36278a852524da34093152a447ab4a1d, type: 3}
       propertyPath: m_Pivot.x

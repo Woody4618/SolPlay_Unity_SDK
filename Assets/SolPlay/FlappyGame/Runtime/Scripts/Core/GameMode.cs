@@ -2,7 +2,6 @@ using System.Collections;
 using Frictionless;
 using SolPlay.Deeplinks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEditor;
 
 public class GameMode : MonoBehaviour
@@ -79,6 +78,10 @@ public class GameMode : MonoBehaviour
         _playerController.Flap();
         _pipeGenerator.StartSpawn();
         _screenController.ShowInGameHud();
+        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        {
+            NewScore = Score
+        });
     }
 
     public void GameOver()
@@ -103,9 +106,12 @@ public class GameMode : MonoBehaviour
         _groundParallax.Reset();
         _screenController.ShowStartHud();
         Score = 0;
+        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        {
+            NewScore = Score
+        });
         yield return StartCoroutine(_fadeScreen.FadeOut(_fadeTime, _fadeColor));
         _particleEffect.gameObject.SetActive(true);
-        //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void HandleNewScore()
@@ -132,7 +138,19 @@ public class GameMode : MonoBehaviour
 
     public void IncrementScore()
     {
-        Score++;
+        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        if (nftService.SelectedNft != null && nftService.IsBeaverNft(nftService.SelectedNft))
+        {
+            Score += 2;
+        }
+        else
+        {
+            Score++;
+        }
+        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        {
+            NewScore = Score
+        });
     }
 
     public void QuitGame()
@@ -143,4 +161,9 @@ public class GameMode : MonoBehaviour
         Application.Quit();
 #endif
     }
+}
+
+public class ScoreChangedMessage
+{
+    public int NewScore;
 }

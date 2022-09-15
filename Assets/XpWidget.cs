@@ -1,5 +1,7 @@
-using System;
 using System.Collections;
+using Frictionless;
+using SolPlay.CustomSmartContractExample;
+using SolPlay.Deeplinks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,26 +11,64 @@ public class XpWidget : MonoBehaviour
     public Slider XPSlider;
     public TextMeshProUGUI XpText;
     public TextMeshProUGUI LevelText;
+    public bool AnimateAtStart = true;
+    
+    private Coroutine animationCoroutine;
+    private uint shownXp;
 
-    public static string PlayerPrefsXpKey = "TestXp4";
-
-    public void AnimateXp(int xp, int newXp)
+    private void Start()
     {
-        StartCoroutine(AnimateXpRoutine(xp, newXp));
+        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NewHighScoreLoadedMessage>(OnNewHighscoreLoadedMessage);
+        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
+        if (!AnimateAtStart)
+        {
+            var totalScore = ServiceFactory.Instance.Resolve<HighscoreService>().GetTotalScore();
+            shownXp = totalScore;
+        }
+        AnimateXp();
     }
 
-    private IEnumerator AnimateXpRoutine(int xp, int newXp)
+    private void OnNftLoadingFinishedMessage(NftLoadingFinishedMessage messge)
     {
-        int shownXp = xp - newXp;
-        while (shownXp <= xp)
+        if (!AnimateAtStart)
+        {
+            var totalScore = ServiceFactory.Instance.Resolve<HighscoreService>().GetTotalScore();
+            shownXp = totalScore;
+        }
+    }
+
+    private void OnNewHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
+    {
+        AnimateXp();
+    }
+
+    private void AnimateXp()
+    {
+        if (!gameObject.activeInHierarchy)
+        {
+            return;
+        }
+        if (animationCoroutine != null)
+        {
+            StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
+        }
+
+        var totalScore = ServiceFactory.Instance.Resolve<HighscoreService>().GetTotalScore();
+        StartCoroutine(AnimateXpRoutine(shownXp, totalScore));
+    }
+
+    private IEnumerator AnimateXpRoutine(uint xp, uint newXp)
+    {
+        while (shownXp <= newXp)
         {
             SetData(shownXp);
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.04f);
             shownXp++;
         }
     }
 
-    public void SetData(int xp)
+    public void SetData(uint xp)
     {
         int playerLevel = Mathf.FloorToInt(Mathf.Log(xp / 5 + 1, 2));
 

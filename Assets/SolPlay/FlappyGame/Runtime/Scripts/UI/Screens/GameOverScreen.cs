@@ -1,7 +1,12 @@
 using System.Collections;
 using DG.Tweening;
+using Frictionless;
+using Solana.Unity.Rpc.Models;
+using SolPlay.CustomSmartContractExample;
+using SolPlay.Deeplinks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameOverScreen : MonoBehaviour
 {
@@ -11,9 +16,12 @@ public class GameOverScreen : MonoBehaviour
     [SerializeField] MedalHud _medalHud;
     [SerializeField] TextMeshProUGUI _scoreText;
     [SerializeField] TextMeshProUGUI _highScoreText;
+    [SerializeField] TextMeshProUGUI _costText;
     [SerializeField] GameObject  _newHud;
     [SerializeField] FadeScreen _fadeScreen;
     [SerializeField] XpWidget _xpWidget;
+    [SerializeField] Button _submitHighscoreButton;
+    [SerializeField] NftItemView _nftItemView;
     
     [Header("Containers")]
     [SerializeField] CanvasGroup _gameOverContainer;
@@ -36,6 +44,34 @@ public class GameOverScreen : MonoBehaviour
     [Header("Audio")]
     [SerializeField] AudioFX _statsMoveAudio;
     [SerializeField] AudioFX _buttonsMoveAudio;
+
+    private void Awake()
+    {
+        gameObject.SetActive(false);
+        _submitHighscoreButton.onClick.AddListener(OnSubmitHighscoreButtonClicked);
+    }
+
+    private void Start()
+    {
+        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
+        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
+
+    }
+
+    private void OnHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
+    {
+        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        if (nftService.SelectedNft != null)
+        {
+            _nftItemView.SetData(nftService.SelectedNft, view => { });
+
+        }
+    }
+
+    private void OnNftSelectedMessage(NftSelectedMessage message)
+    {
+        _gameMode.RestartGame();
+    }
 
     private void OnEnable()
     {
@@ -96,23 +132,59 @@ public class GameOverScreen : MonoBehaviour
         group.blocksRaycasts = true;
     }
 
+    private async void OnSubmitHighscoreButtonClicked()
+    {
+        _submitHighscoreButton.interactable = false;
+
+        var smartContractService = ServiceFactory.Instance.Resolve<HighscoreService>();
+        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var customSmartContractService = smartContractService;
+        await customSmartContractService.SafeHighScore(nftService.SelectedNft, (uint) _gameMode.Score);
+        AccountInfo account = await smartContractService.GetHighscoreAccountData(nftService.SelectedNft);
+    }
+
     private void UpdateHud()
     {
+        var highscoreService = ServiceFactory.Instance.Resolve<HighscoreService>();
+        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        
         int score = _gameMode.Score;
-        int curHighScore = _gameSaver.CurrentSave.HighestScore;
-        int newHighScore = score > curHighScore ? score : curHighScore;
+        int curHighScore = 0;
+        bool hasHighscoreSaved = highscoreService.TryGetCurrentHighscore(out HighscoreEntry savedHighscore);
+        if (hasHighscoreSaved)
+        {
+            curHighScore = (int) savedHighscore.Highscore;
+        }
 
+        if (nftService.SelectedNft != null)
+        {
+            _nftItemView.gameObject.SetActive(true);
+            _nftItemView.SetData(nftService.SelectedNft, view => { });
+        }
+        else
+        {
+            _nftItemView.gameObject.SetActive(false);
+        }
+        
+        var newHighscoreReached = score > curHighScore;
+        int newHighScore = newHighscoreReached ? score : curHighScore;
+
+        if (curHighScore == 0)
+        {
+            _costText.text = "0.00191 sol";
+        }
+        else
+        {
+            _costText.text = "0.001 sol";
+        }
+        _submitHighscoreButton.interactable = newHighscoreReached && savedHighscore.AccountLoaded;
+#if UNITY_EDITOR
+        _submitHighscoreButton.interactable = true;
+#endif
         _medalHud.HandleScore(score);
         _scoreText.SetText(score.ToString());
         _highScoreText.SetText(newHighScore.ToString());
 
-        var playerXp = PlayerPrefs.GetInt(XpWidget.PlayerPrefsXpKey);
-        playerXp += score;
-        
-        _xpWidget.AnimateXp(playerXp, score);
-
-        PlayerPrefs.SetInt(XpWidget.PlayerPrefsXpKey, playerXp);
-
-        _newHud.SetActive(score > curHighScore);
+        _newHud.SetActive(newHighscoreReached);
     }
 }
