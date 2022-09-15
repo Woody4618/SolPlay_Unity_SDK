@@ -10,8 +10,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="solplay" android:host="onPhantomConnected" />
-                <data android:scheme="solplay" android:host="transactionSuccessful" />
+                <data android:scheme="solplay"/>
             </intent-filter>
         </activity>
     </application>

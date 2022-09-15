@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Threading.Tasks;
 using Frictionless;
 using TMPro;
@@ -16,11 +17,16 @@ namespace SolPlay.Deeplinks
         {
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<SolBalanceChangedMessage>(OnSolBalanceChangedMessage);
             await RequestSolBalance();
+            StartCoroutine(PollSolBalance());
         }
 
-        private void OnDestroy()
+        private IEnumerator PollSolBalance()
         {
-            ServiceFactory.Instance.Resolve<MessageRouter>().RemoveHandler<SolBalanceChangedMessage>(OnSolBalanceChangedMessage);
+            while (true)
+            {
+                yield return new WaitForSeconds(10);
+                RequestSol();
+            }
         }
 
         private async Task RequestSolBalance()
@@ -30,9 +36,14 @@ namespace SolPlay.Deeplinks
             SolBalance.text = sol.ToString("F2") + " sol";
         }
 
-        private void OnSolBalanceChangedMessage(SolBalanceChangedMessage message)
+        private async void OnSolBalanceChangedMessage(SolBalanceChangedMessage message)
         {
-            RequestSolBalance();
+            await RequestSolBalance();
+        }
+
+        private async void RequestSol()
+        {
+            await RequestSolBalance();
         }
     }
 }

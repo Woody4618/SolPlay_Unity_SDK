@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 using dotnetstandard_bip32;
 using Frictionless;
 using GemBank.Program;
-using GemFarm.Accounts;
 using GemFarm.Program;
-using Solana.Unity.Programs.Abstract;
 using Solana.Unity.Programs.Utilities;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
@@ -96,10 +94,7 @@ namespace SolPlay.Staking
             if (transaction == null) return null;
 
             var depositGemAccounts = new DepositGemAccounts();
-            //depositGemAccounts.Authority = new PublicKey();
             TransactionInstruction depositGemInstruction = GemBankProgram.DepositGem(depositGemAccounts, 0, 0, 1, BankId);
-
-            
             transaction.Instructions.Add(depositGemInstruction);
             return transaction;
         }

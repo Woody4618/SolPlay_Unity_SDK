@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Frictionless;
-using SolPlay.Staking;
+using SolPlay.CustomSmartContractExample;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,14 +20,13 @@ namespace SolPlay.Deeplinks
         public Button GetSolPlayTokenButton;
         public Button PhantomTransactionButton;
         public NftItemListView NftItemListView;
+        public NftItemListView BeaverNftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
         public GameObject NotConnectedRoot;
         public GameObject TabBarRoot;
         public GameObject LoadingSpinner;
-        public NftItemView OwnedBeaverNftItemView;
-        public TextMeshProUGUI BeaverNameText;
         public TextMeshProUGUI WalletPubKeyText;
 
         void Start()
@@ -37,6 +36,12 @@ namespace SolPlay.Deeplinks
             GetNFtsDataButton.onClick.AddListener(OnGetNftButtonClicked);
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
+#if UNITY_IOS
+            // Not allowed on ios 
+            GetBeaverButton.gameObject.SetActive(false);
+            GetSolPlayTokenButton.gameObject.SetActive(false);
+            PhantomTransactionButton.gameObject.SetActive(false);
+#endif
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
             PhantomTransactionButton.onClick.AddListener(OnPhantomTransactionButtonClicked);
 
@@ -87,17 +92,8 @@ namespace SolPlay.Deeplinks
         private void OnNftArrivedMessage(NftArrivedMessage message)
         {
             NftItemListView.AddNFt(message.NewNFt);
-
-            var nftService = ServiceFactory.Instance.Resolve<NftService>();
-            var ownsBeaver = UpdateBeaverStatus();
-            if (ownsBeaver)
-            {
-                var allBeavers = nftService.GetAllNftsByMintAuthority(NftService.BeaverNftMintAuthority);
-                var metaPlexNft = allBeavers[0];
-                OwnedBeaverNftItemView.SetData(metaPlexNft,
-                    view => { ServiceFactory.Instance.Resolve<NftContextMenu>().Open(OwnedBeaverNftItemView); });
-                BeaverNameText.text = metaPlexNft.MetaplexData.data.name;
-            }
+            BeaverNftItemListView.AddNFt(message.NewNFt);
+            UpdateBeaverStatus();
         }
 
         private bool UpdateBeaverStatus()
@@ -122,13 +118,15 @@ namespace SolPlay.Deeplinks
         private void OnNftLoadingStartedMessage(NftLoadingStartedMessage message)
         {
             NftItemListView.Clear();
+            BeaverNftItemListView.Clear();
             GetNFtsDataButton.interactable = false;
             GetNFtsNotCachedButton.interactable = false;
         }
 
         private void OnNftLoadingFinishedMessage(NftLoadingFinishedMessage message)
         {
-            // 
+            NftItemListView.UpdateContent();
+            BeaverNftItemListView.UpdateContent();
         }
 
         private void Update()

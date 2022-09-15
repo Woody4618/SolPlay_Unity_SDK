@@ -19,7 +19,7 @@ namespace SolPlay.Deeplinks
         private void OnNftArrived(NftArrivedMessage message)
         {
             var totalPowerLevel = ServiceFactory.Instance.Resolve<NftPowerLevelService>().GetTotalPowerLevel();
-            TotalPowerLevelText.text = $"NFT Power Level: {totalPowerLevel}";
+            TotalPowerLevelText.text = $"{totalPowerLevel}";
         }
     }
 }
