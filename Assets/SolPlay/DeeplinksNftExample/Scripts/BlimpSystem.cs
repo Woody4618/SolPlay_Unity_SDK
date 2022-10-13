@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Frictionless;
 using UnityEngine;
@@ -6,17 +7,28 @@ namespace SolPlay.Deeplinks
 {
     public class BlimpSystem : MonoBehaviour
     {
+        public enum BlimpType
+        {
+            TextWithBackground,
+            Boost,
+            Score
+        }
+
         public class ShowBlimpMessage
         {
             public string BlimpText;
+            public BlimpType BlimpType;
 
-            public ShowBlimpMessage(string blimpText)
+            public ShowBlimpMessage(string blimpText, BlimpType blimpType = BlimpType.TextWithBackground)
             {
                 BlimpText = blimpText;
+                BlimpType = blimpType;
             }
         }
 
         public TextBlimp TextBlimpPrefab;
+        public TextBlimp BoostBlimpPrefab;
+        public TextBlimp ScoreBlimpPrefab;
         public GameObject BlimpRoot;
 
         // Start is called before the first frame update
@@ -28,22 +40,48 @@ namespace SolPlay.Deeplinks
 
         private void OnLogMessage(string condition, string stacktrace, LogType type)
         {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
             if (type == LogType.Error || type == LogType.Exception)
             {
-                SpawnBlimp(condition);
+                SpawnBlimp(condition, BlimpType.TextWithBackground);
             }
         }
 
         private void OnShowBlimpMessage(ShowBlimpMessage message)
         {
-            SpawnBlimp(message.BlimpText);
+            SpawnBlimp(message.BlimpText, message.BlimpType);
         }
 
-        private void SpawnBlimp(string message)
+        private void SpawnBlimp(string message, BlimpType blimpType)
         {
             // TODO: Pool for production
-            var instance = Instantiate<TextBlimp>(TextBlimpPrefab, BlimpRoot.transform);
+            TextBlimp blimpPrefab = null;
+            string animationId = null;
+            switch (blimpType)
+            {
+                case BlimpType.TextWithBackground:
+                    blimpPrefab = TextBlimpPrefab;
+                    break;
+                case BlimpType.Boost:
+                    blimpPrefab = BoostBlimpPrefab;
+                    animationId = "BoostBlimpAppear";
+                    break;
+                case BlimpType.Score:
+                    blimpPrefab = ScoreBlimpPrefab;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(blimpType), blimpType, null);
+            }
+
+            var instance = Instantiate(blimpPrefab, BlimpRoot.transform);
             instance.SetData(message);
+            if (!string.IsNullOrEmpty(animationId))
+            {
+                instance.GetComponent<Animator>().Play(animationId);
+            }
 
             StartCoroutine(DestroyDelayed(instance.gameObject));
         }

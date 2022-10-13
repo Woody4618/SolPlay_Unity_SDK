@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Runtime.Serialization.Formatters;
+using DG.Tweening;
+using Frictionless;
 using SolPlay.Deeplinks;
 using UnityEngine;
 
@@ -6,14 +10,24 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInputs))]
 public class PlayerController : MonoBehaviour
 {
+    public enum NftType
+    {
+        Water,
+        Default
+    }
+    
     [SerializeField] PlayerInputs _input;
     [SerializeField] PlayerAudio _audio;
     [SerializeField] SpriteRenderer _spriteRenderer;
     [SerializeField] ParticleSystem _fireParticles;
+    [SerializeField] ParticleSystem _waterTrail;
+    [SerializeField] ParticleSystem _waterSplash;
     [SerializeField] GameObject _tradeGraphParticles;
     public PlayerParameters MovementParameters;
-
+    public NftType Type = NftType.Default;
+    
     Vector3 _velocity;
+    float _speedIncrease;
     Vector3 _rotation;
 
     private bool _isDead;
@@ -34,6 +48,8 @@ public class PlayerController : MonoBehaviour
         _audio.OnDie();
         CameraShake.Shake(0.1f, 0.2f);
         _tradeGraphParticles.gameObject.SetActive(false);
+        _waterTrail.gameObject.SetActive(false);
+        _speedIncrease = 0;
     }
 
     public void Reset()
@@ -41,7 +57,21 @@ public class PlayerController : MonoBehaviour
         transform.position = Vector3.zero;
         _isDead = false;
         transform.rotation = Quaternion.identity;
-        _tradeGraphParticles.gameObject.SetActive(true);
+        switch(Type)
+        {
+            case NftType.Water:
+                _fireParticles.gameObject.SetActive(false);
+                _waterTrail.gameObject.SetActive(true);
+                _tradeGraphParticles.gameObject.SetActive(false);
+                break;
+            case NftType.Default:
+                _fireParticles.gameObject.SetActive(true);
+                _waterTrail.gameObject.SetActive(false);
+                _tradeGraphParticles.gameObject.SetActive(true);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     private void Awake()
@@ -62,6 +92,7 @@ public class PlayerController : MonoBehaviour
 
         if(!_isDead)
         {
+            _speedIncrease += MovementParameters.ForwardSpeedIncrease * delta;
             MoveForward();
             ProcessInput();
         }
@@ -90,17 +121,29 @@ public class PlayerController : MonoBehaviour
         _rotation.z = MovementParameters.FlapRotation;
         _audio.OnFlap();
 
-        if (!_tradeGraphParticles.gameObject.activeInHierarchy)
+        /*if (!_tradeGraphParticles.gameObject.activeInHierarchy)
         {
             _tradeGraphParticles.gameObject.SetActive(true);   
+        }*/
+
+        switch (Type)
+        {
+            case NftType.Water:
+                _waterSplash.gameObject.SetActive(false);
+                _waterSplash.gameObject.SetActive(true);
+                break;
+            case NftType.Default:
+                var fireParticlesEmission = _fireParticles.emission;
+                fireParticlesEmission.rateOverDistance = _initialParticleEmission;
+                if (_fireDisableCoroutine != null)
+                {
+                    StopCoroutine(_fireDisableCoroutine);
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
-        var fireParticlesEmission = _fireParticles.emission;
-        fireParticlesEmission.rateOverDistance = _initialParticleEmission;
-        if (_fireDisableCoroutine != null)
-        {
-            StopCoroutine(_fireDisableCoroutine);
-        }
 
         CameraShake.Shake(0.1f, 0.05f);
         _fireDisableCoroutine = StartCoroutine(SprayFire());
@@ -115,7 +158,7 @@ public class PlayerController : MonoBehaviour
 
     private void MoveForward()
     {
-        _velocity.x = MovementParameters.ForwardSpeed;
+        _velocity.x = MovementParameters.ForwardSpeed + _speedIncrease;
     }
 
     private void ApplyGravity(in float delta)

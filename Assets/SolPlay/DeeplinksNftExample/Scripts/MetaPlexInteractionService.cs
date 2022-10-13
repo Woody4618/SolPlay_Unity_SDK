@@ -6,7 +6,6 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
-using Solana.Unity.SDK.Example;
 using Solana.Unity.Wallet;
 using UnityEngine;
 
@@ -20,6 +19,7 @@ namespace SolPlay.Deeplinks
         }
         
         /// <summary>
+        /// WIP
         /// Be careful with this function, it will really burn the nft and return the accounts sol. 
         /// </summary>
         /// <param name="nft"></param>
@@ -36,10 +36,10 @@ namespace SolPlay.Deeplinks
                 return;
             }
 
-            var burnNftTransaction = CreateBurnNFTTransaction(nft, blockHash);
-            var signedTransaction = burnNftTransaction.Build(SimpleWallet.instance.wallet.GetAccount(0));
-            var result = await SimpleWallet.instance.activeRpcClient.SendTransactionAsync(signedTransaction);
-            Debug.Log(result.Reason);
+            //var burnNftTransaction = CreateBurnNFTTransaction(nft, blockHash);
+            //var signedTransaction = burnNftTransaction.Build(SimpleWallet.instance.wallet.GetAccount(0));
+            //var result = await SimpleWallet.instance.activeRpcClient.SendTransactionAsync(signedTransaction);
+            //Debug.Log(result.Reason);
         }
 
         private Transaction CreateBurnNFTTransaction(SolPlayNft nft,

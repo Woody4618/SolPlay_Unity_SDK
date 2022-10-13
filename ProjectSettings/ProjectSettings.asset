@@ -221,6 +221,7 @@ PlayerSettings:
   iOSDeviceRequirements: []
   iOSURLSchemes:
   - SolPlay
+  - torusapp://
   macOSURLSchemes: []
   iOSBackgroundModes: 0
   iOSMetalForceHardShadows: 0

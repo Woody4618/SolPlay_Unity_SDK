@@ -6,9 +6,9 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
-using SolPlay.CustomSmartContractExample;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -141,7 +141,7 @@ namespace SolPlay.Deeplinks
             {
                 RequestResult<ResponseValue<List<TokenAccount>>> result =
                     await wallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(publicKey, null,
-                        TokenProgram.ProgramIdKey);
+                        TokenProgram.ProgramIdKey, Commitment.Confirmed);
 
                 if (result.Result != null && result.Result.Value != null)
                 {
@@ -233,6 +233,10 @@ namespace SolPlay.Deeplinks
     }
 
     public class NftLoadingFinishedMessage
+    {
+    }
+
+    public class TokenValueChangedMessage
     {
     }
 

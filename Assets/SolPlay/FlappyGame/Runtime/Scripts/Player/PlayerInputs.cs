@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerInputs : MonoBehaviour
@@ -10,22 +11,39 @@ public class PlayerInputs : MonoBehaviour
     private bool _disableInputs;
 
     public void EnableInputs(bool value) => _disableInputs = !value;
-
+    public bool RocketMode = false;
+    
     public bool TapUp()
     {
         if(_disableInputs)
             return false;
-
-        // Mouse
-        if(Input.GetMouseButtonDown(0))
-            return true;
-
-        // Touch
-        for(int i = 0; i < Input.touchCount; i++)
+        if (RocketMode)
         {
-            if(Input.GetTouch(i).phase == TouchPhase.Began)
+            // Mouse
+            if(Input.GetMouseButton(0))
                 return true;
+
+            // Touch
+            for(int i = 0; i < Input.touchCount; i++)
+            {
+                if(Input.GetTouch(i).phase == TouchPhase.Stationary)
+                    return true;
+            }
         }
+        else
+        {
+            // Mouse
+            if(Input.GetMouseButtonDown(0))
+                return true;
+
+            // Touch
+            for(int i = 0; i < Input.touchCount; i++)
+            {
+                if(Input.GetTouch(i).phase == TouchPhase.Began)
+                    return true;
+            }
+        }
+
 
         return false;
     }

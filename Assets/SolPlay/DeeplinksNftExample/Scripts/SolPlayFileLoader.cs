@@ -48,7 +48,7 @@ namespace SolPlay.Deeplinks
                     await Task.Yield();
                 }
 
-                if (uwr.result == UnityWebRequest.Result.ConnectionError)
+                if (uwr.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
                 {
                     Debug.Log(uwr.error);
                     return default;
@@ -62,6 +62,11 @@ namespace SolPlay.Deeplinks
             }
         }
 
+        public static Sprite LoadFromResources(string fileName)
+        {
+            return Resources.Load<Sprite>(fileName);
+        }
+        
         private static async Task<T> LoadGif<T>(string filePath, CancellationToken token = default)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(filePath))

@@ -13,27 +13,26 @@ public class GameMode : MonoBehaviour
     [SerializeField] private GameSaver _gameSaver;
     [SerializeField] private AudioHandler _audioHandler;
     [SerializeField] private GroundParallax _groundParallax;
-    [SerializeField] private GameObject _particleEffect;
+    [SerializeField] private PlayerFollow _playerFollow;
 
-    [Header("Fade")]
-    [SerializeField] private FadeScreen _fadeScreen;
+    [Header("Fade")] [SerializeField] private FadeScreen _fadeScreen;
     [SerializeField] private float _fadeTime = 0.05f;
     [SerializeField] private Color _fadeColor = Color.black;
 
-    [Header("Data")]
-    [SerializeField] private PlayerParameters _gameWaitingParameters;
+    [Header("Data")] [SerializeField] private PlayerParameters _gameWaitingParameters;
     [SerializeField] private PlayerParameters _gameRunningParameters;
     [SerializeField] private PlayerParameters _gameOverParameters;
 
     [field: SerializeField] public int Score { get; private set; }
+    [field: SerializeField] public int Boost { get; private set; }
 
 
-    private void Awake() 
+    private void Awake()
     {
         _playerController.MovementParameters = _gameWaitingParameters;
         _playerController.enabled = false;
 
-        AudioUtility.AudioHandler = _audioHandler;    
+        AudioUtility.AudioHandler = _audioHandler;
 
         StartCoroutine(_fadeScreen.FadeOut(_fadeTime, _fadeColor));
         _screenController.ShowStartHud();
@@ -51,7 +50,9 @@ public class GameMode : MonoBehaviour
 
     private void OnNftSelectedMessage(NftSelectedMessage obj)
     {
+        _playerController.Type = obj.NewNFt.MetaplexData.data.symbol == "ORCANAUT" ? PlayerController.NftType.Water : PlayerController.NftType.Default;
         _playerController.SetSpriteFromNft(obj.NewNFt);
+        _playerFollow.UpdateBackgrounds(0);
     }
 
     public void StartWaiting()
@@ -73,6 +74,7 @@ public class GameMode : MonoBehaviour
 
     public void StartGame()
     {
+        _playerController.Reset();
         _playerController.enabled = true;
         _playerController.MovementParameters = _gameRunningParameters;
         _playerController.Flap();
@@ -98,7 +100,8 @@ public class GameMode : MonoBehaviour
 
     private IEnumerator RestartGameCoroutine()
     {
-        _particleEffect.gameObject.SetActive(false);
+        _playerController.gameObject.SetActive(false);
+        _playerController.MovementParameters = _gameWaitingParameters;
         yield return StartCoroutine(_fadeScreen.FadeIn(_fadeTime, _fadeColor));
         _playerController.Reset();
         _playerDeathController.Reset();
@@ -106,21 +109,22 @@ public class GameMode : MonoBehaviour
         _groundParallax.Reset();
         _screenController.ShowStartHud();
         Score = 0;
+        Boost = 0;
         ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
         {
             NewScore = Score
         });
         yield return StartCoroutine(_fadeScreen.FadeOut(_fadeTime, _fadeColor));
-        _particleEffect.gameObject.SetActive(true);
+        _playerController.gameObject.SetActive(true);
     }
 
     private void HandleNewScore()
     {
         int highScore = _gameSaver.CurrentSave.HighestScore;
 
-        if(Score > highScore)
+        if (Score > highScore)
         {
-            _gameSaver.SaveGame(new SaveGameData(){ HighestScore = Score } );
+            _gameSaver.SaveGame(new SaveGameData() {HighestScore = Score});
         }
     }
 
@@ -129,8 +133,8 @@ public class GameMode : MonoBehaviour
         Time.timeScale = 0;
         _screenController.ShowPauseHud();
     }
-    
-    public void ResumeGame() 
+
+    public void ResumeGame()
     {
         Time.timeScale = 1;
         _screenController.ShowInGameHud();
@@ -139,18 +143,35 @@ public class GameMode : MonoBehaviour
     public void IncrementScore()
     {
         var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        int totalScoreIncrease = 0;
         if (nftService.SelectedNft != null && nftService.IsBeaverNft(nftService.SelectedNft))
         {
-            Score += 2;
+            totalScoreIncrease += 2;
         }
         else
         {
-            Score++;
+            totalScoreIncrease++;
         }
+
+        Score += totalScoreIncrease;
+
         ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
         {
             NewScore = Score
         });
+    }
+
+    public void IncrementBoost()
+    {
+        Boost++;
+        Score += Boost;
+        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"+{Boost}", BlimpSystem.BlimpType.Boost));
+    }
+
+    public void StopBoost()
+    {
+        Boost = 0;
+        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"missed", BlimpSystem.BlimpType.Boost));
     }
 
     public void QuitGame()

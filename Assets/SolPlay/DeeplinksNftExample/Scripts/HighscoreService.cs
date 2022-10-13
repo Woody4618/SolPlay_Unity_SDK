@@ -197,7 +197,7 @@ namespace SolPlay.CustomSmartContractExample
 
             if (sol <= fees)
             {
-                if (wallet.rpcCluster == RpcCluster.MainNet)
+                if (wallet.RpcCluster == RpcCluster.MainNet)
                 {
                     ServiceFactory.Instance.Resolve<LoggingService>().Log(
                         $"You dont have enough sol to pay for account creation. Need at least: {fees} ", true);
@@ -258,8 +258,7 @@ namespace SolPlay.CustomSmartContractExample
                 AccountMeta.Writable(localPublicKey, true),
                 AccountMeta.Writable(_highscoreSubmitFeePubkey, false),
                 AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
-                AccountMeta.ReadOnly(nftMintPublicKey, false),
-                AccountMeta.ReadOnly(SysVars.RentKey, false)
+                AccountMeta.ReadOnly(nftMintPublicKey, false)
             };
 
             byte[] data = new byte[7];
@@ -285,7 +284,7 @@ namespace SolPlay.CustomSmartContractExample
 
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
-                    Convert.ToBase64String(signedTransaction), false, Commitment.Confirmed);
+                    Convert.ToBase64String(signedTransaction.Serialize()), false, Commitment.Confirmed);
 
             if (transactionSignature.WasSuccessful)
             {

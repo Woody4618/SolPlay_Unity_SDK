@@ -6,12 +6,15 @@ namespace SolPlay.DeeplinksNftExample.Scripts
     public class MainInstaller : MonoBehaviour
     {
         private LoggingService _loggingService;
+        private OrcaWhirlpoolService _orcaWhirlpoolService;
         
         private void Awake()
         {
             ServiceFactory.Instance.RegisterSingleton(this);
             _loggingService = new LoggingService();
             ServiceFactory.Instance.RegisterSingleton(_loggingService);
+            _orcaWhirlpoolService = new OrcaWhirlpoolService();
+            ServiceFactory.Instance.RegisterSingleton(_orcaWhirlpoolService);
         }
     }
 }

@@ -54,7 +54,7 @@ namespace SolPlay.Deeplinks
 
         public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection)
         {
-            AccountInfo accountInfo = await AccountUtility.GetAccountData(mint, connection);
+            AccountInfo accountInfo = await Nft.GetAccountData(mint, connection);
 
             Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(accountInfo));
 
@@ -104,7 +104,7 @@ namespace SolPlay.Deeplinks
                     }
                 }
 
-                AccountInfo accountInfo = await AccountUtility.GetAccountData(metaplexDataPubKey.Key, connection);
+                AccountInfo accountInfo = await Nft.GetAccountData(metaplexDataPubKey.Key, connection);
 
                 if (accountInfo != null && accountInfo.Data != null && accountInfo.Data.Count > 0)
                 {

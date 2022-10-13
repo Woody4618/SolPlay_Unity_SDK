@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using Frictionless;
-using Solana.Unity.Rpc.Models;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -8,8 +8,10 @@ public class PlayerFollow : MonoBehaviour
 {
     [SerializeField] float _xOffset;
     [SerializeField] Transform _objectToFollow;
+    [SerializeField] PlayerController _playerController;
 
     public List<GameObject> Backgrounds;
+    public List<GameObject> WaterBackgrounds;
     
     private void Start() 
     {
@@ -21,29 +23,66 @@ public class PlayerFollow : MonoBehaviour
 
     private void OnScoreChangedMessage(ScoreChangedMessage message)
     {
+        UpdateBackgrounds(message.NewScore);
+    }
+
+    public void UpdateBackgrounds(int score)
+    {
+        foreach (var bg in Backgrounds)
+        {
+            bg.gameObject.SetActive(false);
+        }
+        foreach (var bg in WaterBackgrounds)
+        {
+            bg.gameObject.SetActive(false);
+        }
+        
+        switch (_playerController.Type)
+        {
+            case PlayerController.NftType.Water:
+                UpdateWaterBackgrounds(score);
+                break;
+            case PlayerController.NftType.Default:
+                DefaultBackgrounds(score);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    
+    private void DefaultBackgrounds(int score)
+    {
         Backgrounds[0].gameObject.SetActive(false);
         Backgrounds[1].gameObject.SetActive(false);
         Backgrounds[2].gameObject.SetActive(false);
         Backgrounds[3].gameObject.SetActive(false);
         Backgrounds[4].gameObject.SetActive(false);
-        
-        if (message.NewScore <= 10)
+
+        if (score <= 10)
         {
             Backgrounds[0].gameObject.SetActive(true);
         }
-        else if (message.NewScore > 10 && message.NewScore < 25)
+        else if (score > 10 && score < 25)
         {
             Backgrounds[1].gameObject.SetActive(true);
-        } else if (message.NewScore > 25 && message.NewScore < 50)
+        }
+        else if (score > 25 && score < 50)
         {
             Backgrounds[2].gameObject.SetActive(true);
-        } else if (message.NewScore > 50 && message.NewScore < 100)
+        }
+        else if (score > 50 && score < 100)
         {
             Backgrounds[3].gameObject.SetActive(true);
-        }else if (message.NewScore > 100)
+        }
+        else if (score > 100)
         {
             Backgrounds[4].gameObject.SetActive(true);
         }
+    }
+    
+    private void UpdateWaterBackgrounds(int score)
+    {
+        WaterBackgrounds[0].gameObject.SetActive(true);
     }
 
     void LateUpdate()

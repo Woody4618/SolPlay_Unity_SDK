@@ -2,15 +2,25 @@ using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
 {
+    public class WalletLoggedInMessage
+    {
+        public WalletBase Wallet;
+    }
+    
     public class WalletHolderService : MonoBehaviour
     {
-        public PhantomWallet DeeplinkWallet;
-        public InGameWallet InGameWallet;
+        private PhantomWallet DeeplinkWallet;
+        private InGameWallet InGameWallet;
 
+        public RpcCluster InGameWalletCluster = RpcCluster.DevNet;
+        public string InGameWalletCustomUrl = "https://light-red-uranium.solana-mainnet.discover.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/";
+
+        [DoNotSerialize]
         public WalletBase BaseWallet;
 
         private void Awake()
@@ -18,9 +28,24 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.RegisterSingleton(this);
         }
 
-        public void ShowMessage(string message)
+        private void Start()
         {
-            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(message));
+            PhantomWalletOptions phantomWalletOptions = new PhantomWalletOptions();
+            phantomWalletOptions.deeplinkUrlScheme = "solplay";
+            phantomWalletOptions.phantomApiVersion = "v1";
+            phantomWalletOptions.appMetaDataUrl = "https://www.solplay.de";
+            DeeplinkWallet = new PhantomWallet(phantomWalletOptions, RpcCluster.Custom,
+                "https://light-red-uranium.solana-mainnet.discover.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/",
+                true);
+
+              if (InGameWalletCluster == RpcCluster.Custom)
+              {
+                  InGameWallet = new InGameWallet(InGameWalletCluster, InGameWalletCustomUrl, true);   
+              }
+              else
+              {
+                  InGameWallet = new InGameWallet(InGameWalletCluster, null, true);
+              }
         }
         
         public async Task<Account> Login(bool devNetLogin)
@@ -28,13 +53,15 @@ namespace SolPlay.Deeplinks
             if (devNetLogin)
             {
                 BaseWallet = InGameWallet;
+                Debug.Log("Before");
 
-                var account = await InGameWallet.Login() ?? await InGameWallet.CreateAccount();
+                var account = await InGameWallet.Login("") ?? await InGameWallet.CreateAccount(null, "");
+                Debug.Log("after");
                 // Copy this if you want to import your wallet into phantom. Dont share it with anyone.
                 // var privateKeyString = account.PrivateKey.Key;
                 double sol = await BaseWallet.GetBalance();
                 
-                if (sol == 0)
+                if (sol < 1)
                 {
                     var messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
                     messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Requesting airdrop"));
@@ -54,8 +81,11 @@ namespace SolPlay.Deeplinks
 #endif
             }
 
+            ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new WalletLoggedInMessage()
+            {
+                Wallet = BaseWallet
+            });
             Debug.Log("Logged in: " + BaseWallet.Account.PublicKey);
-            //ServiceFactory.Instance.Resolve<StakingService>().RefreshFarm();
             return BaseWallet.Account;
         }
         

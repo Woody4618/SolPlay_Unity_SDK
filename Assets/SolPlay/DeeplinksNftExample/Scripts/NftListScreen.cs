@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Frictionless;
-using SolPlay.CustomSmartContractExample;
+using SolPlay.DeeplinksNftExample.Scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,10 +17,10 @@ namespace SolPlay.Deeplinks
         public Button GetNFtsDataButton;
         public Button GetNFtsNotCachedButton;
         public Button GetBeaverButton;
+        public Button MintInAppButton;
         public Button GetSolPlayTokenButton;
         public Button PhantomTransactionButton;
         public NftItemListView NftItemListView;
-        public NftItemListView BeaverNftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
         public GameObject ConnectedRoot;
@@ -36,6 +36,7 @@ namespace SolPlay.Deeplinks
             GetNFtsDataButton.onClick.AddListener(OnGetNftButtonClicked);
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
+            MintInAppButton.onClick.AddListener(OnMintInAppButtonClicked);
 #if UNITY_IOS
             // Not allowed on ios 
             GetBeaverButton.gameObject.SetActive(false);
@@ -50,12 +51,19 @@ namespace SolPlay.Deeplinks
                 .AddHandler<NftLoadingStartedMessage>(OnNftLoadingStartedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
-            
+
             ConnectedRoot.gameObject.SetActive(false);
             NotConnectedRoot.gameObject.SetActive(true);
             TabBarRoot.gameObject.SetActive(false);
-            
+
             UpdateBeaverStatus();
+        }
+
+        private async void OnMintInAppButtonClicked()
+        {
+            // Mint a SolAndy NFT
+           var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
+           await RequestNfts(true);
         }
 
         private async void OnDevnetInGameWalletButtonClicked()
@@ -77,22 +85,31 @@ namespace SolPlay.Deeplinks
         private void OnGetSolPlayTokenButtonClicked()
         {
             // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
-            ServiceFactory.Instance.Resolve<WalletHolderService>().DeeplinkWallet.OpenUrlInWalletBrowser(
+            OpenUrlInWalletBrowser(
                 "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
         }
 
         private void OnGetBeaverButtonClicked()
         {
             // Here you can just open the link to your minting page within phantom mobile browser
-            ServiceFactory.Instance.Resolve<WalletHolderService>().DeeplinkWallet
-                .OpenUrlInWalletBrowser("https://beavercrush.com");
+            OpenUrlInWalletBrowser("https://beavercrush.com");
         }
 
+        public void OpenUrlInWalletBrowser(string url)
+        {
+#if UNITY_IOS || UNITY_ANROID
+            string refUrl = UnityWebRequest.EscapeURL("SolPlay");
+            string escapedUrl = UnityWebRequest.EscapeURL(url);
+            string inWalletUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
+#else
+            string inWalletUrl = url;
+#endif
+            Application.OpenURL(inWalletUrl);
+        }
 
         private void OnNftArrivedMessage(NftArrivedMessage message)
         {
             NftItemListView.AddNFt(message.NewNFt);
-            BeaverNftItemListView.AddNFt(message.NewNFt);
             UpdateBeaverStatus();
         }
 
@@ -118,7 +135,6 @@ namespace SolPlay.Deeplinks
         private void OnNftLoadingStartedMessage(NftLoadingStartedMessage message)
         {
             NftItemListView.Clear();
-            BeaverNftItemListView.Clear();
             GetNFtsDataButton.interactable = false;
             GetNFtsNotCachedButton.interactable = false;
         }
@@ -126,7 +142,6 @@ namespace SolPlay.Deeplinks
         private void OnNftLoadingFinishedMessage(NftLoadingFinishedMessage message)
         {
             NftItemListView.UpdateContent();
-            BeaverNftItemListView.UpdateContent();
         }
 
         private void Update()

@@ -4,58 +4,67 @@ using Frictionless;
 using Solana.Unity.Rpc.Models;
 using SolPlay.CustomSmartContractExample;
 using SolPlay.Deeplinks;
+using SolPlay.DeeplinksNftExample.Scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class GameOverScreen : MonoBehaviour
 {
-    [Header("Elements")]
-    [SerializeField] GameMode _gameMode;
+    [Header("Elements")] [SerializeField] GameMode _gameMode;
     [SerializeField] GameSaver _gameSaver;
     [SerializeField] MedalHud _medalHud;
     [SerializeField] TextMeshProUGUI _scoreText;
     [SerializeField] TextMeshProUGUI _highScoreText;
     [SerializeField] TextMeshProUGUI _costText;
-    [SerializeField] GameObject  _newHud;
+    [SerializeField] GameObject _newHud;
     [SerializeField] FadeScreen _fadeScreen;
     [SerializeField] XpWidget _xpWidget;
     [SerializeField] Button _submitHighscoreButton;
+    [SerializeField] Button _mintMedalButton;
     [SerializeField] NftItemView _nftItemView;
-    
-    [Header("Containers")]
-    [SerializeField] CanvasGroup _gameOverContainer;
+    [SerializeField] Sprite _bronzeMedal;
+    [SerializeField] Sprite _silverMedal;
+    [SerializeField] Sprite _goldMedal;
+    [SerializeField] Sprite _noMedal;
+    [SerializeField] Image _medalImage;
+
+    [Header("Containers")] [SerializeField]
+    CanvasGroup _gameOverContainer;
+
     [SerializeField] CanvasGroup _statsContainer;
 
-    [Header("GameOver Tween")]
-    [SerializeField] Transform _gameOverReference;
+    [Header("GameOver Tween")] [SerializeField]
+    Transform _gameOverReference;
+
     [SerializeField] float _gameOverAnimationTime = 1f;
 
-    [Header("Stats Tween")]
-    [SerializeField] Transform _statsReference;
+    [Header("Stats Tween")] [SerializeField]
+    Transform _statsReference;
+
     [SerializeField] float _statsAnimationDelay = 1f;
     [SerializeField] float _statsAnimationTime = 1f;
 
-    [Header("Buttons Tween")]
-    [SerializeField] Transform _buttonsReference;
-    [SerializeField] float _buttonsAnimationDelay = 1f;
-    [SerializeField] float _buttonsAnimationTime = 1f;  
+    [Header("Buttons Tween")] [SerializeField]
+    Transform _buttonsReference;
 
-    [Header("Audio")]
-    [SerializeField] AudioFX _statsMoveAudio;
+    [SerializeField] float _buttonsAnimationDelay = 1f;
+    [SerializeField] float _buttonsAnimationTime = 1f;
+
+    [Header("Audio")] [SerializeField] AudioFX _statsMoveAudio;
     [SerializeField] AudioFX _buttonsMoveAudio;
 
     private void Awake()
     {
-        gameObject.SetActive(false);
         _submitHighscoreButton.onClick.AddListener(OnSubmitHighscoreButtonClicked);
+        _mintMedalButton.onClick.AddListener(OnMintMedalButtonClicked);
     }
 
     private void Start()
     {
         ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
-
+        ServiceFactory.Instance.Resolve<MessageRouter>()
+            .AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
     }
 
     private void OnHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
@@ -64,7 +73,6 @@ public class GameOverScreen : MonoBehaviour
         if (nftService.SelectedNft != null)
         {
             _nftItemView.SetData(nftService.SelectedNft, view => { });
-
         }
     }
 
@@ -77,7 +85,7 @@ public class GameOverScreen : MonoBehaviour
     {
         UpdateHud();
 
-        if(_fadeScreen != null)
+        if (_fadeScreen != null)
             StartCoroutine(_fadeScreen.Flash());
 
         StartCoroutine(ShowUICoroutine());
@@ -95,12 +103,12 @@ public class GameOverScreen : MonoBehaviour
         _statsContainer.blocksRaycasts = false;
 
         yield return StartCoroutine(
-                AnimateCanvasGroup(
-                    _gameOverContainer,
-                    _gameOverReference.position,
-                    _gameOverContainer.transform.position,
-                    _gameOverAnimationTime
-                ));
+            AnimateCanvasGroup(
+                _gameOverContainer,
+                _gameOverReference.position,
+                _gameOverContainer.transform.position,
+                _gameOverAnimationTime
+            ));
 
         _statsMoveAudio.PlayAudio();
 
@@ -132,6 +140,33 @@ public class GameOverScreen : MonoBehaviour
         group.blocksRaycasts = true;
     }
 
+    private void OnMintMedalButtonClicked()
+    {
+        var nftMintingService = ServiceFactory.Instance.Resolve<NftMintingService>();
+        if (_gameMode.Score >= 150)
+        {
+            nftMintingService.MintNftWithMetaData(
+                "https://shdw-drive.genesysgo.net/8QHFphU4iT6rFAW93vvzj8f79Txe5auRAgto3SMxxQ8x/manifest.json",
+                $"Gold Medal {_gameMode.Score}", "SolPlay");
+        }
+        else if (_gameMode.Score >= 100)
+        {
+            nftMintingService.MintNftWithMetaData(
+                "https://shdw-drive.genesysgo.net/9JjNpESm1sGJGJRuaGEiju6hG4Z54XRtCEc7jzWDJWdV/manifest.json",
+                $"Silver Medal {_gameMode.Score}", "SolPlay");
+        }
+        else if (_gameMode.Score >= 50)
+        {
+            nftMintingService.MintNftWithMetaData(
+                "https://shdw-drive.genesysgo.net/9hrRBH5U3Lc5eKDKkcazk5wycizd11jon8M5HpFTsHjG/manifest.json",
+                $"Bronze Medal {_gameMode.Score}", "SolPlay");
+        }
+        else
+        {
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Reach at least 50 Points!", true);
+        }
+    }
+
     private async void OnSubmitHighscoreButtonClicked()
     {
         _submitHighscoreButton.interactable = false;
@@ -146,14 +181,36 @@ public class GameOverScreen : MonoBehaviour
     private void UpdateHud()
     {
         var highscoreService = ServiceFactory.Instance.Resolve<HighscoreService>();
+        var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
+        if (walletHolderService.BaseWallet == null)
+        {
+            return;
+        }
         var nftService = ServiceFactory.Instance.Resolve<NftService>();
-        
+
         int score = _gameMode.Score;
         int curHighScore = 0;
         bool hasHighscoreSaved = highscoreService.TryGetCurrentHighscore(out HighscoreEntry savedHighscore);
         if (hasHighscoreSaved)
         {
             curHighScore = (int) savedHighscore.Highscore;
+        }
+
+        if (_gameMode.Score >= 150)
+        {
+            _medalImage.sprite = _goldMedal;
+        }
+        else if (_gameMode.Score >= 100)
+        {
+            _medalImage.sprite = _silverMedal;
+        }
+        else if (_gameMode.Score >= 50)
+        {
+            _medalImage.sprite = _bronzeMedal;
+        }
+        else
+        {
+            _medalImage.sprite = _noMedal;
         }
 
         if (nftService.SelectedNft != null)
@@ -165,7 +222,7 @@ public class GameOverScreen : MonoBehaviour
         {
             _nftItemView.gameObject.SetActive(false);
         }
-        
+
         var newHighscoreReached = score > curHighScore;
         int newHighScore = newHighscoreReached ? score : curHighScore;
 
@@ -177,6 +234,7 @@ public class GameOverScreen : MonoBehaviour
         {
             _costText.text = "0.001 sol";
         }
+
         _submitHighscoreButton.interactable = newHighscoreReached && savedHighscore.AccountLoaded;
 #if UNITY_EDITOR
         _submitHighscoreButton.interactable = true;

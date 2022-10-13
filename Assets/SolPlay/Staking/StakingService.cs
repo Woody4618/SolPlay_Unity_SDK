@@ -2,11 +2,9 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using dotnetstandard_bip32;
 using Frictionless;
 using GemBank.Program;
 using GemFarm.Program;
-using Solana.Unity.Programs.Utilities;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
@@ -66,8 +64,8 @@ namespace SolPlay.Staking
             };
             
             byte[] data = Encoding.Default.GetBytes(GemFarmPDAHelper.RefreshFarmInstructionIdentifier);
-            var dataWithHashedInstructionIdentifier = SHA256.Create().ComputeHash(data).Slice(0, 9);
-            dataWithHashedInstructionIdentifier.WriteU8(farmerBump, 8);
+            /*var dataWithHashedInstructionIdentifier = SHA256.Create().ComputeHash(data).Slice(0, 9);
+            dataWithHashedInstructionIdentifier.WriteU8(farmerBump, 8);*/
 
             RefreshFarmerAccounts account = new RefreshFarmerAccounts();
             account.Farm = GemFarmPDAHelper.Farm;
@@ -79,7 +77,7 @@ namespace SolPlay.Staking
             {
                 ProgramId = GemFarmPDAHelper.FarmProgramm,
                 Keys = accountMetaList,
-                Data = dataWithHashedInstructionIdentifier
+                //Data = dataWithHashedInstructionIdentifier
             };
             transaction.Instructions.Add(instr);
             //transaction.Instructions.Add(refreshFarmerInstruction);
