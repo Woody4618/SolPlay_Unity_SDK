@@ -1256,7 +1256,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e467b9af29084366a426eab927cd6f80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InGameWalletCluster: 3
+  InGameWalletCluster: 1
   InGameWalletCustomUrl: https://light-red-uranium.solana-mainnet.discover.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/
 --- !u!1 &192802175
 GameObject:
@@ -2499,7 +2499,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 697831005}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

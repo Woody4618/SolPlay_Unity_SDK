@@ -63,7 +63,13 @@ namespace SolPlay.Deeplinks
         {
             // Mint a SolAndy NFT
            var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
-           await RequestNfts(true);
+           
+           ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
+               () =>
+               {
+                   RequestNfts(true);
+                   ServiceFactory.Instance.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+               });
         }
 
         private async void OnDevnetInGameWalletButtonClicked()

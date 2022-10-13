@@ -4,7 +4,8 @@ using UnityEngine;
 namespace SolPlay.Deeplinks
 {
     /// <summary>
-    /// Handles all logic related to NFTs and calculating their power level or whatever you like to do with the NFTs
+    /// Handles logic to calculate NFT power level or whatever you like to do with the NFTs.
+    /// It merely an example on how to use NFT attributes. 
     /// </summary>
     public class NftPowerLevelService : MonoBehaviour
     {

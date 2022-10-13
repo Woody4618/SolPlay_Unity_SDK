@@ -182,22 +182,16 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             
             Console.WriteLine($"TX1.Length {transaction.Length}");
             
-            var txSim2 = await rpcClient.SimulateTransactionAsync(transaction);
-
             var signedTransaction = await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
 
+            // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
+            // phantom produces
             signedTransaction.Signatures[0] = signedTransaction.Signatures[3];
             signedTransaction.Signatures.RemoveAt(3);
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), false, Commitment.Confirmed);
-
-            ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(transactionSignature.Result,
-                () =>
-                {
-                    ServiceFactory.Instance.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
-                });
-
+            
             Debug.Log(transactionSignature.Reason);
             return transactionSignature.Result;
         }
