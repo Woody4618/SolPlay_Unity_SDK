@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "com.solana.unity_sdk": {
-      "version": "file:/Users/jonasmac2/Documents/GitHub/Solana.Unity-SDK",
+      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git",
       "depth": 0,
-      "source": "local",
+      "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
-      }
+      },
+      "hash": "7c83ed537fa13b82e17cf8b4d6f647fceced8003"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

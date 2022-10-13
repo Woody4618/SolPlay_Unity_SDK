@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
+using Solana.Unity.Wallet.Bip39;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -53,15 +54,14 @@ namespace SolPlay.Deeplinks
             if (devNetLogin)
             {
                 BaseWallet = InGameWallet;
-                Debug.Log("Before");
 
-                var account = await InGameWallet.Login("") ?? await InGameWallet.CreateAccount(null, "");
-                Debug.Log("after");
+                var newMnemonic = new Mnemonic(WordList.English, WordCount.Twelve);
+                var account = await InGameWallet.Login("1234") ?? await InGameWallet.CreateAccount(newMnemonic.ToString(), "1234");
                 // Copy this if you want to import your wallet into phantom. Dont share it with anyone.
                 // var privateKeyString = account.PrivateKey.Key;
                 double sol = await BaseWallet.GetBalance();
                 
-                if (sol < 1)
+                if (sol < 0.8)
                 {
                     var messageRouter = ServiceFactory.Instance.Resolve<MessageRouter>();
                     messageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Requesting airdrop"));

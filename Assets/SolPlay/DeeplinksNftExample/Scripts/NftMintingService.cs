@@ -33,19 +33,19 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             Account tokenAccount = new Account();
 
             var fromAccount = walletHolderService.BaseWallet.Account;
-            //if (fromAccount.PrivateKey == null)
-            //{
-                fromAccount = new Account(new Account().PrivateKey.KeyBytes,
-                    walletHolderService.BaseWallet.Account.PublicKey.KeyBytes);
-            //}
+
+            // To be able to sign the transaction while using the transaction builder we need to have a private key set in the signing account. 
+            // I will try to make this nicer later. 
+            fromAccount = new Account(new Account().PrivateKey.KeyBytes,
+                walletHolderService.BaseWallet.Account.PublicKey.KeyBytes);
 
             RequestResult<ResponseValue<ulong>> balance = await rpcClient.GetBalanceAsync(wallet.Account.PublicKey);
-            
+
             Debug.Log($"Balance: {balance.Result.Value} ");
             Debug.Log($"Mint key : {mintAccount.PublicKey} ");
 
             var blockHash = await rpcClient.GetRecentBlockHashAsync();
-            var rentMint = await  rpcClient.GetMinimumBalanceForRentExemptionAsync(
+            var rentMint = await rpcClient.GetMinimumBalanceForRentExemptionAsync(
                 TokenProgram.MintAccountDataSize,
                 Commitment.Confirmed
             );
@@ -92,7 +92,8 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             PublicKey metadataAddressPDA;
             byte nonce;
             PublicKey.TryFindProgramAddress(
-                new List<byte[]>() {
+                new List<byte[]>()
+                {
                     Encoding.UTF8.GetBytes("metadata"),
                     MetadataProgram.ProgramIdKey,
                     mintAccount.PublicKey
@@ -102,13 +103,14 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 out nonce
             );
 
-            Console.WriteLine($"PDA METADATA: { metadataAddressPDA}");
+            Console.WriteLine($"PDA METADATA: {metadataAddressPDA}");
 
             // PDA MASTER EDITION
             PublicKey masterEditionAddress;
 
             PublicKey.TryFindProgramAddress(
-                new List<byte[]>() {
+                new List<byte[]>()
+                {
                     Encoding.UTF8.GetBytes("metadata"),
                     MetadataProgram.ProgramIdKey,
                     mintAccount.PublicKey,
@@ -118,10 +120,10 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 out masterEditionAddress,
                 out nonce
             );
-            Console.WriteLine($"PDA MASTER: { masterEditionAddress }");
-            
+            Console.WriteLine($"PDA MASTER: {masterEditionAddress}");
+
             // CREATORS
-            var creator1 = new Creator( fromAccount.PublicKey, 100);
+            var creator1 = new Creator(fromAccount.PublicKey, 100);
 
             // DATA
             var data = new MetadataV1()
@@ -129,7 +131,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 name = name,
                 symbol = symbol,
                 uri = metaDataUri,
-                creators = new List<Creator>() { creator1 } ,
+                creators = new List<Creator>() {creator1},
                 sellerFeeBasisPoints = 77,
             };
 
@@ -141,17 +143,17 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 .AddInstruction(initializeMint)
                 .AddInstruction(createTokenAccount)
                 .AddInstruction(initializeMintAccount)
-                .AddInstruction(mintTo) 
+                .AddInstruction(mintTo)
                 .AddInstruction(
                     MetadataProgram.CreateMetadataAccount(
-                        metadataAddressPDA,                    // PDA
-                        mintAccount,               
-                        fromAccount.PublicKey,    
-                        fromAccount.PublicKey,      
+                        metadataAddressPDA, // PDA
+                        mintAccount,
+                        fromAccount.PublicKey,
+                        fromAccount.PublicKey,
                         fromAccount.PublicKey, // update Authority 
-                        data,                               // DATA
+                        data, // DATA
                         true,
-                        true                        // ISMUTABLE
+                        true // ISMUTABLE
                     )
                 )
                 .AddInstruction(
@@ -179,9 +181,9 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 .Build(signers);
 
             Transaction deserializedTransaction = Transaction.Deserialize(transaction);
-            
+
             Console.WriteLine($"TX1.Length {transaction.Length}");
-            
+
             var signedTransaction = await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
 
             // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
@@ -191,7 +193,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), false, Commitment.Confirmed);
-            
+
             Debug.Log(transactionSignature.Reason);
             return transactionSignature.Result;
         }
@@ -208,12 +210,12 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var fromAccount = walletHolderService.BaseWallet.Account;
 
             RequestResult<ResponseValue<ulong>> balance = await rpcClient.GetBalanceAsync(wallet.Account.PublicKey);
-            
+
             Debug.Log($"Balance: {balance.Result.Value} ");
             Debug.Log($"Mint key : {mintAccount.PublicKey} ");
 
             var blockHash = await rpcClient.GetRecentBlockHashAsync();
-            var rentMint = await  rpcClient.GetMinimumBalanceForRentExemptionAsync(
+            var rentMint = await rpcClient.GetMinimumBalanceForRentExemptionAsync(
                 TokenProgram.MintAccountDataSize,
                 Commitment.Confirmed
             );
@@ -264,7 +266,6 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 .AddInstruction(createTokenAccount) // createaccount
                 .AddInstruction(initializeMintAccount) // initAccount
                 .AddInstruction(mintTo) // mintTo
-                //.AddInstruction(instr6) // Create Metadata
                 .Build(new List<Account> {fromAccount, mintAccount, tokenAccount});
 
             Console.WriteLine($"TX1.Length {transaction.Length}");
@@ -273,11 +274,21 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(transaction), false, Commitment.Confirmed);
 
-            Debug.Log(transactionSignature.Reason);
-
-            AddMetaDataToMint(mintAccount, "https://metadata.y00ts.com/t/10225.json");
+            if (transactionSignature.WasSuccessful)
+            {
+                Debug.Log($"Send transaction to create mint with id: {mintAccount}");   
+            }
+            else
+            {
+                Debug.Log("There was an error creating mint: {transactionSignature.Reason}");   
+            }
         }
 
+        /// <summary>
+        /// In case you have a mint and want to add meta data to it. I recomment to use CreateNFT with Meta Data instead.
+        /// </summary>
+        /// <param name="mint"></param>
+        /// <param name="metaDataUri"></param>
         public async void AddMetaDataToMint(PublicKey mint, string metaDataUri)
         {
             var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
@@ -293,7 +304,8 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             PublicKey metadataAddress;
             byte nonce;
             PublicKey.TryFindProgramAddress(
-                new List<byte[]>() {
+                new List<byte[]>()
+                {
                     Encoding.UTF8.GetBytes("metadata"),
                     MetadataProgram.ProgramIdKey,
                     mintAccount
@@ -303,13 +315,14 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 out nonce
             );
 
-            Console.WriteLine($"PDA METADATA: { metadataAddress}");
+            Console.WriteLine($"PDA METADATA: {metadataAddress}");
 
             // PDA MASTER EDITION
             PublicKey masterEditionAddress;
 
             PublicKey.TryFindProgramAddress(
-                new List<byte[]>() {
+                new List<byte[]>()
+                {
                     Encoding.UTF8.GetBytes("metadata"),
                     MetadataProgram.ProgramIdKey,
                     mintAccount,
@@ -319,10 +332,10 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 out masterEditionAddress,
                 out nonce
             );
-            Console.WriteLine($"PDA MASTER: { masterEditionAddress }");
-            
+            Console.WriteLine($"PDA MASTER: {masterEditionAddress}");
+
             // CREATORS
-            var creator1 = new Creator( fromAccount.PublicKey, 100);
+            var creator1 = new Creator(fromAccount.PublicKey, 100);
 
             // DATA
             var data = new MetadataV1()
@@ -330,7 +343,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 name = "Super NFT",
                 symbol = "SolPlay",
                 uri = metaDataUri,
-                creators = new List<Creator>() { creator1 } ,
+                creators = new List<Creator>() {creator1},
                 sellerFeeBasisPoints = 77,
             };
 
@@ -339,22 +352,22 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 .SetFeePayer(fromAccount.PublicKey)
                 .AddInstruction(
                     MetadataProgram.CreateMetadataAccount(
-                        metadataAddress,                    // PDA
-                        mintAccount,                        // MINT
-                        fromAccount.PublicKey,    // mint AUTHORITY
-                        fromAccount.PublicKey,      // PAYER
+                        metadataAddress, // PDA
+                        mintAccount, // MINT
+                        fromAccount.PublicKey, // mint AUTHORITY
+                        fromAccount.PublicKey, // PAYER
                         fromAccount.PublicKey, // update Authority 
-                        data,                               // DATA
+                        data, // DATA
                         true,
-                        true                        // ISMUTABLE
+                        true // ISMUTABLE
                     )
                 )
-                 .AddInstruction(
-                     MetadataProgram.SignMetada(
-                         metadataAddress,
-                         creator1.key
-                     )
-                 )
+                .AddInstruction(
+                    MetadataProgram.SignMetada(
+                        metadataAddress,
+                        creator1.key
+                    )
+                )
                 .AddInstruction(
                     MetadataProgram.PuffMetada(
                         metadataAddress
@@ -371,7 +384,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                         metadataAddress
                     )
                 )
-            .Build(new List<Account> { fromAccount });
+                .Build(new List<Account> {fromAccount});
 
             Console.WriteLine($"TX2.Length {transaction.Length}");
 

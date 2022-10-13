@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.solana.unity_sdk": "file:/Users/jonasmac2/Documents/GitHub/Solana.Unity-SDK",
+    "com.solana.unity_sdk": "https://github.com/Woody4618/Solana.Unity-SDK.git",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.collab-proxy": "1.17.1",
     "com.unity.ext.nunit": "2.0.3",

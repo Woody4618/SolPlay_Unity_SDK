@@ -3,6 +3,7 @@ using Frictionless;
 using SolPlay.DeeplinksNftExample.Scripts;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace SolPlay.Deeplinks
@@ -62,6 +63,8 @@ namespace SolPlay.Deeplinks
         private async void OnMintInAppButtonClicked()
         {
             // Mint a SolAndy NFT
+           ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
+
            var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
            
            ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
