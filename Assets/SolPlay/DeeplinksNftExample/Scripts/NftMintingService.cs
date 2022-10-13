@@ -182,7 +182,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
             Transaction deserializedTransaction = Transaction.Deserialize(transaction);
 
-            Console.WriteLine($"TX1.Length {transaction.Length}");
+            Debug.Log($"mint transaction length {transaction.Length}");
 
             var signedTransaction = await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
 
@@ -285,7 +285,8 @@ namespace SolPlay.DeeplinksNftExample.Scripts
         }
 
         /// <summary>
-        /// In case you have a mint and want to add meta data to it. I recomment to use CreateNFT with Meta Data instead.
+        /// In case you have a mint and want to add meta data to it.
+        /// I recommend to use MintNftWithMetaData instead.
         /// </summary>
         /// <param name="mint"></param>
         /// <param name="metaDataUri"></param>

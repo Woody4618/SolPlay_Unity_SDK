@@ -23,6 +23,7 @@ public class OrcaSwapWidget : MonoBehaviour
     private void Start()
     {
         ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
+        InitPools(true);
     }
 
     private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
