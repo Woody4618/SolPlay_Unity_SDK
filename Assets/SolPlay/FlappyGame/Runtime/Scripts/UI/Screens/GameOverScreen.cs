@@ -83,6 +83,7 @@ public class GameOverScreen : MonoBehaviour
 
     private void OnEnable()
     {
+        _mintMedalButton.interactable = true;
         UpdateHud();
 
         if (_fadeScreen != null)
@@ -143,23 +144,33 @@ public class GameOverScreen : MonoBehaviour
     private void OnMintMedalButtonClicked()
     {
         var nftMintingService = ServiceFactory.Instance.Resolve<NftMintingService>();
+
         if (_gameMode.Score >= 150)
         {
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Gold Medal", true);
+
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/8QHFphU4iT6rFAW93vvzj8f79Txe5auRAgto3SMxxQ8x/manifest.json",
                 $"Gold Medal {_gameMode.Score}", "SolPlay");
+            _mintMedalButton.interactable = false;
         }
         else if (_gameMode.Score >= 100)
         {
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Silver Medal", true);
+
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/9JjNpESm1sGJGJRuaGEiju6hG4Z54XRtCEc7jzWDJWdV/manifest.json",
                 $"Silver Medal {_gameMode.Score}", "SolPlay");
+            _mintMedalButton.interactable = false;
         }
         else if (_gameMode.Score >= 50)
         {
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Bronze Medal", true);
+
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/9hrRBH5U3Lc5eKDKkcazk5wycizd11jon8M5HpFTsHjG/manifest.json",
                 $"Bronze Medal {_gameMode.Score}", "SolPlay");
+            _mintMedalButton.interactable = false;
         }
         else
         {

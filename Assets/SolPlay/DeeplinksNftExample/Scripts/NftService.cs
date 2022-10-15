@@ -240,6 +240,10 @@ namespace SolPlay.Deeplinks
     {
     }
 
+    public class NftMintFinishedMessage
+    {
+    }
+
     public class TokenArrivedMessage
     {
         public TokenAccountInfoDetails TokenAccountInfoDetails;

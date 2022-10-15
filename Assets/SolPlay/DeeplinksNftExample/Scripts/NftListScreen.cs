@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 using Frictionless;
+using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace SolPlay.Deeplinks
@@ -52,6 +52,8 @@ namespace SolPlay.Deeplinks
                 .AddHandler<NftLoadingStartedMessage>(OnNftLoadingStartedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .AddHandler<NftMintFinishedMessage>(OnNftMintFinishedMessage);
 
             ConnectedRoot.gameObject.SetActive(false);
             NotConnectedRoot.gameObject.SetActive(true);
@@ -63,16 +65,26 @@ namespace SolPlay.Deeplinks
         private async void OnMintInAppButtonClicked()
         {
             // Mint a SolAndy NFT
-           ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
-
-           var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
-           
-           ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
-               () =>
-               {
-                   RequestNfts(true);
-                   ServiceFactory.Instance.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
-               });
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
+            
+            // Mint a baloon beaver
+            /*var signature = await ServiceFactory.Instance.Resolve<NftMintingService>()
+                .MintNftWithMetaData(
+                    "https://shdw-drive.genesysgo.net/2TvgCDMEcSGnfuSUZNHvKpHL9Z5hLn19YqvgeUpS6rSs/manifest.json",
+                    "Baloon Beaver", "Beaver");*/
+            
+            // Mint a solandy
+            var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
+            ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
+                () =>
+                {
+                    RequestNfts(true);
+                    ServiceFactory.Instance.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                });
+            
+            // Mint from a candy machine (This one is from zen republic, i used it for testing)
+            //var signature = await ServiceFactory.Instance.Resolve<NftMintingService>()
+            //    .MintNFTFromCandyMachineV2(new PublicKey("3eqPffoeSj7e2ZkyHJHyYPc7qm8rbGDZFwM9oYSW4Z5w"));
         }
 
         private async void OnDevnetInGameWalletButtonClicked()
@@ -151,6 +163,11 @@ namespace SolPlay.Deeplinks
         private void OnNftLoadingFinishedMessage(NftLoadingFinishedMessage message)
         {
             NftItemListView.UpdateContent();
+        }
+
+        private void OnNftMintFinishedMessage(NftMintFinishedMessage message)
+        {
+            RequestNfts(true);
         }
 
         private void Update()
