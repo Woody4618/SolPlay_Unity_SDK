@@ -3,18 +3,32 @@ An example project to show how to use Phantom deeplinks to login and use Solana 
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
 
-To use it in your game just include: 
-https://github.com/Woody4618/Solana.Unity-SDK.git 
-in your unity packages
+1) To use it in your game just include: 
+https://github.com/Woody4618/Solana.Unity-SDK.git (maybe a few commits ahead or behind the garbles SDK) 
+or 
+https://github.com/garbles-labs/Solana.Unity-SDK.git
+in your unity package manager.
 
-Check out the tutorial series for an introduction: 
-https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos
+2) Import this unity package 
+[SolPlay_0_3_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9846922/SolPlay_0_3_alpha.unitypackage.zip)
+and add: https://github.com/JohannesDeml/unity-ui-extensions.git
+in the package manager
+
+Here is a Video which explains the process step by step: 
+[https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
 
 
 If you want to participate, it's very welcome.
 
 
 Packages used: 
+
+Epic Toon FX:
+https://assetstore.unity.com/packages/vfx/particles/epic-toon-fx-57772
+
+Lunar console (Get the pro version here: 
+https://github.com/SpaceMadness/lunar-unity-console
+Pro Version: https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-pro-43800
 
 Garbels unity solana sdk. Check out their awesome game as well! Vr Pokemon! 
 https://github.com/garbles-dev/Solana.Unity/tree/master/src
@@ -30,6 +44,9 @@ https://github.com/3DI70R/Unity-GifDecoder
 
 Flappy Bird Game: 
 https://github.com/diegolrs/Flappy-Bird
+
+Unity Ui Extensions:
+https://github.com/JohannesDeml/unity-ui-extensions.git
 
 So far the repository is only tested in IOS mobile, Android and WebGL.
 
@@ -47,13 +64,14 @@ Done:
 - Smart contract interaction
 - Token swap using Orca WhirlPools
 - Minting NFTs using metaplex (Without candy machine)
+- Minting NFTs (from candy machine V2)
 
 Next up Todo: 
 
 - Animated Gifs
 - Gtlf models 
+- Minting NFTs (from candy machine V2 with white list tokens)
 - Maybe Staking? 
-- Minting NFTs (from candy machine V2)
 - What else would you like?  
 
 
