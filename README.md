@@ -3,9 +3,18 @@ An example project to show how to use Phantom deeplinks to login and use Solana 
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
 
+1) 
 To use it in your game just include: 
-https://github.com/Woody4618/Solana.Unity-SDK.git 
-in your unity packages
+https://github.com/Woody4618/Solana.Unity-SDK.git (maybe a few commits ahead or behind the garbles SDK) 
+or 
+https://github.com/garbles-labs/Solana.Unity-SDK.git
+in your unity package manager.
+
+2)
+Import package 
+[SolPlay_0_2_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9846730/SolPlay_0_2_alpha.unitypackage.zip)
+and add: https://github.com/JohannesDeml/unity-ui-extensions.git
+in the package manager
 
 Check out the tutorial series for an introduction: 
 https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos
@@ -37,6 +46,9 @@ https://github.com/3DI70R/Unity-GifDecoder
 
 Flappy Bird Game: 
 https://github.com/diegolrs/Flappy-Bird
+
+Unity Ui Extensions:
+https://github.com/JohannesDeml/unity-ui-extensions.git
 
 So far the repository is only tested in IOS mobile, Android and WebGL.
 
