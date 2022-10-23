@@ -19,6 +19,10 @@ Packages used:
 Epic Toon FX:
 https://assetstore.unity.com/packages/vfx/particles/epic-toon-fx-57772
 
+Lunar console (Get the pro version here: 
+https://github.com/SpaceMadness/lunar-unity-console
+Pro Version: https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-pro-43800
+
 Garbels unity solana sdk. Check out their awesome game as well! Vr Pokemon! 
 https://github.com/garbles-dev/Solana.Unity/tree/master/src
 
@@ -50,13 +54,14 @@ Done:
 - Smart contract interaction
 - Token swap using Orca WhirlPools
 - Minting NFTs using metaplex (Without candy machine)
+- Minting NFTs (from candy machine V2)
 
 Next up Todo: 
 
 - Animated Gifs
 - Gtlf models 
+- Minting NFTs (from candy machine V2 with white list tokens)
 - Maybe Staking? 
-- Minting NFTs (from candy machine V2)
 - What else would you like?  
 
 
