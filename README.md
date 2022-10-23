@@ -9,13 +9,13 @@ or
 https://github.com/garbles-labs/Solana.Unity-SDK.git
 in your unity package manager.
 
-2) Import package 
-[SolPlay_0_2_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9846730/SolPlay_0_2_alpha.unitypackage.zip)
+2) Import this unity package 
+[SolPlay_0_3_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9846922/SolPlay_0_3_alpha.unitypackage.zip)
 and add: https://github.com/JohannesDeml/unity-ui-extensions.git
 in the package manager
 
-Check out the tutorial series for an introduction: 
-https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos
+Here is a Video which explains the process step by step: 
+[https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
 
 
 If you want to participate, it's very welcome.
