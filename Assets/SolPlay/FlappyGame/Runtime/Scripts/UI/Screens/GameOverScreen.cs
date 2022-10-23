@@ -193,7 +193,7 @@ public class GameOverScreen : MonoBehaviour
     {
         var highscoreService = ServiceFactory.Instance.Resolve<HighscoreService>();
         var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
-        if (walletHolderService.BaseWallet == null)
+        if (walletHolderService == null || walletHolderService.BaseWallet == null)
         {
             return;
         }

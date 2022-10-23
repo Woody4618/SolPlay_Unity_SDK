@@ -16,14 +16,23 @@ namespace SolPlay.Deeplinks
     
     public class WalletHolderService : MonoBehaviour
     {
-        private PhantomWallet DeeplinkWallet;
-        private InGameWallet InGameWallet;
-
         public RpcCluster InGameWalletCluster = RpcCluster.DevNet;
-        public string InGameWalletCustomUrl = "https://light-red-uranium.solana-mainnet.discover.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/";
+        [HideIfEnumValue("InGameWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
+        public string InGameWalletCustomRpcUrl = "";
 
+        public RpcCluster PhantomWalletCluster = RpcCluster.DevNet;
+        [HideIfEnumValue("PhantomWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
+        public string PhantomWalletCustomUrl = "";
+
+        public PhantomWalletOptions PhantomWalletOptions;
+        
         [DoNotSerialize]
         public WalletBase BaseWallet;
+
+        public bool IsLoggedIn { get; private set; }
+
+        private PhantomWallet DeeplinkWallet;
+        private InGameWallet InGameWallet;
 
         private void Awake()
         {
@@ -32,17 +41,11 @@ namespace SolPlay.Deeplinks
 
         private void Start()
         {
-            PhantomWalletOptions phantomWalletOptions = new PhantomWalletOptions();
-            phantomWalletOptions.deeplinkUrlScheme = "solplay";
-            phantomWalletOptions.phantomApiVersion = "v1";
-            phantomWalletOptions.appMetaDataUrl = "https://www.solplay.de";
-            DeeplinkWallet = new PhantomWallet(phantomWalletOptions, RpcCluster.Custom,
-                "https://light-red-uranium.solana-mainnet.discover.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/",
-                true);
+              DeeplinkWallet = new PhantomWallet(PhantomWalletOptions, PhantomWalletCluster, PhantomWalletCustomUrl, true);
 
               if (InGameWalletCluster == RpcCluster.Custom)
               {
-                  InGameWallet = new InGameWallet(InGameWalletCluster, InGameWalletCustomUrl, true);   
+                  InGameWallet = new InGameWallet(InGameWalletCluster, InGameWalletCustomRpcUrl, true);   
               }
               else
               {
@@ -75,13 +78,14 @@ namespace SolPlay.Deeplinks
             }
             else
             {
-#if (UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL) && !UNITY_EDITOR
-            BaseWallet = DeeplinkWallet;
-            Debug.Log(BaseWallet.ActiveRpcClient.NodeAddress);
-            await BaseWallet.Login();
+#if (UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL)
+                BaseWallet = DeeplinkWallet;
+                Debug.Log(BaseWallet.ActiveRpcClient.NodeAddress);
+                await BaseWallet.Login();
 #endif
             }
 
+            IsLoggedIn = true;
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new WalletLoggedInMessage()
             {
                 Wallet = BaseWallet

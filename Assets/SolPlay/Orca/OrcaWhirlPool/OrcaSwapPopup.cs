@@ -76,8 +76,8 @@ public class OrcaSwapPopup : BasePopup
         var d = Double.Parse(bigInt.ToString());
         var fromX64 = Math.Pow(d * Math.Pow(2, -64), 2);
         var aRatioA = Math.Pow(10,
-            currentPoolData.TokenMintInfoA.Data.Parsed.Info.Decimals -
-            currentPoolData.TokenMintInfoB.Data.Parsed.Info.Decimals);
+            currentPoolData.TokenA.decimals -
+            currentPoolData.TokenB.decimals);
         var priceBtoA = fromX64 * aRatioA;
 
         TokenSymbolA.text = AToB ? currentPoolData.SymbolA : currentPoolData.SymbolB;
@@ -102,8 +102,8 @@ public class OrcaSwapPopup : BasePopup
 
         var pow = (ulong) Math.Pow(10,
             AToB
-                ? currentPoolData.TokenMintInfoA.Data.Parsed.Info.Decimals
-                : currentPoolData.TokenMintInfoB.Data.Parsed.Info.Decimals);
+                ? currentPoolData.TokenA.decimals
+                : currentPoolData.TokenB.decimals);
         var floorToInt = value * pow;
         ulong valueLong = (ulong) floorToInt;
 

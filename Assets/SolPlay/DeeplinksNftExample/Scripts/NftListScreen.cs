@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using Frictionless;
-using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,39 +11,25 @@ namespace SolPlay.Deeplinks
     /// </summary>
     public class NftListScreen : MonoBehaviour
     {
-        public Button PhantomLoginButton;
-        public Button DevnetInGameWalletButton;
         public Button GetNFtsDataButton;
         public Button GetNFtsNotCachedButton;
         public Button GetBeaverButton;
         public Button MintInAppButton;
-        public Button GetSolPlayTokenButton;
-        public Button PhantomTransactionButton;
         public NftItemListView NftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
-        public GameObject ConnectedRoot;
-        public GameObject NotConnectedRoot;
-        public GameObject TabBarRoot;
         public GameObject LoadingSpinner;
-        public TextMeshProUGUI WalletPubKeyText;
 
-        void Start()
+        async void Start()
         {
-            PhantomLoginButton.onClick.AddListener(OnPhantomButtonClicked);
-            DevnetInGameWalletButton.onClick.AddListener(OnDevnetInGameWalletButtonClicked);
             GetNFtsDataButton.onClick.AddListener(OnGetNftButtonClicked);
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
             MintInAppButton.onClick.AddListener(OnMintInAppButtonClicked);
-#if UNITY_IOS
-            // Not allowed on ios 
-            GetBeaverButton.gameObject.SetActive(false);
-            GetSolPlayTokenButton.gameObject.SetActive(false);
-            PhantomTransactionButton.gameObject.SetActive(false);
-#endif
-            GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
-            PhantomTransactionButton.onClick.AddListener(OnPhantomTransactionButtonClicked);
+// #if UNITY_IOS
+            // If you have minting of NFTs in your app it may be hard to get into the AppStore
+            //GetBeaverButton.gameObject.SetActive(false);
+// #endif
 
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftArrivedMessage>(OnNftArrivedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
@@ -54,19 +38,28 @@ namespace SolPlay.Deeplinks
                 .AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>()
                 .AddHandler<NftMintFinishedMessage>(OnNftMintFinishedMessage);
+            ServiceFactory.Instance.Resolve<MessageRouter>()
+                .AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
 
-            ConnectedRoot.gameObject.SetActive(false);
-            NotConnectedRoot.gameObject.SetActive(true);
-            TabBarRoot.gameObject.SetActive(false);
+            if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+            {
+                await RequestNfts(true);
+                UpdateBeaverStatus();
+            }
+        }
 
-            UpdateBeaverStatus();
+        private async void OnWalletLoggedInMessage(WalletLoggedInMessage message)
+        {
+            await OnLogin();
+        }
+
+        private async Task OnLogin()
+        {
+            await RequestNfts(true);
         }
 
         private async void OnMintInAppButtonClicked()
         {
-            // Mint a SolAndy NFT
-            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
-            
             // Mint a baloon beaver
             /*var signature = await ServiceFactory.Instance.Resolve<NftMintingService>()
                 .MintNftWithMetaData(
@@ -74,6 +67,7 @@ namespace SolPlay.Deeplinks
                     "Baloon Beaver", "Beaver");*/
             
             // Mint a solandy
+            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
             var signature = await ServiceFactory.Instance.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
             ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
                 () =>
@@ -87,45 +81,10 @@ namespace SolPlay.Deeplinks
             //    .MintNFTFromCandyMachineV2(new PublicKey("3eqPffoeSj7e2ZkyHJHyYPc7qm8rbGDZFwM9oYSW4Z5w"));
         }
 
-        private async void OnDevnetInGameWalletButtonClicked()
-        {
-            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login(true);
-            WalletPubKeyText.text = account.PublicKey;
-            ConnectedRoot.gameObject.SetActive(true);
-            NotConnectedRoot.gameObject.SetActive(false);
-            TabBarRoot.gameObject.SetActive(true);
-            await RequestNfts(true);
-        }
-
-        private void OnPhantomTransactionButtonClicked()
-        {
-            var phantomDeeplinkService = ServiceFactory.Instance.Resolve<TransactionService>();
-            phantomDeeplinkService.TransferSolanaToPubkey(phantomDeeplinkService.EditorExampleWalletPublicKey);
-        }
-
-        private void OnGetSolPlayTokenButtonClicked()
-        {
-            // To let people buy a token just put the direct raydium link to your token and open it with a phantom deeplink. 
-            OpenUrlInWalletBrowser(
-                "https://raydium.io/swap/?inputCurrency=sol&outputCurrency=PLAyKbtrwQWgWkpsEaMHPMeDLDourWEWVrx824kQN8P&inputAmount=0.1&outputAmount=0.9&fixed=in");
-        }
-
         private void OnGetBeaverButtonClicked()
         {
             // Here you can just open the link to your minting page within phantom mobile browser
-            OpenUrlInWalletBrowser("https://beavercrush.com");
-        }
-
-        public void OpenUrlInWalletBrowser(string url)
-        {
-#if UNITY_IOS || UNITY_ANROID
-            string refUrl = UnityWebRequest.EscapeURL("SolPlay");
-            string escapedUrl = UnityWebRequest.EscapeURL(url);
-            string inWalletUrl = $"https://phantom.app/ul/browse/{url}?ref=refUrl";
-#else
-            string inWalletUrl = url;
-#endif
-            Application.OpenURL(inWalletUrl);
+            PhantomUtils.OpenUrlInWalletBrowser("https://beavercrush.com");
         }
 
         private void OnNftArrivedMessage(NftArrivedMessage message)
@@ -189,16 +148,6 @@ namespace SolPlay.Deeplinks
                 await ServiceFactory.Instance.Resolve<NftService>()
                     .RequestNftsFromPublicKey(phantomPublicKey, tryUseLocalCache);
             }
-        }
-
-        private async void OnPhantomButtonClicked()
-        {
-            var account = await ServiceFactory.Instance.Resolve<WalletHolderService>().Login(false);
-            WalletPubKeyText.text = account.PublicKey;
-            ConnectedRoot.gameObject.SetActive(true);
-            NotConnectedRoot.gameObject.SetActive(false);
-            TabBarRoot.gameObject.SetActive(true);
-            await RequestNfts(true);
         }
     }
 }

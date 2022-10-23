@@ -16,8 +16,27 @@ namespace SolPlay.Deeplinks
         async void Start()
         {
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<SolBalanceChangedMessage>(OnSolBalanceChangedMessage);
+            ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<TokenValueChangedMessage>(OnTokenValueChangedMessage);
+
+            if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+            {
+                await OnLoggin();
+            }
+            else
+            {
+                ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedIn);
+            }
+        }
+
+        private async Task OnLoggin()
+        {
             await RequestSolBalance();
             StartCoroutine(PollSolBalance());
+        }
+
+        private async void OnWalletLoggedIn(WalletLoggedInMessage message)
+        {
+            await OnLoggin();
         }
 
         private IEnumerator PollSolBalance()
@@ -37,6 +56,11 @@ namespace SolPlay.Deeplinks
         }
 
         private async void OnSolBalanceChangedMessage(SolBalanceChangedMessage message)
+        {
+            await RequestSolBalance();
+        }
+
+        private async void OnTokenValueChangedMessage(TokenValueChangedMessage message)
         {
             await RequestSolBalance();
         }

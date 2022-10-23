@@ -9,6 +9,7 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
+using SolPlay.DeeplinksNftExample.Scripts;
 using UnityEngine;
 
 namespace SolPlay.Deeplinks
@@ -50,7 +51,7 @@ namespace SolPlay.Deeplinks
 
             if (tokenAccounts == null)
             {
-                string error = "Could not load Token Accounts, are you connected to the internet?";
+                string error = $"Could not load Token Accounts, are you connected to the internet?";
                 ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage(error));
                 IsLoadingTokenAccounts = false;
                 return;
@@ -150,6 +151,7 @@ namespace SolPlay.Deeplinks
             }
             catch (Exception ex)
             {
+                ServiceFactory.Instance.Resolve<LoggingService>().Log($"Token loading error: {ex}", true);
                 Debug.LogError(ex);
                 IsLoadingTokenAccounts = false;
             }

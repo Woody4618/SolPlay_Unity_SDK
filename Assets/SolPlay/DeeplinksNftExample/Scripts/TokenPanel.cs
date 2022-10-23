@@ -25,6 +25,10 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<TokenArrivedMessage>(OnTokenArrivedMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<TokenValueChangedMessage>(OnTokenValueChangedMessage);
+            if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+            {
+                UpdateTokenAmount();
+            }
         }
 
         private void OnTokenValueChangedMessage(TokenValueChangedMessage message)
@@ -32,19 +36,25 @@ namespace SolPlay.Deeplinks
             UpdateTokenAmount();
         }
 
-        private async void OnWalletLoggedInMessage(WalletLoggedInMessage message)
+        private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
         {
             UpdateTokenAmount();
         }
 
         private async void UpdateTokenAmount()
         {
-            var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
+            var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
+            if (!walletHolderService.IsLoggedIn)
+            {
+                return;
+            } 
+            var wallet = walletHolderService.BaseWallet;
             if (wallet != null && wallet.Account.PublicKey != null)
             {
                 _associatedTokenAddress =
                     AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, new PublicKey(TokenMintAdress));
             }
+            
             if (_associatedTokenAddress == null)
             {
                 return;

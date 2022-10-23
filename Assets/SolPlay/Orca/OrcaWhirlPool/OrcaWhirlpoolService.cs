@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Frictionless;
+using Newtonsoft.Json;
 using Solana.Unity.Programs;
 using Solana.Unity.Programs.Models;
 using Solana.Unity.Rpc.Core.Http;
@@ -10,12 +11,13 @@ using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
+using Solana.Unity.SDK.Utility;
 using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
+using SolPlay.Orca;
 using UnityEngine;
 using Whirlpool;
-using Whirlpool.Accounts;
 using Whirlpool.Program;
 using Whirlpool.Types;
 
@@ -26,9 +28,16 @@ namespace SolPlay.DeeplinksNftExample.Scripts
         private WhirlpoolClient _whirlpoolClient;
         public static PublicKey WhirlpoolProgammId = new PublicKey("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc");
         public static PublicKey WhirlpoolConfigId = new PublicKey("2LecshUwdy9xi7meFgHtFJQNSKk4KdTrcpvaB56dP2NQ");
+        public static PublicKey NativeMint = new PublicKey("So11111111111111111111111111111111111111112");
 
+        public OrcaApiPoolsData OrcaApiPoolsData;
+        public OrcaApiTokenData OrcaApiTokenData;
+        
         const string MAX_SQRT_PRICE = "79226673515401279992447579055";
         const string MIN_SQRT_PRICE = "4295048016";
+        
+        public TextAsset PoolsAsset;
+        public TextAsset TokensAsset;
 
         private void Awake()
         {
@@ -38,8 +47,25 @@ namespace SolPlay.DeeplinksNftExample.Scripts
         private void Start()
         {
             ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
+            OrcaApiPoolsData = JsonConvert.DeserializeObject<OrcaApiPoolsData>(PoolsAsset.text);
+            OrcaApiTokenData = JsonConvert.DeserializeObject<OrcaApiTokenData>(TokensAsset.text);
+            // Its faster to cache it directly in unity in text assets. But the data may be out of date, so we calculate the
+            // prices from the on chain data sqrt price directly.
+            //RefreshApiData();
+            if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+            {
+                Init();
+            }
         }
 
+        private async void RefreshApiData()
+        {
+            OrcaApiPoolsData = await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.mainnet.orca.so/v1/whirlpool/list");
+            OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.mainnet.orca.so/v1/token/list");
+            //OrcaApiPoolsData = await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.devnet.orca.so/v1/whirlpool/list");
+            //OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.devnet.orca.so/v1/token/list");
+        }
+        
         private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
         {
             Init();
@@ -47,12 +73,21 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         private void Init()
         {
-            var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
+            var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
+            if (!walletHolderService.IsLoggedIn)
+            {
+                return;
+            }
+            var wallet = walletHolderService.BaseWallet;
             _whirlpoolClient = new WhirlpoolClient(wallet.ActiveRpcClient, null, WhirlpoolProgammId);
         }
 
         public async Task<Whirlpool.Accounts.Whirlpool> GetPool(string poolPDA)
         {
+            if (_whirlpoolClient == null)
+            {
+                Init();
+            }
             var whirlpoolsAsync =
                 await _whirlpoolClient.GetWhirlpoolAsync(poolPDA);
             var pool = whirlpoolsAsync.ParsedResult;
@@ -67,6 +102,9 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             return allPools;
         }
 
+        /// <summary>
+        /// WIP
+        /// </summary>
         public async Task<string> InitializePool(WalletBase wallet)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
@@ -107,21 +145,21 @@ namespace SolPlay.DeeplinksNftExample.Scripts
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
-            var whirlPoolConfigResult = await _whirlpoolClient.GetWhirlpoolsConfigAsync(pool.WhirlpoolsConfig);
-            WhirlpoolsConfig whirlPoolConfig = whirlPoolConfigResult.ParsedResult;
+            // var whirlPoolConfigResult = await _whirlpoolClient.GetWhirlpoolsConfigAsync(pool.WhirlpoolsConfig);
+            // WhirlpoolsConfig whirlPoolConfig = whirlPoolConfigResult.ParsedResult;
 
             PublicKey whirlPoolPda = OrcaPDAUtils.GetWhirlpoolPda(WhirlpoolProgammId, pool.WhirlpoolsConfig,
                 pool.TokenMintA, pool.TokenMintB, pool.TickSpacing);
 
-            var getWhilepool = await _whirlpoolClient.GetWhirlpoolAsync(whirlPoolPda);
-            if (getWhilepool.ParsedResult == null)
+            var getWhirlpool = await _whirlpoolClient.GetWhirlpoolAsync(whirlPoolPda);
+            if (getWhirlpool.ParsedResult == null)
             {
                 ServiceFactory.Instance.Resolve<LoggingService>()
                     .LogWarning($"Could not load whirlpool {whirlPoolPda}", true);
                 return null;
             }
 
-            Debug.Log(getWhilepool.ParsedResult.TickSpacing);
+            Debug.Log(getWhirlpool.ParsedResult.TickSpacing);
 
             Transaction swapOrcaTokenTransaction = new Transaction();
             swapOrcaTokenTransaction.FeePayer = wallet.Account.PublicKey;
@@ -129,40 +167,19 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             swapOrcaTokenTransaction.Signatures = new List<SignaturePubKeyPair>();
             swapOrcaTokenTransaction.Instructions = new List<TransactionInstruction>();
 
-            PublicKey tokenOwnerAccountA =
-                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, pool.TokenMintA);
-            PublicKey tokenOwnerAccountB =
-                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, pool.TokenMintB);
+            var tokenOwnerAccountA = await CreateAtaInstruction(wallet, pool.TokenMintA, swapOrcaTokenTransaction, amount);
+            var tokenOwnerAccountB = await CreateAtaInstruction(wallet, pool.TokenMintB, swapOrcaTokenTransaction, amount);
 
-            var accountInfoA = await wallet.ActiveRpcClient.GetAccountInfoAsync(tokenOwnerAccountA);
-            var accountInfoB = await wallet.ActiveRpcClient.GetAccountInfoAsync(tokenOwnerAccountB);
-
-            if (accountInfoA.Result.Value == null)
-            {
-                var associatedTokenAccountA = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
-                    wallet.Account.PublicKey,
-                    wallet.Account.PublicKey, pool.TokenMintA);
-                swapOrcaTokenTransaction.Instructions.Add(associatedTokenAccountA);
-            }
-
-            if (accountInfoB.Result.Value == null)
-            {
-                var associatedTokenAccountB = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
-                    wallet.Account.PublicKey,
-                    wallet.Account.PublicKey, pool.TokenMintB);
-                swapOrcaTokenTransaction.Instructions.Add(associatedTokenAccountB);
-            }
-    
             int startTickIndex = TickUtils.GetStartTickIndex(pool.TickCurrentIndex, pool.TickSpacing, 0);
             var swapAccountsTickArray0 = OrcaPDAUtils.GetTickArray(WhirlpoolProgammId, whirlPoolPda, startTickIndex);
 
             SwapAccounts swapAccounts = new SwapAccounts();
             swapAccounts.TokenProgram = TokenProgram.ProgramIdKey;
             swapAccounts.TokenAuthority = wallet.Account.PublicKey;
-            swapAccounts.TokenOwnerAccountA = true ? tokenOwnerAccountA : tokenOwnerAccountB;
+            swapAccounts.TokenOwnerAccountA = true ? tokenOwnerAccountA.PublicKey : tokenOwnerAccountB;
             swapAccounts.TokenVaultA = true ? pool.TokenVaultA : pool.TokenVaultB;
             swapAccounts.TokenVaultB = true ? pool.TokenVaultB : pool.TokenVaultA;
-            swapAccounts.TokenOwnerAccountB = true ? tokenOwnerAccountB : tokenOwnerAccountA;
+            swapAccounts.TokenOwnerAccountB = true ? tokenOwnerAccountB.PublicKey : tokenOwnerAccountA;
             swapAccounts.TickArray0 = swapAccountsTickArray0;
             swapAccounts.TickArray1 = swapAccounts.TickArray0;
             swapAccounts.TickArray2 = swapAccounts.TickArray0;
@@ -175,17 +192,87 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             
             swapOrcaTokenTransaction.Instructions.Add(swapInstruction);
 
-            Transaction signedTransaction = await wallet.SignTransaction(swapOrcaTokenTransaction);
-            var signature =
-                await wallet.ActiveRpcClient.SendTransactionAsync(Convert.ToBase64String(signedTransaction.Serialize()), false,
-                    Commitment.Confirmed);
+            if (pool.TokenMintA == NativeMint)
+            {
+                var closeAccount = TokenProgram.CloseAccount(
+                    tokenOwnerAccountA,
+                    wallet.Account.PublicKey,
+                    wallet.Account.PublicKey,
+                    TokenProgram.ProgramIdKey);
+                swapOrcaTokenTransaction.Instructions.Add(closeAccount);
+            }
+            if (pool.TokenMintB == NativeMint)
+            {
+                var closeAccount = TokenProgram.CloseAccount(
+                    tokenOwnerAccountB,
+                    wallet.Account.PublicKey,
+                    wallet.Account.PublicKey,
+                    TokenProgram.ProgramIdKey);
+                swapOrcaTokenTransaction.Instructions.Add(closeAccount);
+            }
 
+            Transaction signedTransaction = await wallet.SignTransaction(swapOrcaTokenTransaction);
+            
+            var signature = await wallet.ActiveRpcClient.SendTransactionAsync(
+                Convert.ToBase64String(signedTransaction.Serialize()),
+                true, Commitment.Confirmed);
+            
             if (!signature.WasSuccessful)
             {
                 ServiceFactory.Instance.Resolve<LoggingService>().LogWarning(signature.Reason, true);
             }
 
             return signature.Result;
+        }
+
+        private static async Task<Account> CreateAtaInstruction(WalletBase wallet, PublicKey tokenMint, 
+            Transaction swapOrcaTokenTransaction, ulong wrappedSolIn = 0)
+        {
+            if (tokenMint == NativeMint)
+            {
+                var minimumRent = await wallet.ActiveRpcClient.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
+                PublicKey tokenOwnerAccount = CreateAta(wallet, tokenMint);
+
+                var accountInfo = await wallet.ActiveRpcClient.GetAccountInfoAsync(tokenOwnerAccount);
+
+                if (accountInfo.Result.Value == null)
+                {
+                    var createWrappedSolTokenAccount = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                        wallet.Account.PublicKey,
+                        wallet.Account.PublicKey, 
+                        tokenMint);
+                    swapOrcaTokenTransaction.Instructions.Add(createWrappedSolTokenAccount);
+                }
+                
+                var transfer = SystemProgram.Transfer(wallet.Account.PublicKey, tokenOwnerAccount, wrappedSolIn + minimumRent.Result);
+                var nativeSync=TokenProgram.SyncNative(tokenOwnerAccount);
+
+                swapOrcaTokenTransaction.Instructions.Add(transfer);
+                swapOrcaTokenTransaction.Instructions.Add(nativeSync);
+
+                return new Account("", tokenOwnerAccount.Key);
+            }
+            else
+            {
+                PublicKey tokenOwnerAccount = CreateAta(wallet, tokenMint);
+
+                var accountInfo = await wallet.ActiveRpcClient.GetAccountInfoAsync(tokenOwnerAccount);
+
+                if (accountInfo.Result.Value == null)
+                {
+                    var associatedTokenAccountA = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                        wallet.Account.PublicKey,
+                        wallet.Account.PublicKey, tokenMint);
+                    swapOrcaTokenTransaction.Instructions.Add(associatedTokenAccountA);
+                }
+
+                return new Account("", tokenOwnerAccount.Key);
+            }
+        }
+
+        private static PublicKey CreateAta(WalletBase wallet, PublicKey mint)
+        {
+            return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, mint);
         }
 
         /*
@@ -211,5 +298,17 @@ namespace SolPlay.DeeplinksNftExample.Scripts
         var serializeObject2 = Newtonsoft.Json.JsonConvert.SerializeObject(message);
         var utf8string = Encoding.UTF8.GetString(message);
         ObjectToByte.DecodeBase58StringFromByte(message, 0, message.Length, out string parsedjson);*/
+        public Token GetToken(PublicKey mint)
+        {
+            foreach (var token in OrcaApiTokenData.tokens)
+            {
+                if (mint == token.mint)
+                {
+                    return token;
+                }
+            }
+
+            return null;
+        }
     }
 }

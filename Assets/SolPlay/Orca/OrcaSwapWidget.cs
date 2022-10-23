@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Rpc.Models;
@@ -23,7 +24,10 @@ public class OrcaSwapWidget : MonoBehaviour
     private void Start()
     {
         ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
-        InitPools(true);
+        if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+        {
+            InitPools(true);
+        }
     }
 
     private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
@@ -40,25 +44,50 @@ public class OrcaSwapWidget : MonoBehaviour
     private async void InitPools(bool whiteList)
     {
         var pools = new List<Whirlpool.Accounts.Whirlpool>();
+        /*
+         // With this you can get a bunch of pools from the whirl pool list that is saved in the whirlpool service
+       var list = ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().OrcaApiPoolsData.whirlpools;
+       for (var index = 0; index < 20; index++)
+       {
+           var entry = list[index];
+           try
+           {
+               Whirlpool.Accounts.Whirlpool pool =
+                   await ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetPool(entry.address);
+               pools.Add(pool);
+               Debug.Log($"pool: {entry.address} {entry.tokenA.symbol} {entry.tokenB.symbol}");
+           }
+           catch (Exception)
+           {
+               // May not exist on dev net
+           }
+       }
+ 
+       initPools(pools);
+       return; */
+        Debug.Log("Start getting pools" + PoolIdWhiteList.Count);
         if (whiteList)
         {
             foreach (var entry in PoolIdWhiteList)
             {
                 try
                 {
-                    Whirlpool.Accounts.Whirlpool pool =
-                        await ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetPool(entry);
+                    Whirlpool.Accounts.Whirlpool pool = await ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetPool(entry);
                     pools.Add(pool);
+
+                    Debug.Log("add pool" + pool.TokenMintA);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     // May not exist on dev net
+                    Debug.Log($"Getting Pool error {e}");
                 }
             }
         }
         else
         {
-            // You can get all pools, but its very expensive call. So need a good RPC. 
+            // You can get all pools, but its very expensive call. So need a good RPC. public RPCs will permit it in general. 
+            // You can also use the ORCA API which is saved in ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().OrcaApiPoolsData.whirlpools
             pools = await ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetPools();
             if (pools == null)
             {
@@ -72,10 +101,12 @@ public class OrcaSwapWidget : MonoBehaviour
 
     private async void initPools(List<Whirlpool.Accounts.Whirlpool> pools)
     {
+        Thread.Sleep(3);
         var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
 
         string poolList = String.Empty;
 
+        Debug.Log("pools" + pools.Count);
         for (var index = 0; index < pools.Count; index++)
         {
             Whirlpool.Accounts.Whirlpool pool = pools[index];
@@ -85,7 +116,7 @@ public class OrcaSwapWidget : MonoBehaviour
 
             if (!PoolIdWhiteList.Contains(whirlPoolPda))
             {
-                // continue;
+                //continue;
             }
 
             PoolData poolData = new PoolData();
@@ -96,6 +127,7 @@ public class OrcaSwapWidget : MonoBehaviour
             var metadataPdaA = MetaPlexPDAUtils.GetMetadataPDA(pool.TokenMintA);
             var metadataPdaB = MetaPlexPDAUtils.GetMetadataPDA(pool.TokenMintB);
 
+            /* Since this is very slow we get the data from the orca API instead 
             var accountInfoMintA = await wallet.ActiveRpcClient.GetTokenMintInfoAsync(pool.TokenMintA);
             var accountInfoMintB = await wallet.ActiveRpcClient.GetTokenMintInfoAsync(pool.TokenMintB);
 
@@ -105,9 +137,12 @@ public class OrcaSwapWidget : MonoBehaviour
                 Debug.LogWarning($"Error:{accountInfoMintA.Reason} {accountInfoMintA} {accountInfoMintB}");
                 continue;
             }
+                poolData.TokenMintInfoA = accountInfoMintA.Result.Value;
+                poolData.TokenMintInfoB = accountInfoMintB.Result.Value;
+            */
 
-            poolData.TokenMintInfoA = accountInfoMintA.Result.Value;
-            poolData.TokenMintInfoB = accountInfoMintB.Result.Value;
+            poolData.TokenA = ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetToken(pool.TokenMintA);
+            poolData.TokenB = ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().GetToken(pool.TokenMintB);
 
             AccountInfo tokenAccountInfoA = await Nft.GetAccountData(metadataPdaA, wallet.ActiveRpcClient);
             AccountInfo tokenAccountInfoB = await Nft.GetAccountData(metadataPdaB, wallet.ActiveRpcClient);
@@ -137,6 +172,8 @@ public class OrcaSwapWidget : MonoBehaviour
             poolData.SpriteB = await GetTokenIconSprite(pool.TokenMintB, poolData.SymbolB);
 
             PoolListItem poolListItem = Instantiate(PoolListItemPrefab, PoolListItemRoot.transform);
+            Debug.Log("set data" + poolData.PoolPda);
+
             poolListItem.SetData(poolData, OpenSwapPopup);
         }
 
@@ -149,24 +186,50 @@ public class OrcaSwapWidget : MonoBehaviour
     /// </summary>
     private static async Task<Sprite> GetTokenIconSprite(string mint, string symbol)
     {
-        var spriteFromResources = SolPlayFileLoader.LoadFromResources(symbol);
-        if (spriteFromResources != null)
+        foreach (var token in ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>().OrcaApiTokenData.tokens)
         {
-            return spriteFromResources;
+            var spriteFromResources = SolPlayFileLoader.LoadFromResources(symbol);
+            if (spriteFromResources != null)
+            {
+                return spriteFromResources;
+            }
+
+            if (token.mint == mint)
+            {
+                string tokenIconUrl = token.logoURI;
+                var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
+                Texture2D compressedTexture = Nft.Resize(texture, 75, 75);
+                var sprite = Sprite.Create(compressedTexture,
+                    new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
+                    100.0f);
+                return sprite;
+            }
         }
 
-        string tokenIconUrl =
+
+        return null;
+        /*
+            Deprecated way of loading token icons from the Solana token-list
+         string tokenIconUrl =
             $"https://github.com/solana-labs/token-list/blob/main/assets/mainnet/{mint}/logo.png?raw=true";
         var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
         Texture2D compressedTexture = Nft.Resize(texture, 75, 75);
         var sprite = Sprite.Create(compressedTexture,
             new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
             100.0f);
-        return sprite;
+        return sprite;*/
     }
 
     private void OpenSwapPopup(PoolListItem poolListItem)
     {
-        ServiceFactory.Instance.Resolve<OrcaSwapPopup>().Open(poolListItem.PoolData);
+        var orcaSwapPopup = ServiceFactory.Instance.Resolve<OrcaSwapPopup>();
+        if (orcaSwapPopup == null)
+        {
+            ServiceFactory.Instance.Resolve<LoggingService>()
+                .Log("You need to add the OrcaSwapPopup to the scene.", true);
+            return;
+        }
+
+        orcaSwapPopup.Open(poolListItem.PoolData);
     }
 }

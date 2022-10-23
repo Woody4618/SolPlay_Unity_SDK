@@ -15,7 +15,7 @@ public class IapService : MonoBehaviour
         ServiceFactory.Instance.RegisterSingleton(this);
     }
 
-    public async void OnNFtIapDone(bool wasBought)
+    public async void OnNftIapDone(bool wasBought)
     {
         var baseWallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
         var account = baseWallet.Account;

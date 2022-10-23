@@ -39,6 +39,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var candyMachineWrap  = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
             var candyMachine = candyMachineWrap.ParsedResult;
 
+
             var (candyMachineCreator, creatorBump) = CandyMachineUtils.getCandyMachineCreator(candyMachineKey);
             
             MintNftAccounts mintNftAccounts = new MintNftAccounts
@@ -248,7 +249,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             };
 
             var signers = new List<Account> {fromAccount, mintAccount, tokenAccount};
-            byte[] transaction = new TransactionBuilder()
+            var transactionBuilder = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(fromAccount)
                 .AddInstruction(createMintAccount)
@@ -289,19 +290,17 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                         fromAccount.PublicKey,
                         metadataAddressPDA
                     )
-                )
-                .Build(signers);
-
+                );
+            
+            byte[] transaction = transactionBuilder.Build(signers);
             Transaction deserializedTransaction = Transaction.Deserialize(transaction);
-
-            Debug.Log($"mint transaction length {transaction.Length}");
-
-            var signedTransaction = await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
+            Transaction signedTransaction = await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
 
             // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
             // phantom produces
             signedTransaction.Signatures[0] = signedTransaction.Signatures[3];
             signedTransaction.Signatures.RemoveAt(3);
+
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);

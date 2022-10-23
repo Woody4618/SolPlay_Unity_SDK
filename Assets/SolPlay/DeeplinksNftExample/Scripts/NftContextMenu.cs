@@ -1,5 +1,6 @@
 using Frictionless;
 using SolPlay.CustomSmartContractExample;
+using SolPlay.DeeplinksNftExample.Scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,7 +34,15 @@ namespace SolPlay.Deeplinks
             ServiceFactory.Instance.Resolve<NftService>().SelectNft(currentNft);
             ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"{currentNft.MetaplexData.data.name} selected"));
             Close();
-            ServiceFactory.Instance.Resolve<TabBarComponent>().HorizontalScrollSnap.ChangePage(1);
+            var tabBarComponent = ServiceFactory.Instance.Resolve<TabBarComponent>();
+            if (tabBarComponent != null)
+            {
+                tabBarComponent.HorizontalScrollSnap.ChangePage(1);
+            }
+            else
+            {
+                ServiceFactory.Instance.Resolve<LoggingService>().Log("Add you select logic in NftContextMenu.cs", true);
+            }
         }
 
         private void OnBurnClicked()

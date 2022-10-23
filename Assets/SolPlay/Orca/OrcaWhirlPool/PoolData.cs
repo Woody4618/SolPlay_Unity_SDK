@@ -15,8 +15,10 @@ namespace SolPlay.Orca.OrcaWhirlPool
         public string SymbolA;
         public string SymbolB;
         public Whirlpool.Accounts.Whirlpool Pool;
-        public TokenMintInfo TokenMintInfoA;
-        public TokenMintInfo TokenMintInfoB;
+        //public TokenMintInfo TokenMintInfoA;
+        //public TokenMintInfo TokenMintInfoB;
+        public Token TokenA;
+        public Token TokenB;
         public PublicKey PoolPda;
     }
 }
