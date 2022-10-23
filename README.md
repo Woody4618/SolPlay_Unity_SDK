@@ -3,15 +3,13 @@ An example project to show how to use Phantom deeplinks to login and use Solana 
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
 
-1) 
-To use it in your game just include: 
+1) To use it in your game just include: 
 https://github.com/Woody4618/Solana.Unity-SDK.git (maybe a few commits ahead or behind the garbles SDK) 
 or 
 https://github.com/garbles-labs/Solana.Unity-SDK.git
 in your unity package manager.
 
-2)
-Import package 
+2) Import package 
 [SolPlay_0_2_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9846730/SolPlay_0_2_alpha.unitypackage.zip)
 and add: https://github.com/JohannesDeml/unity-ui-extensions.git
 in the package manager
