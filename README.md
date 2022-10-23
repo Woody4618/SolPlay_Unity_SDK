@@ -16,6 +16,9 @@ If you want to participate, it's very welcome.
 
 Packages used: 
 
+Epic Toon FX:
+https://assetstore.unity.com/packages/vfx/particles/epic-toon-fx-57772
+
 Garbels unity solana sdk. Check out their awesome game as well! Vr Pokemon! 
 https://github.com/garbles-dev/Solana.Unity/tree/master/src
 
