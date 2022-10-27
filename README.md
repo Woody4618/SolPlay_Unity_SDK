@@ -10,8 +10,10 @@ https://github.com/garbles-labs/Solana.Unity-SDK.git
 in your unity package manager.
 
 2) Import this unity package 
-Get the newest Unity package from the Releases tab on the right ---> 
-and import it in Unity Assets->importPackage.
+[SolPlay_0_4_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9880685/SolPlay_0_4_alpha.unitypackage.zip)
+Or get the newest Unity package from the Releases tab on the right.
+and then import it in Unity Assets->importPackage.
+
 
 Here is a Video which explains the process step by step: 
 [https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
