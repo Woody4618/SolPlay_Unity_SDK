@@ -1,6 +1,8 @@
 using System.Collections;
 using Frictionless;
 using SolPlay.Deeplinks;
+using SolPlay.Scripts.Services;
+using SolPlay.Scripts.Ui;
 using UnityEngine;
 using UnityEditor;
 
@@ -40,8 +42,8 @@ public class GameMode : MonoBehaviour
 
     private void Start()
     {
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
-        var selectedNft = ServiceFactory.Instance.Resolve<NftService>().SelectedNft;
+        MessageRouter.AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
+        var selectedNft = ServiceFactory.Resolve<NftService>().SelectedNft;
         if (selectedNft != null)
         {
             _playerController.SetSpriteFromNft(selectedNft);
@@ -80,7 +82,7 @@ public class GameMode : MonoBehaviour
         _playerController.Flap();
         _pipeGenerator.StartSpawn();
         _screenController.ShowInGameHud();
-        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        MessageRouter.RaiseMessage(new ScoreChangedMessage()
         {
             NewScore = Score
         });
@@ -110,7 +112,7 @@ public class GameMode : MonoBehaviour
         _screenController.ShowStartHud();
         Score = 0;
         Boost = 0;
-        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        MessageRouter.RaiseMessage(new ScoreChangedMessage()
         {
             NewScore = Score
         });
@@ -142,7 +144,7 @@ public class GameMode : MonoBehaviour
 
     public void IncrementScore()
     {
-        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var nftService = ServiceFactory.Resolve<NftService>();
         int totalScoreIncrease = 0;
         if (nftService.SelectedNft != null && nftService.IsBeaverNft(nftService.SelectedNft))
         {
@@ -155,7 +157,7 @@ public class GameMode : MonoBehaviour
 
         Score += totalScoreIncrease;
 
-        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new ScoreChangedMessage()
+        MessageRouter.RaiseMessage(new ScoreChangedMessage()
         {
             NewScore = Score
         });
@@ -165,13 +167,13 @@ public class GameMode : MonoBehaviour
     {
         Boost++;
         Score += Boost;
-        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"+{Boost}", BlimpSystem.BlimpType.Boost));
+        MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage($"+{Boost}", BlimpSystem.BlimpType.Boost));
     }
 
     public void StopBoost()
     {
         Boost = 0;
-        ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new BlimpSystem.ShowBlimpMessage($"missed", BlimpSystem.BlimpType.Boost));
+        MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage($"missed", BlimpSystem.BlimpType.Boost));
     }
 
     public void QuitGame()

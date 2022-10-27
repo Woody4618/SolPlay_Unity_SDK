@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -9,51 +10,18 @@ using UnityEngine;
 
 namespace Frictionless
 {
-	public class ServiceFactory
+	public static class ServiceFactory
 	{
-		private static ServiceFactory instance;
+		private static readonly Dictionary<Type,Type> singletons = new Dictionary<Type, Type>();
+		private static readonly Dictionary<Type,Type> transients = new Dictionary<Type, Type>();
+		private static readonly Dictionary<Type,object> singletonInstances = new Dictionary<Type, object>();
 
-		private Dictionary<Type,Type> singletons = new Dictionary<Type, Type>();
-		private Dictionary<Type,Type> transients = new Dictionary<Type, Type>();
-		private Dictionary<Type,object> singletonInstances = new Dictionary<Type, object>();
-
-		static ServiceFactory()
-		{
-			instance = new ServiceFactory();
-		}
-
-		protected ServiceFactory()
-		{
-		}
-
-		public static ServiceFactory Instance
-		{
-			get { return instance; }
-		}
-
-		public bool IsEmpty
+		public static bool IsEmpty
 		{
 			get { return singletons.Count == 0 && transients.Count == 0; }
 		}
 
-		public void HandleNewSceneLoaded()
-		{
-			List<IMultiSceneSingleton> multis = new List<IMultiSceneSingleton>();
-			foreach(KeyValuePair<Type,object> pair in singletonInstances)
-			{
-				IMultiSceneSingleton multi = pair.Value as IMultiSceneSingleton;
-				if (multi != null)
-					multis.Add (multi);
-			}
-			foreach(var multi in multis)
-			{
-				MonoBehaviour behavior = multi as MonoBehaviour;
-				if (behavior != null)
-					behavior.StartCoroutine(multi.HandleNewSceneLoaded());
-			}
-		}
-
-		public void Reset()
+		public static void Reset()
 		{
 			List<Type> survivorRegisteredTypes = new List<Type>();
 			List<object> survivors = new List<object>();
@@ -76,33 +44,33 @@ namespace Frictionless
 			}
 		}
 
-		public void RegisterSingleton<TConcrete>()
+		public static void RegisterSingleton<TConcrete>()
 		{
 			singletons[typeof(TConcrete)] = typeof(TConcrete);
 		}
 
-		public void RegisterSingleton<TAbstract,TConcrete>()
+		public static void RegisterSingleton<TAbstract,TConcrete>()
 		{
 			singletons[typeof(TAbstract)] = typeof(TConcrete);
 		}
 		
-		public void RegisterSingleton<TConcrete>(TConcrete instance)
+		public static void RegisterSingleton<TConcrete>(TConcrete instance)
 		{
 			singletons[typeof(TConcrete)] = typeof(TConcrete);
 			singletonInstances[typeof(TConcrete)] = instance;
 		}
 
-		public void RegisterTransient<TAbstract,TConcrete>()
+		public static void RegisterTransient<TAbstract,TConcrete>()
 		{
 			transients[typeof(TAbstract)] = typeof(TConcrete);
 		}
 
-		public T Resolve<T>() where T : class
+		public static T Resolve<T>() where T : class
 		{
 			return Resolve<T>(false);
 		}
 
-		public T Resolve<T>(bool onlyExisting) where T : class
+		public static T Resolve<T>(bool onlyExisting) where T : class
 		{
 			T result = default(T);
 			Type concreteType = null;
@@ -119,15 +87,11 @@ namespace Frictionless
 					{
 						GameObject singletonGameObject = new GameObject();
 						r = singletonGameObject.AddComponent(concreteType);
-						singletonGameObject.name = typeof(T).ToString() + " (singleton)";
+						singletonGameObject.name = $"{typeof(T)} (singleton)";
 					}
 					else
 						r = Activator.CreateInstance(concreteType);
 					singletonInstances[typeof(T)] = r;
-
-					IMultiSceneSingleton multi = r as IMultiSceneSingleton;
-					if (multi != null)
-						multi.HandleNewSceneLoaded();
 				}
 				result = (T)r;
 			}
@@ -137,6 +101,18 @@ namespace Frictionless
 				result = (T)r;
 			}
 			return result;
+		}
+
+		public static IEnumerator HandleSceneLoad(AsyncOperation sceneLoadOperation)
+		{
+			yield return sceneLoadOperation;
+			foreach(KeyValuePair<Type,object> pair in singletonInstances)
+			{
+				if (pair.Value is IReinitializingMultiSceneSingleton reinitializingMultiSceneSingleton)
+				{
+					reinitializingMultiSceneSingleton.ReinitializeAfterSceneLoad();
+				}
+			}
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
 using SolPlay.Orca;
+using SolPlay.Scripts.Services;
 using UnityEngine;
 using Whirlpool;
 using Whirlpool.Program;
@@ -23,7 +25,7 @@ using Whirlpool.Types;
 
 namespace SolPlay.DeeplinksNftExample.Scripts
 {
-    public class OrcaWhirlpoolService : MonoBehaviour
+    public class OrcaWhirlpoolService : MonoBehaviour, IMultiSceneSingleton
     {
         private WhirlpoolClient _whirlpoolClient;
         public static PublicKey WhirlpoolProgammId = new PublicKey("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc");
@@ -41,18 +43,23 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         private void Awake()
         {
-            ServiceFactory.Instance.RegisterSingleton(this);
+            if (ServiceFactory.Resolve<OrcaWhirlpoolService>() != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            ServiceFactory.RegisterSingleton(this);
         }
 
         private void Start()
         {
-            ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
+            MessageRouter.AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
             OrcaApiPoolsData = JsonConvert.DeserializeObject<OrcaApiPoolsData>(PoolsAsset.text);
             OrcaApiTokenData = JsonConvert.DeserializeObject<OrcaApiTokenData>(TokensAsset.text);
             // Its faster to cache it directly in unity in text assets. But the data may be out of date, so we calculate the
             // prices from the on chain data sqrt price directly.
             //RefreshApiData();
-            if (ServiceFactory.Instance.Resolve<WalletHolderService>().IsLoggedIn)
+            if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
             {
                 Init();
             }
@@ -73,7 +80,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         private void Init()
         {
-            var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
             if (!walletHolderService.IsLoggedIn)
             {
                 return;
@@ -154,7 +161,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var getWhirlpool = await _whirlpoolClient.GetWhirlpoolAsync(whirlPoolPda);
             if (getWhirlpool.ParsedResult == null)
             {
-                ServiceFactory.Instance.Resolve<LoggingService>()
+                ServiceFactory.Resolve<LoggingService>()
                     .LogWarning($"Could not load whirlpool {whirlPoolPda}", true);
                 return null;
             }
@@ -219,7 +226,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             
             if (!signature.WasSuccessful)
             {
-                ServiceFactory.Instance.Resolve<LoggingService>().LogWarning(signature.Reason, true);
+                ServiceFactory.Resolve<LoggingService>().LogWarning(signature.Reason, true);
             }
 
             return signature.Result;
@@ -275,29 +282,6 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, mint);
         }
 
-        /*
-        var getMetaDataA = getMetadata(pool.TokenMintA);
-        var getMetaDataB = getMetadata(pool.TokenMintB);
-
-        var tokenInfoA = await wallet.ActiveRpcClient.GetTokenAccountInfoAsync(getMetaDataA);
-        var tokenInfoB = await wallet.ActiveRpcClient.GetTokenAccountInfoAsync(getMetaDataA);
-
-        var seeds = new List<byte[]>();
-        seeds.Add(Encoding.UTF8.GetBytes("metadata"));
-        seeds.Add(new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").KeyBytes);
-        seeds.Add(pool.TokenMintA.KeyBytes);
-
-        PublicKey.TryFindProgramAddress(
-            seeds, 
-            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
-            out PublicKey metaplexDataPubKey, out var _bump);
-        
-        var metaDataAccountInfo = await wallet.ActiveRpcClient.GetAccountInfoAsync(metaplexDataPubKey, Commitment.Confirmed, BinaryEncoding.JsonParsed);
-
-        byte[] message = Base64.Decode(metaDataAccountInfo.Result.Value.Data[0]);
-        var serializeObject2 = Newtonsoft.Json.JsonConvert.SerializeObject(message);
-        var utf8string = Encoding.UTF8.GetString(message);
-        ObjectToByte.DecodeBase58StringFromByte(message, 0, message.Length, out string parsedjson);*/
         public Token GetToken(PublicKey mint)
         {
             foreach (var token in OrcaApiTokenData.tokens)
@@ -309,6 +293,11 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             }
 
             return null;
+        }
+
+        public IEnumerator HandleNewSceneLoaded()
+        {
+            yield return null;
         }
     }
 }

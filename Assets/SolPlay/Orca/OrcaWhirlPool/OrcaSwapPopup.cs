@@ -3,8 +3,9 @@ using System.Numerics;
 using Frictionless;
 using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
-using SolPlay.Engine;
 using SolPlay.Orca.OrcaWhirlPool;
+using SolPlay.Scripts.Services;
+using SolPlay.Scripts.Ui;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -28,7 +29,7 @@ public class OrcaSwapPopup : BasePopup
 
     private void Awake()
     {
-        ServiceFactory.Instance.RegisterSingleton(this);
+        ServiceFactory.RegisterSingleton(this);
         SwapButton.onClick.AddListener(OnSwapButtonClicked);
         SwapAAndBButton.onClick.AddListener(OnSwapAAndBButtonClicked);
         base.Awake();
@@ -40,7 +41,7 @@ public class OrcaSwapPopup : BasePopup
     {
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Instance.Resolve<LoggingService>()
+            ServiceFactory.Resolve<LoggingService>()
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -67,7 +68,7 @@ public class OrcaSwapPopup : BasePopup
 
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Instance.Resolve<LoggingService>()
+            ServiceFactory.Resolve<LoggingService>()
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -95,7 +96,7 @@ public class OrcaSwapPopup : BasePopup
     {
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Instance.Resolve<LoggingService>()
+            ServiceFactory.Resolve<LoggingService>()
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -112,12 +113,12 @@ public class OrcaSwapPopup : BasePopup
                 ? $"Swapping {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}"
                 : $"Swapping {value} {currentPoolData.SymbolB} to {currentPoolData.SymbolA}";
 
-        ServiceFactory.Instance.Resolve<LoggingService>().Log(fromToMessage, true);
-        var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
-        var signature = await ServiceFactory.Instance.Resolve<OrcaWhirlpoolService>()
+        ServiceFactory.Resolve<LoggingService>().Log(fromToMessage, true);
+        var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
+        var signature = await ServiceFactory.Resolve<OrcaWhirlpoolService>()
             .Swap(wallet, currentPoolData.Pool, valueLong, AToB);
-        ServiceFactory.Instance.Resolve<TransactionService>().CheckSignatureStatus(signature,
-            () => { ServiceFactory.Instance.Resolve<MessageRouter>().RaiseMessage(new TokenValueChangedMessage()); });
+        ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature,
+            () => { MessageRouter.RaiseMessage(new TokenValueChangedMessage()); });
     }
 
     private void OnSwapAAndBButtonClicked()

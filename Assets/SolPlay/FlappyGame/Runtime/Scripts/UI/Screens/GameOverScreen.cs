@@ -2,9 +2,10 @@ using System.Collections;
 using DG.Tweening;
 using Frictionless;
 using Solana.Unity.Rpc.Models;
-using SolPlay.CustomSmartContractExample;
 using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
+using SolPlay.Scripts.Services;
+using SolPlay.Scripts.Ui;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -62,14 +63,14 @@ public class GameOverScreen : MonoBehaviour
 
     private void Start()
     {
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
-        ServiceFactory.Instance.Resolve<MessageRouter>()
+        MessageRouter.AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
+        MessageRouter
             .AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
     }
 
     private void OnHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
     {
-        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var nftService = ServiceFactory.Resolve<NftService>();
         if (nftService.SelectedNft != null)
         {
             _nftItemView.SetData(nftService.SelectedNft, view => { });
@@ -143,11 +144,11 @@ public class GameOverScreen : MonoBehaviour
 
     private void OnMintMedalButtonClicked()
     {
-        var nftMintingService = ServiceFactory.Instance.Resolve<NftMintingService>();
+        var nftMintingService = ServiceFactory.Resolve<NftMintingService>();
 
         if (_gameMode.Score >= 150)
         {
-            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Gold Medal", true);
+            ServiceFactory.Resolve<LoggingService>().Log("Start minting a Gold Medal", true);
 
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/8QHFphU4iT6rFAW93vvzj8f79Txe5auRAgto3SMxxQ8x/manifest.json",
@@ -156,7 +157,7 @@ public class GameOverScreen : MonoBehaviour
         }
         else if (_gameMode.Score >= 100)
         {
-            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Silver Medal", true);
+            ServiceFactory.Resolve<LoggingService>().Log("Start minting a Silver Medal", true);
 
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/9JjNpESm1sGJGJRuaGEiju6hG4Z54XRtCEc7jzWDJWdV/manifest.json",
@@ -165,7 +166,7 @@ public class GameOverScreen : MonoBehaviour
         }
         else if (_gameMode.Score >= 50)
         {
-            ServiceFactory.Instance.Resolve<LoggingService>().Log("Start minting a Bronze Medal", true);
+            ServiceFactory.Resolve<LoggingService>().Log("Start minting a Bronze Medal", true);
 
             nftMintingService.MintNftWithMetaData(
                 "https://shdw-drive.genesysgo.net/9hrRBH5U3Lc5eKDKkcazk5wycizd11jon8M5HpFTsHjG/manifest.json",
@@ -174,7 +175,7 @@ public class GameOverScreen : MonoBehaviour
         }
         else
         {
-            ServiceFactory.Instance.Resolve<LoggingService>().Log("Reach at least 50 Points!", true);
+            ServiceFactory.Resolve<LoggingService>().Log("Reach at least 50 Points!", true);
         }
     }
 
@@ -182,8 +183,8 @@ public class GameOverScreen : MonoBehaviour
     {
         _submitHighscoreButton.interactable = false;
 
-        var smartContractService = ServiceFactory.Instance.Resolve<HighscoreService>();
-        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var smartContractService = ServiceFactory.Resolve<HighscoreService>();
+        var nftService = ServiceFactory.Resolve<NftService>();
         var customSmartContractService = smartContractService;
         await customSmartContractService.SafeHighScore(nftService.SelectedNft, (uint) _gameMode.Score);
         AccountInfo account = await smartContractService.GetHighscoreAccountData(nftService.SelectedNft);
@@ -191,13 +192,13 @@ public class GameOverScreen : MonoBehaviour
 
     private void UpdateHud()
     {
-        var highscoreService = ServiceFactory.Instance.Resolve<HighscoreService>();
-        var walletHolderService = ServiceFactory.Instance.Resolve<WalletHolderService>();
+        var highscoreService = ServiceFactory.Resolve<HighscoreService>();
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         if (walletHolderService == null || walletHolderService.BaseWallet == null)
         {
             return;
         }
-        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var nftService = ServiceFactory.Resolve<NftService>();
 
         int score = _gameMode.Score;
         int curHighScore = 0;

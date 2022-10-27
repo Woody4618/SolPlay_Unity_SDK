@@ -18,7 +18,7 @@ public class PlayerFollow : MonoBehaviour
         if(_objectToFollow == null)
             enabled = false;
 
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<ScoreChangedMessage>(OnScoreChangedMessage);
+        MessageRouter.AddHandler<ScoreChangedMessage>(OnScoreChangedMessage);
     }
 
     private void OnScoreChangedMessage(ScoreChangedMessage message)

@@ -8,6 +8,8 @@ using GemFarm.Program;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
 using SolPlay.Deeplinks;
+using SolPlay.Scripts.Services;
+using SolPlay.Scripts.Ui;
 using UnityEngine;
 
 namespace SolPlay.Staking
@@ -27,30 +29,30 @@ namespace SolPlay.Staking
 
         private void Awake()
         {
-            ServiceFactory.Instance.RegisterSingleton(this);
+            ServiceFactory.RegisterSingleton(this);
         }
 
         public async void RefreshFarm()
         {
             var transation = await BuildRefreshFarmTransaction();
-            var signature = await ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet
+            var signature = await ServiceFactory.Resolve<WalletHolderService>().BaseWallet
                 .SignAndSendTransaction(transation);
 
             if (string.IsNullOrEmpty(signature.Result))
             {
-                ServiceFactory.Instance.Resolve<MessageRouter>()
+                MessageRouter
                     .RaiseMessage(new BlimpSystem.ShowBlimpMessage(signature.Reason));
             }
             else
             {
-                ServiceFactory.Instance.Resolve<TransactionService>()
+                ServiceFactory.Resolve<TransactionService>()
                     .CheckSignatureStatus(signature.Result, () => { Debug.Log("Farm refreshed successfully."); });
             }
         }
 
         private async Task<Transaction> BuildRefreshFarmTransaction()
         {
-            var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
+            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
             Transaction transaction = await CreateEmptyTransaction();
             if (transaction == null) return null;
 
@@ -87,7 +89,7 @@ namespace SolPlay.Staking
 
         private async Task<Transaction> BuildStakeTransaction(bool unstake = false, bool skipRewards = false)
         {
-            var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
+            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
             Transaction transaction = await CreateEmptyTransaction();
             if (transaction == null) return null;
 
@@ -99,12 +101,12 @@ namespace SolPlay.Staking
 
         private static async Task<Transaction> CreateEmptyTransaction()
         {
-            var wallet = ServiceFactory.Instance.Resolve<WalletHolderService>().BaseWallet;
+            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
             var blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
             if (blockHash.Result == null)
             {
-                ServiceFactory.Instance.Resolve<MessageRouter>()
+                MessageRouter
                     .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Block hash null. Connected to internet?"));
                 return null;
             }

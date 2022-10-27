@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters;
 using Frictionless;
 using SolPlay.Deeplinks;
+using SolPlay.Scripts.Services;
 using UnityEngine;
 
 public class StartScreen : MonoBehaviour
@@ -18,8 +19,8 @@ public class StartScreen : MonoBehaviour
     private void Start()
     {
         UpdateContent();
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
-        ServiceFactory.Instance.Resolve<MessageRouter>().AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
+        MessageRouter.AddHandler<NftSelectedMessage>(OnNftSelectedMessage);
+        MessageRouter.AddHandler<NftLoadingFinishedMessage>(OnNftLoadingFinishedMessage);
     }
 
     private void OnNftLoadingFinishedMessage(NftLoadingFinishedMessage message)
@@ -34,7 +35,7 @@ public class StartScreen : MonoBehaviour
     
     private void UpdateContent()
     {
-        var nftService = ServiceFactory.Instance.Resolve<NftService>();
+        var nftService = ServiceFactory.Resolve<NftService>();
         NftSelectedRoot.gameObject.SetActive(nftService.SelectedNft != null);
         NftUnselectedRoot.gameObject.SetActive(nftService.SelectedNft == null);
     }
