@@ -14,7 +14,6 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solnet.Metaplex;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Utils;
 using UnityEngine;
 

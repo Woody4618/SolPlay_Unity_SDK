@@ -42,7 +42,7 @@ namespace SolPlay.Scripts.Services
             if (ServiceFactory.Resolve<WalletHolderService>() != null)
             {
                 Destroy(gameObject);
-                return;
+                return; 
             }
 
             ServiceFactory.RegisterSingleton(this);

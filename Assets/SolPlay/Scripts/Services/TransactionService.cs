@@ -7,7 +7,6 @@ using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
 using SystemProgram = Solana.Unity.Programs.SystemProgram;

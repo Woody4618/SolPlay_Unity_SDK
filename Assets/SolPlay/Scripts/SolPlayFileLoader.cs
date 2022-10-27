@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
-namespace SolPlay.Deeplinks
+namespace SolPlay.Scripts
 {
     /// <summary>
     /// Originally from AllArt, but with some changes to also be able to load gifs and reduce garbage and name textures

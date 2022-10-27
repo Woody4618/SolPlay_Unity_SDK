@@ -1,5 +1,4 @@
 using Frictionless;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;

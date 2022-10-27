@@ -1,6 +1,4 @@
 using Frictionless;
-using SolPlay.Deeplinks;
-using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;
@@ -20,7 +18,7 @@ namespace SolPlay.Scripts.Ui
         public Button BurnButton;
         public Button SelectButton;
         public SolPlayNft currentNft;
-
+ 
         private void Awake()
         {
             ServiceFactory.RegisterSingleton(this);
@@ -44,7 +42,7 @@ namespace SolPlay.Scripts.Ui
             else
             {
                 // In case you want to load another scene please use the SolPlay instance
-                Deeplinks.SolPlay.Instance.LoadScene("FlappGameExample");
+                //SolPlay.Instance.LoadScene("FlappyGameExample");
                 ServiceFactory.Resolve<LoggingService>().Log("Add you select logic in NftContextMenu.cs", true);
             }
         }

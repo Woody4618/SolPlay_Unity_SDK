@@ -1,10 +1,9 @@
 using Frictionless;
-using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.Scripts.Services;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SolPlay.Deeplinks
+namespace SolPlay.Scripts
 {
     public class SolPlay : MonoBehaviour
     {

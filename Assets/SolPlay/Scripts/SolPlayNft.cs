@@ -10,7 +10,6 @@ using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
-using Solana.Unity.SDK.Utility;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 using SolPlay.Scripts.Services;
@@ -18,7 +17,7 @@ using SolPlay.Scripts.Ui;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace SolPlay.Deeplinks
+namespace SolPlay.Scripts
 {
     [Serializable]
     public class NftImage : iNftFile<Texture2D>

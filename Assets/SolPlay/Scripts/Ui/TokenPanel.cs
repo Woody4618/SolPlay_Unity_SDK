@@ -2,7 +2,6 @@ using Frictionless;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;

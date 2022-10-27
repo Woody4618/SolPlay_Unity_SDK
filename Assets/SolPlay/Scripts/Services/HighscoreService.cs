@@ -14,11 +14,11 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace SolPlay.Scripts.Services
 {
@@ -80,7 +80,14 @@ namespace SolPlay.Scripts.Services
             };
             _allHighscores[seedFromPubkey] = highscoreEntry;
 
-            GetHighscoreAccountData(message.NewNFt);
+            // Taking some work from the RPC nodes and delay the high score requests.
+            StartCoroutine(GetHighScoreDataDelayed(message.NewNFt, Random.Range(0, 3)));
+        }
+
+        private IEnumerator GetHighScoreDataDelayed(SolPlayNft messageNewNFt, int range)
+        {
+            yield return new WaitForSeconds(range);
+            GetHighscoreAccountData(messageNewNFt);
         }
 
         private async void OnAllNftsLoadedMessage(NftLoadingFinishedMessage message)

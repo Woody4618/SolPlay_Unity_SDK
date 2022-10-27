@@ -1,6 +1,5 @@
 using System.Collections;
 using Frictionless;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Services;
 using SolPlay.Scripts.Ui;
 using UnityEngine;

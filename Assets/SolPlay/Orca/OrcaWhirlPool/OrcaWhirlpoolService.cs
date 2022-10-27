@@ -14,7 +14,6 @@ using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Utility;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
 using SolPlay.Orca;
 using SolPlay.Scripts.Services;

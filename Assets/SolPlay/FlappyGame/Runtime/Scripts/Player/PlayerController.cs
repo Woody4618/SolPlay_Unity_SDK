@@ -3,7 +3,7 @@ using System.Collections;
 using System.Runtime.Serialization.Formatters;
 using DG.Tweening;
 using Frictionless;
-using SolPlay.Deeplinks;
+using SolPlay.Scripts;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerAudio))]

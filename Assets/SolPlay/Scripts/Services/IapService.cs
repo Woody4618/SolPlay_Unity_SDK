@@ -2,7 +2,6 @@ using System.Collections;
 using CandyMachineV2;
 using Frictionless;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using UnityEngine;
 
 namespace SolPlay.Scripts.Services

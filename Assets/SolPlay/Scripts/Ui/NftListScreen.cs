@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Frictionless;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.Scripts.Services;
 using UnityEngine;

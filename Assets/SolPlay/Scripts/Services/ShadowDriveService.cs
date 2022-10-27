@@ -7,7 +7,6 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Builders;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using UnityEngine;
 
 namespace SolPlay.Scripts.Services

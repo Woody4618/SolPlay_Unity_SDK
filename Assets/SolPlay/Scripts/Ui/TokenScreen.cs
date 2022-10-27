@@ -1,5 +1,4 @@
 using Frictionless;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Services;

@@ -2,7 +2,6 @@ using System.Collections;
 using DG.Tweening;
 using Frictionless;
 using Solana.Unity.Rpc.Models;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.Scripts.Services;
 using SolPlay.Scripts.Ui;

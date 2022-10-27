@@ -6,11 +6,11 @@ using Frictionless;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.SDK.Nft;
 using Solana.Unity.Wallet;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
 using SolPlay.MetaPlex;
 using SolPlay.Orca.OrcaWhirlPool;
+using SolPlay.Scripts;
 using SolPlay.Scripts.Services;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
@@ -76,7 +76,7 @@ public class OrcaSwapWidget : MonoBehaviour
                     Whirlpool.Accounts.Whirlpool pool = await ServiceFactory.Resolve<OrcaWhirlpoolService>().GetPool(entry);
                     pools.Add(pool);
 
-                    Debug.Log("add pool" + pool.TokenMintA);
+                    //Debug.Log("add pool" + pool.TokenMintA);
                 }
                 catch (Exception e)
                 {
@@ -102,10 +102,7 @@ public class OrcaSwapWidget : MonoBehaviour
 
     private async void initPools(List<Whirlpool.Accounts.Whirlpool> pools)
     {
-        Thread.Sleep(3);
         var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
-
-        string poolList = String.Empty;
 
         Debug.Log("pools" + pools.Count);
         for (var index = 0; index < pools.Count; index++)
@@ -150,13 +147,13 @@ public class OrcaSwapWidget : MonoBehaviour
 
             if (tokenAccountInfoA == null || tokenAccountInfoA.Data == null)
             {
-                Debug.LogWarning($"Could not load meta data of mint {metadataPdaA}");
+                Debug.LogWarning($"Could not load meta data of mint A");
                 continue;
             }
 
             if (tokenAccountInfoB == null || tokenAccountInfoB.Data == null)
             {
-                Debug.LogWarning($"Could not load meta data of mint {metadataPdaB}");
+                Debug.LogWarning($"Could not load meta data of mint B");
                 continue;
             }
 
@@ -166,19 +163,15 @@ public class OrcaSwapWidget : MonoBehaviour
             poolData.SymbolA = metaPlexA.data.symbol;
             poolData.SymbolB = metaPlexB.data.symbol;
 
-            poolList +=
-                $"\nSymbolA: {poolData.SymbolA} SymbolB: {poolData.SymbolB} PDA: {whirlPoolPda}  config: {pool.WhirlpoolsConfig}";
-
             poolData.SpriteA = await GetTokenIconSprite(pool.TokenMintA, poolData.SymbolA);
             poolData.SpriteB = await GetTokenIconSprite(pool.TokenMintB, poolData.SymbolB);
 
             PoolListItem poolListItem = Instantiate(PoolListItemPrefab, PoolListItemRoot.transform);
-            Debug.Log("set data" + poolData.PoolPda);
+           // Debug.Log("set data" + poolData.PoolPda);
 
             poolListItem.SetData(poolData, OpenSwapPopup);
         }
 
-        Debug.Log(poolList);
     }
 
     /// <summary>

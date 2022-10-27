@@ -2,7 +2,6 @@ using System.Collections;
 using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Rpc.Types;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;

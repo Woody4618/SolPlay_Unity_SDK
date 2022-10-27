@@ -1,7 +1,6 @@
 using System;
 using System.Numerics;
 using Frictionless;
-using SolPlay.Deeplinks;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.Orca.OrcaWhirlPool;
 using SolPlay.Scripts.Services;

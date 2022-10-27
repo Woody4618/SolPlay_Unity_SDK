@@ -10,10 +10,9 @@ using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
-using SolPlay.Deeplinks;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
-using NftImage = SolPlay.Deeplinks.NftImage;
+using NftImage = SolPlay.Scripts.NftImage;
 
 namespace SolPlay.Scripts.Services
 {
