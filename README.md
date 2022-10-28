@@ -1,4 +1,4 @@
-# SolanaUnityDeeplinkExample
+# SolPlay - Unity - SDK
 An example project to show how to use Phantom deeplinks to login and use Solana NFTs in Unity games and apps.
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
