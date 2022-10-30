@@ -9,7 +9,10 @@ or
 https://github.com/garbles-labs/Solana.Unity-SDK.git
 in your unity package manager.
 
-2) Import this unity package 
+2) Import Glftfast for 3D NFT support
+[GlFAst Installer](https://package-installer.glitch.me/v1/installer/OpenUPM/com.atteneder.gltfast?registry=https%3A%2F%2Fpackage.openupm.com&scope=com.atteneder)
+
+3) Import this unity package 
 [SolPlay_0_4_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9880685/SolPlay_0_4_alpha.unitypackage.zip)
 Or get the newest Unity package from the Releases tab on the right.
 and then import it in Unity Assets->importPackage.
