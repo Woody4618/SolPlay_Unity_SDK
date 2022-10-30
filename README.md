@@ -9,9 +9,11 @@ or
 https://github.com/garbles-labs/Solana.Unity-SDK.git
 in your unity package manager.
 
-2) Import this unity package 
-[SolPlay_0_4_alpha.unitypackage.zip](https://github.com/Woody4618/SolanaUnityDeeplinkExample/files/9880685/SolPlay_0_4_alpha.unitypackage.zip)
-Or get the newest Unity package from the Releases tab on the right.
+2) Import Glftfast for 3D NFT support
+[GlFAst Installer](https://package-installer.glitch.me/v1/installer/OpenUPM/com.atteneder.gltfast?registry=https%3A%2F%2Fpackage.openupm.com&scope=com.atteneder)
+
+3) Import this unity package 
+[SolPlay_0_5_alpha.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/9896112/SolPlay_0_5_alpha.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 
@@ -26,6 +28,9 @@ Packages used:
 
 Epic Toon FX:
 https://assetstore.unity.com/packages/vfx/particles/epic-toon-fx-57772
+
+glTFast for runtime loading of 3D NFTs:
+https://github.com/atteneder/glTFast
 
 Lunar console (Get the pro version here: 
 https://github.com/SpaceMadness/lunar-unity-console
