@@ -29,6 +29,9 @@ Packages used:
 Epic Toon FX:
 https://assetstore.unity.com/packages/vfx/particles/epic-toon-fx-57772
 
+glTFast for runtime loading of 3D NFTs:
+https://github.com/atteneder/glTFast
+
 Lunar console (Get the pro version here: 
 https://github.com/SpaceMadness/lunar-unity-console
 Pro Version: https://assetstore.unity.com/packages/tools/gui/lunar-mobile-console-pro-43800
