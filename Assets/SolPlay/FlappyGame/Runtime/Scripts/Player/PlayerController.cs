@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
-using System.Runtime.Serialization.Formatters;
-using DG.Tweening;
-using Frictionless;
+using GLTFast;
 using SolPlay.Scripts;
+using SolPlay.Utils;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerAudio))]
@@ -25,6 +24,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] GameObject _tradeGraphParticles;
     public PlayerParameters MovementParameters;
     public NftType Type = NftType.Default;
+    // 3D character
+    public GltfAsset GltfAsset;
+    public BoxCollider2D TargetBounds;
     
     Vector3 _velocity;
     float _speedIncrease;
@@ -35,10 +37,47 @@ public class PlayerController : MonoBehaviour
     private Coroutine _fireDisableCoroutine;
     public Vector3 Velocity { get => _velocity; }
 
-    public void SetSpriteFromNft(SolPlayNft nft)
+    public async void SetSpriteFromNft(SolPlayNft nft)
     {
-        var rect = new Rect(0, 0, nft.MetaplexData.nftImage.file.width, nft.MetaplexData.nftImage.file.height);
-        _spriteRenderer.sprite = Sprite.Create(nft.MetaplexData.nftImage.file, rect, new Vector2(0.5f, 0.5f));
+        if (!string.IsNullOrEmpty(nft.MetaplexData.data.json.animation_url))
+        {
+            _spriteRenderer.gameObject.SetActive(false);
+            foreach (Transform trans in GltfAsset.transform)
+            {
+                Destroy(trans.gameObject);
+            }
+            GltfAsset.gameObject.SetActive(true);
+
+            var loaded = await GltfAsset.Load(nft.MetaplexData.data.json.animation_url);
+            if (loaded)
+            {
+                StartCoroutine(ScaleLoadedAssetToCorrectSize());   
+            }
+        }
+        else
+        {
+            _spriteRenderer.gameObject.SetActive(true);
+            GltfAsset.gameObject.SetActive(false);
+            var rect = new Rect(0, 0, nft.MetaplexData.nftImage.file.width, nft.MetaplexData.nftImage.file.height);
+            _spriteRenderer.sprite = Sprite.Create(nft.MetaplexData.nftImage.file, rect, new Vector2(0.5f, 0.5f));
+        }
+    }
+
+    private IEnumerator ScaleLoadedAssetToCorrectSize()
+    {
+        yield return new WaitForEndOfFrame();
+        if (GltfAsset.transform.childCount == 0)
+        {
+            yield break;
+        }
+
+        var gltfScene = GltfAsset.transform.GetChild(0);
+        var currentBounds = UnityUtils.GetBoundsWithChildren(gltfScene.gameObject);
+        bool stillTooBigOrSmall = true;
+        Debug.Log("Bounds size: " + currentBounds.size);
+        Debug.Log("Bounds: extends" + currentBounds.extents);
+        var sizeY = TargetBounds.bounds.size.y / currentBounds.size.y;
+        gltfScene.gameObject.transform.localScale = new Vector3(sizeY, sizeY, sizeY);
     }
 
     public void Die()

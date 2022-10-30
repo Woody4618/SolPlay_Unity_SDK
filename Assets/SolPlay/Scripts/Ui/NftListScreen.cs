@@ -16,6 +16,7 @@ namespace SolPlay.Scripts.Ui
         public Button GetNFtsNotCachedButton;
         public Button GetBeaverButton;
         public Button MintInAppButton;
+        public Button MintInApp3DButton;
         public NftItemListView NftItemListView;
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
@@ -27,6 +28,7 @@ namespace SolPlay.Scripts.Ui
             GetNFtsNotCachedButton.onClick.AddListener(OnNFtsNotCachedButtonClicked);
             GetBeaverButton.onClick.AddListener(OnGetBeaverButtonClicked);
             MintInAppButton.onClick.AddListener(OnMintInAppButtonClicked);
+            MintInApp3DButton.onClick.AddListener(OnMintInApp3DButtonClicked);
 // #if UNITY_IOS
             // If you have minting of NFTs in your app it may be hard to get into the AppStore
             //GetBeaverButton.gameObject.SetActive(false);
@@ -57,6 +59,14 @@ namespace SolPlay.Scripts.Ui
         private async Task OnLogin()
         {
             await RequestNfts(true);
+        }
+
+        private async void OnMintInApp3DButtonClicked()
+        {
+            var signature = await ServiceFactory.Resolve<NftMintingService>()
+                .MintNftWithMetaData(
+                    "https://arweave.net/x-NmscUWB6zzdROsLsX1-CfRVVlYcuBL2rQ5vk8Fslo",
+                    "Alpha Racing Dummy", "Test3D");
         }
 
         private async void OnMintInAppButtonClicked()

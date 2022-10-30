@@ -45,14 +45,16 @@ public class GameMode : MonoBehaviour
         var selectedNft = ServiceFactory.Resolve<NftService>().SelectedNft;
         if (selectedNft != null)
         {
-            _playerController.SetSpriteFromNft(selectedNft);
+           // _playerController.SetSpriteFromNft(selectedNft);
         }
     }
 
-    private void OnNftSelectedMessage(NftSelectedMessage obj)
+    private void OnNftSelectedMessage(NftSelectedMessage message)
     {
-        _playerController.Type = obj.NewNFt.MetaplexData.data.symbol == "ORCANAUT" ? PlayerController.NftType.Water : PlayerController.NftType.Default;
-        _playerController.SetSpriteFromNft(obj.NewNFt);
+        _playerController.Type = message.NewNFt.MetaplexData.data.symbol == "ORCANAUT"
+            ? PlayerController.NftType.Water
+            : PlayerController.NftType.Default;
+        _playerController.SetSpriteFromNft(message.NewNFt);
         _playerFollow.UpdateBackgrounds(0);
     }
 

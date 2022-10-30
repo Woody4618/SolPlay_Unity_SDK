@@ -3,9 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
+using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
+using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
@@ -97,7 +99,9 @@ namespace SolPlay.Scripts.Services
                             signatureStatusInfo.ConfirmationStatus == Enum.GetName(typeof(TransactionResult),
                                 TransactionResult.finalized))
                         {
+                            ServiceFactory.Resolve<WalletHolderService>().RefreshSolBalance();
                             MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                            MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                             transactionFinalized = true;
                             onSignatureFinalized();
                         }
@@ -121,8 +125,57 @@ namespace SolPlay.Scripts.Services
             }
         }
 
+        public async Task<RequestResult<string>> TransferTokenToPubkey(PublicKey destination, PublicKey tokenMint,
+            ulong amount, Commitment commitment = Commitment.Confirmed)
+        {
+            var wallHolderService = ServiceFactory.Resolve<WalletHolderService>();
 
-        public async void TransferSolanaToPubkey(string toPublicKey, ulong lamports)
+            PublicKey localTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
+                wallHolderService.BaseWallet.Account.PublicKey,
+                tokenMint);
+            PublicKey senderTokenAccount =
+                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
+            var tokenAccounts =
+                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint);
+
+            var blockHash = await wallHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
+
+            var transaction = new Transaction
+            {
+                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                FeePayer = wallHolderService.BaseWallet.Account.PublicKey,
+                Instructions = new List<TransactionInstruction>(),
+                Signatures = new List<SignaturePubKeyPair>()
+            };
+
+            // We only need to create the token account for the destination because we cant send anything anyway if 
+            // there is no account yet and we only create it if it does not exist yet.
+            if (tokenAccounts.Result == null || tokenAccounts.Result.Value.Count == 0)
+            {
+                transaction.Instructions.Add(
+                    AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                        wallHolderService.BaseWallet.Account.PublicKey,
+                        destination,
+                        tokenMint));
+            }
+
+            transaction.Instructions.Add(
+                TokenProgram.Transfer(
+                    localTokenAccount,
+                    senderTokenAccount,
+                    amount,
+                    wallHolderService.BaseWallet.Account.PublicKey
+                ));
+
+            var result = await wallHolderService.BaseWallet.SignAndSendTransaction(transaction, commitment);
+
+            CheckSignatureStatus(result.Result,
+                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
+            MessageRouter.RaiseMessage(new TokenValueChangedMessage());
+            return result;
+        }
+
+        public async Task<RequestResult<string>> TransferSolanaToPubkey(string toPublicKey, ulong lamports)
         {
             var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
             var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
@@ -130,9 +183,8 @@ namespace SolPlay.Scripts.Services
 
             if (blockHash.Result == null)
             {
-                MessageRouter
-                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Block hash null. Connected to internet?"));
-                return;
+                ServiceFactory.Resolve<LoggingService>().Log("Block hash null. Connected to internet?", true);
+                return null;
             }
 
             var transferSolTransaction = CreateUnsignedTransferSolTransaction(toPublicKey, blockHash, lamports);
@@ -141,7 +193,9 @@ namespace SolPlay.Scripts.Services
                 await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction);
 
             CheckSignatureStatus(requestResult.Result,
-                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); }, TransactionResult.finalized);
+                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
+            MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
+            return requestResult;
         }
 
         private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,

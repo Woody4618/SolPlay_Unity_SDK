@@ -1,6 +1,8 @@
 using System;
 using Frictionless;
+using GLTFast;
 using SolPlay.Scripts.Services;
+using SolPlay.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,28 +14,51 @@ namespace SolPlay.Scripts.Ui
     /// </summary>
     public class NftItemView : MonoBehaviour
     {
-        public SolPlayNft currentSolPlayNft;
-
+        public SolPlayNft CurrentSolPlayNft;
         public RawImage Icon;
         public TextMeshProUGUI Headline;
         public TextMeshProUGUI Description;
         public TextMeshProUGUI PowerLevel;
         public Button Button;
         public GameObject SelectionGameObject;
-        public SolPlayNft CurrentNft;
-
+        public GameObject GltfRoot;
+        public GltfAsset GltfAsset;
+        public RenderTexture RenderTexture;
+        public Camera Camera;
+        public int RenderTextureSize = 75;
+        
         private Action<NftItemView> onButtonClickedAction;
 
-        public void SetData(SolPlayNft solPlayNft, Action<NftItemView> onButtonClicked)
+        public async void SetData(SolPlayNft solPlayNft, Action<NftItemView> onButtonClicked)
         {
-            CurrentNft = solPlayNft;
+            CurrentSolPlayNft = solPlayNft;
             Icon.gameObject.SetActive(false);
-
+            GltfRoot.SetActive(false);
+            
             if (gameObject.activeInHierarchy)
             {
-                Icon.gameObject.SetActive(true);
-                if (solPlayNft.MetaplexData.nftImage != null)
+                if (!string.IsNullOrEmpty(solPlayNft.MetaplexData.data.json.animation_url))
                 {
+                    Icon.gameObject.SetActive(true);
+                    GltfRoot.SetActive(true);
+                    RenderTexture = new RenderTexture(RenderTextureSize, RenderTextureSize, 1);
+                    Camera.targetTexture = RenderTexture;
+                    Camera.cullingMask = (1 << 19);
+                    Icon.texture = RenderTexture;
+                    var isLoaded = await GltfAsset.Load(solPlayNft.MetaplexData.data.json.animation_url);
+                    if (isLoaded)
+                    {
+                        if (!GltfAsset)
+                        {
+                            // In case it was destroyed while loading
+                            return;
+                        }
+                        LayerUtils.SetGameLayerRecursive(GltfAsset.gameObject, 19);
+                    }
+                    
+                } else if (solPlayNft.MetaplexData.nftImage != null)
+                {
+                    Icon.gameObject.SetActive(true);
                     Icon.texture = solPlayNft.MetaplexData.nftImage.file;
                 }
             }
@@ -56,9 +81,8 @@ namespace SolPlay.Scripts.Ui
 
             Button.onClick.AddListener(OnButtonClicked);
             onButtonClickedAction = onButtonClicked;
-            currentSolPlayNft = solPlayNft;
         }
-
+        
         private void OnButtonClicked()
         {
             onButtonClickedAction?.Invoke(this);

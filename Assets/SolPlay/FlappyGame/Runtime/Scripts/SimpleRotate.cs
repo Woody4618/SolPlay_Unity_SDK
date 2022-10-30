@@ -1,12 +1,33 @@
 ﻿using UnityEngine;
 
-
 public class SimpleRotate : MonoBehaviour
 {
-    public float speed = 5;
+    public enum Axis
+    {
+        x,
+        y,
+        z
+    }
+
+    public float speed = 0.1f;
+    public Axis RotationAxis = Axis.x;
 
     void Update()
     {
-        transform.Rotate(Vector3.forward, speed);
+        var rotationAxis = Vector3.zero;
+        switch (RotationAxis)
+        {
+            case Axis.x:
+                rotationAxis = Vector3.forward;
+                break;
+            case Axis.y:
+                rotationAxis = Vector3.up;
+                break;
+            case Axis.z:
+                rotationAxis = Vector3.right;
+                break;
+        }
+
+        transform.Rotate(rotationAxis * Time.deltaTime, speed);
     }
 }

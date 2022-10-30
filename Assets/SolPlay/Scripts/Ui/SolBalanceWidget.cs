@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Threading.Tasks;
 using Frictionless;
-using Solana.Unity.Rpc.Types;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;
@@ -15,61 +12,26 @@ namespace SolPlay.Scripts.Ui
     {
         public TextMeshProUGUI SolBalance;
         
-        async void Start()
+        void Start()
         {
             MessageRouter.AddHandler<SolBalanceChangedMessage>(OnSolBalanceChangedMessage);
             MessageRouter.AddHandler<TokenValueChangedMessage>(OnTokenValueChangedMessage);
-
-            if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
-            {
-                await OnLogin();
-            }
-            else
-            {
-                MessageRouter.AddHandler<WalletLoggedInMessage>(OnWalletLoggedIn);
-            }
         }
 
-        private async Task OnLogin()
+        private void UpdateContent()
         {
-            await RequestSolBalance();
-            StartCoroutine(PollSolBalance());
+            var wallet = ServiceFactory.Resolve<WalletHolderService>();
+            SolBalance.text = wallet.SolBalance.ToString("F2") + " sol";
         }
 
-        private async void OnWalletLoggedIn(WalletLoggedInMessage message)
+        private void OnSolBalanceChangedMessage(SolBalanceChangedMessage message)
         {
-            await OnLogin();
-        }
-
-        private IEnumerator PollSolBalance()
-        {
-            while (true)
-            {
-                yield return new WaitForSeconds(10);
-                RequestSol();
-            }
-        }
-
-        private async Task RequestSolBalance()
-        {
-            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
-            double sol = await wallet.GetBalance(Commitment.Confirmed);
-            SolBalance.text = sol.ToString("F2") + " sol";
-        }
-
-        private async void OnSolBalanceChangedMessage(SolBalanceChangedMessage message)
-        {
-            await RequestSolBalance();
+            UpdateContent();
         }
 
         private async void OnTokenValueChangedMessage(TokenValueChangedMessage message)
         {
-            await RequestSolBalance();
-        }
-
-        private async void RequestSol()
-        {
-            await RequestSolBalance();
+            UpdateContent();
         }
     }
 }

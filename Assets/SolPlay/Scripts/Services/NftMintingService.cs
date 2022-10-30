@@ -82,7 +82,7 @@ namespace SolPlay.Scripts.Services
                 await baseWallet.ActiveRpcClient.GetMinimumBalanceForRentExemptionAsync(
                     TokenProgram.MintAccountDataSize);
 
-            var transaction = new TransactionBuilder()
+            var serializedTransaction = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
                 .SetFeePayer(account)
                 .AddInstruction(
@@ -115,10 +115,10 @@ namespace SolPlay.Scripts.Services
                     account,
                     mint
                 });
+            
+            Transaction deserializedTransaction = Transaction.Deserialize(serializedTransaction);
 
-            Transaction deserializedTransaction = Transaction.Deserialize(transaction);
-
-            Debug.Log($"mint transaction length {transaction.Length}");
+            Debug.Log($"mint transaction length {serializedTransaction.Length}");
 
             var signedTransaction = await baseWallet.SignTransaction(deserializedTransaction);
 

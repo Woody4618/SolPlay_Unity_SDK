@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading.Tasks;
 using Frictionless;
@@ -5,6 +6,7 @@ using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
+using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Ui;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -33,6 +35,7 @@ namespace SolPlay.Scripts.Services
         [DoNotSerialize] public WalletBase BaseWallet;
 
         public bool IsLoggedIn { get; private set; }
+        public double SolBalance;
 
         private PhantomWallet DeeplinkWallet;
         private InGameWallet InGameWallet;
@@ -42,7 +45,7 @@ namespace SolPlay.Scripts.Services
             if (ServiceFactory.Resolve<WalletHolderService>() != null)
             {
                 Destroy(gameObject);
-                return; 
+                return;
             }
 
             ServiceFactory.RegisterSingleton(this);
@@ -61,6 +64,25 @@ namespace SolPlay.Scripts.Services
             {
                 InGameWallet = new InGameWallet(InGameWalletCluster, null, true);
             }
+        }
+
+        public async void RefreshSolBalance(Commitment commitment = Commitment.Confirmed)
+        {
+            if (!IsLoggedIn)
+            {
+                return;
+            }
+
+            var balance = await BaseWallet.ActiveRpcClient.GetBalanceAsync(BaseWallet.Account.PublicKey, commitment);
+            if (balance.Result == null)
+            {
+                ServiceFactory.Resolve<LoggingService>()
+                    .LogWarning("Could not load SolBalance. RPC slow? No Internet connection?", false);
+                return;
+            }
+
+            SolBalance = (double) balance.Result.Value / SolanaUtils.SolToLamports;
+            MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
         }
 
         public async Task<Account> Login(bool devNetLogin)
@@ -99,10 +121,22 @@ namespace SolPlay.Scripts.Services
             {
                 Wallet = BaseWallet
             });
+            
+            RefreshSolBalance();
             Debug.Log("Logged in: " + BaseWallet.Account.PublicKey);
+            StartCoroutine(PollSolBalance());
             return BaseWallet.Account;
         }
-
+       
+        private IEnumerator PollSolBalance()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(10);
+                RefreshSolBalance();
+            }
+        }
+        
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)
         {
             if (BaseWallet.Account == null)

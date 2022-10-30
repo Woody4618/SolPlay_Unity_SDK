@@ -1,4 +1,5 @@
 using Frictionless;
+using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Services;
@@ -10,21 +11,31 @@ namespace SolPlay.Scripts.Ui
     public class TokenScreen : MonoBehaviour
     {
         public Button GetSolPlayTokenButton;
-        public Button PhantomTransactionButton;
+        public Button TransferSolButton;
+        public Button TokenTransactionButton;
 
         void Awake()
         {
-            GetSolPlayTokenButton.gameObject.SetActive(false);
-            PhantomTransactionButton.gameObject.SetActive(false);
             GetSolPlayTokenButton.onClick.AddListener(OnGetSolPlayTokenButtonClicked);
-            PhantomTransactionButton.onClick.AddListener(OnPhantomTransactionButtonClicked);
+            TransferSolButton.onClick.AddListener(OnTransferSolButtonClicked);
+            TokenTransactionButton.onClick.AddListener(OnTokenTransactionButtonClicked);
         }
 
-        private void OnPhantomTransactionButtonClicked()
+        private async void OnTokenTransactionButtonClicked()
+        {
+            var transactionService = ServiceFactory.Resolve<TransactionService>();
+
+            // Transfer one usdc token to to another wallet. USDC has 6 decimals to we need to send 1000000 for 1 USDC
+            var result = await transactionService.TransferTokenToPubkey(
+                new PublicKey(transactionService.EditorExampleWalletPublicKey),
+                new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), 1000000);
+        }
+
+        private async void OnTransferSolButtonClicked()
         {
             var transactionService = ServiceFactory.Resolve<TransactionService>();
             // Transfer 0.1Sol 
-            transactionService.TransferSolanaToPubkey(transactionService.EditorExampleWalletPublicKey,
+            var result = await transactionService.TransferSolanaToPubkey(transactionService.EditorExampleWalletPublicKey,
                 SolanaUtils.SolToLamports / 10);
         }
 

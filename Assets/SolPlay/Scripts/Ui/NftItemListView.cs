@@ -29,7 +29,7 @@ namespace SolPlay.Scripts.Ui
         {
             foreach (var itemView in allNftItemViews)
             {
-                if (itemView.CurrentNft.MetaplexData.mint.Contains(message.HighscoreEntry.Seed))
+                if (itemView.CurrentSolPlayNft.MetaplexData.mint.Contains(message.HighscoreEntry.Seed))
                 {
                     itemView.PowerLevel.text = $"Score: {message.HighscoreEntry.Highscore}";
                 }   
@@ -94,7 +94,7 @@ namespace SolPlay.Scripts.Ui
 
         private void OnItemClicked(NftItemView itemView)
         {
-            Debug.Log("Item Clicked: " + itemView.currentSolPlayNft.MetaplexData.data.name);
+            Debug.Log("Item Clicked: " + itemView.CurrentSolPlayNft.MetaplexData.data.name);
             ServiceFactory.Resolve<NftContextMenu>().Open(itemView);
         }
     }

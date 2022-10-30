@@ -42,7 +42,7 @@ namespace SolPlay.Scripts.Ui
             else
             {
                 // In case you want to load another scene please use the SolPlay instance
-                //SolPlay.Instance.LoadScene("FlappyGameExample");
+                // SolPlay.Instance.LoadScene("FlappyGameExample");
                 ServiceFactory.Resolve<LoggingService>().Log("Add you select logic in NftContextMenu.cs", true);
             }
         }
@@ -64,13 +64,13 @@ namespace SolPlay.Scripts.Ui
 
         public void Open(NftItemView nftItemView)
         {
-            currentNft = nftItemView.currentSolPlayNft;
+            currentNft = nftItemView.CurrentSolPlayNft;
             Root.gameObject.SetActive(true);
-            NftNameText.text = nftItemView.currentSolPlayNft.MetaplexData.data.name;
+            NftNameText.text = nftItemView.CurrentSolPlayNft.MetaplexData.data.name;
             transform.position = nftItemView.transform.position;
             var powerLevelService = ServiceFactory.Resolve<HighscoreService>();
             PowerLevelText.text =
-                $"High score: {powerLevelService.GetHighscoreForPubkey(nftItemView.currentSolPlayNft.MetaplexData.mint).Highscore}";
+                $"High score: {powerLevelService.GetHighscoreForPubkey(nftItemView.CurrentSolPlayNft.MetaplexData.mint).Highscore}";
         }
     }
 }
