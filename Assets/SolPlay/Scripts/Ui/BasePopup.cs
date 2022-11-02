@@ -1,3 +1,4 @@
+using SolPlay.Scripts.Services;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,7 +14,7 @@ namespace SolPlay.Scripts.Ui
             Root.gameObject.SetActive(false);
         }
 
-        public void Open()
+        public virtual void Open(UiService.UiData uiData)
         {
             if (CloseButton != null)
             {
@@ -24,7 +25,7 @@ namespace SolPlay.Scripts.Ui
             Root.gameObject.SetActive(true);
         }
 
-        public void Close()
+        public virtual void Close()
         {
             Root.gameObject.SetActive(false);
         }

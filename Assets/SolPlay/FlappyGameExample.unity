@@ -1021,6 +1021,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlimpSystem
       objectReference: {fileID: 0}
+    - target: {fileID: 3757795471086493542, guid: bc76dbd9ca62145069ac709427e99206, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bc76dbd9ca62145069ac709427e99206, type: 3}
 --- !u!1 &782628375
@@ -1232,7 +1236,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 4.73
+  orthographic size: 5.749109
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2612,6 +2616,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7366234778644114185, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
+      propertyPath: UiRegistrations.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7366234778644114185, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
+      propertyPath: UiRegistrations.Array.data[0].ScreenType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7366234778644114185, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
+      propertyPath: UiRegistrations.Array.data[1].ScreenType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7366234778644114185, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
+      propertyPath: UiRegistrations.Array.data[0].PopupPrefab
+      value: 
+      objectReference: {fileID: 4618755962311296800, guid: e69a38b077d764ae3b4b6cc08b075354, type: 3}
+    - target: {fileID: 7366234778644114185, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
+      propertyPath: UiRegistrations.Array.data[1].PopupPrefab
+      value: 
+      objectReference: {fileID: 3274750751915825555, guid: 5bc4408f2a9f040b2a9c289c724c12c3, type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1b4fdc6f1968a43d68ee82dc0c862785, type: 3}
 --- !u!1001 &2364347744926053383

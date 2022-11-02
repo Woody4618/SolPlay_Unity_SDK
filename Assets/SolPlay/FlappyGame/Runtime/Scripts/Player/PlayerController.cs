@@ -74,8 +74,6 @@ public class PlayerController : MonoBehaviour
         var gltfScene = GltfAsset.transform.GetChild(0);
         var currentBounds = UnityUtils.GetBoundsWithChildren(gltfScene.gameObject);
         bool stillTooBigOrSmall = true;
-        Debug.Log("Bounds size: " + currentBounds.size);
-        Debug.Log("Bounds: extends" + currentBounds.extents);
         var sizeY = TargetBounds.bounds.size.y / currentBounds.size.y;
         gltfScene.gameObject.transform.localScale = new Vector3(sizeY, sizeY, sizeY);
     }

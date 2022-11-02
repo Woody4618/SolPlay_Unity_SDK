@@ -41,6 +41,7 @@ namespace SolPlay.Scripts.Ui
         private void OnDestroy()
         {
             MessageRouter.RemoveHandler<ShowBlimpMessage>(OnShowBlimpMessage);
+            Application.logMessageReceived -= OnLogMessage;
         }
 
         private void OnLogMessage(string condition, string stacktrace, LogType type)

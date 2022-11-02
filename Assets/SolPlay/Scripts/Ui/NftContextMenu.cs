@@ -17,6 +17,7 @@ namespace SolPlay.Scripts.Ui
         public TextMeshProUGUI PowerLevelText;
         public Button BurnButton;
         public Button SelectButton;
+        public Button TransferButton;
         public SolPlayNft currentNft;
  
         private void Awake()
@@ -26,6 +27,12 @@ namespace SolPlay.Scripts.Ui
             CloseButton.onClick.AddListener(OnCloseButtonClicked);
             BurnButton.onClick.AddListener(OnBurnClicked);
             SelectButton.onClick.AddListener(OnSelectClicked);
+            TransferButton.onClick.AddListener(OnTransferClicked);
+        }
+
+        private void OnTransferClicked()
+        {
+            ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.TransferNftPopup, new TransferPopupUiData(currentNft));
         }
 
         private void OnSelectClicked()

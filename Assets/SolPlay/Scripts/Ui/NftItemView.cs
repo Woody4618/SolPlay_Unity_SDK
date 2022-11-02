@@ -31,6 +31,10 @@ namespace SolPlay.Scripts.Ui
 
         public async void SetData(SolPlayNft solPlayNft, Action<NftItemView> onButtonClicked)
         {
+            if (solPlayNft == null)
+            {
+                return;
+            }
             CurrentSolPlayNft = solPlayNft;
             Icon.gameObject.SetActive(false);
             GltfRoot.SetActive(false);

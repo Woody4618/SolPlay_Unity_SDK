@@ -6,7 +6,6 @@ using SolPlay.Orca.OrcaWhirlPool;
 using SolPlay.Scripts.Services;
 using SolPlay.Scripts.Ui;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -50,11 +49,10 @@ public class OrcaSwapPopup : BasePopup
 
     public void Open(PoolData poolData)
     {
-        Open();
+        Open(new UiService.UiData());
         currentPoolData = poolData;
         AToB = true;
         TokenInputA.text = DefaultSwapValue.ToString();
-        ;
         UpdateContent();
     }
 

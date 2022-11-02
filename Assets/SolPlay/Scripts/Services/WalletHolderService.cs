@@ -10,6 +10,7 @@ using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Ui;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SolPlay.Scripts.Services
 {

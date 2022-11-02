@@ -332,9 +332,18 @@ namespace SolPlay.Scripts.Services
 
             // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
             // phantom produces
-            signedTransaction.Signatures[0] = signedTransaction.Signatures[3];
-            signedTransaction.Signatures.RemoveAt(3);
+            Debug.Log("signatures: " + signedTransaction.Signatures);
+            foreach (var sig in signedTransaction.Signatures)
+            {
+                Debug.Log(sig.PublicKey);
+            }
 
+            if (signedTransaction.Signatures.Count > signers.Count)
+            {
+                signedTransaction.Signatures[0] = signedTransaction.Signatures[3];
+                signedTransaction.Signatures.RemoveAt(3);
+            }
+            
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
