@@ -2,6 +2,7 @@ using Frictionless;
 using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts;
 using SolPlay.DeeplinksNftExample.Utils;
+using SolPlay.Orca;
 using SolPlay.Scripts.Services;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,20 +24,16 @@ namespace SolPlay.Scripts.Ui
 
         private async void OnTokenTransactionButtonClicked()
         {
-            var transactionService = ServiceFactory.Resolve<TransactionService>();
-
-            // Transfer one usdc token to to another wallet. USDC has 6 decimals to we need to send 1000000 for 1 USDC
-            var result = await transactionService.TransferTokenToPubkey(
-                new PublicKey(transactionService.EditorExampleWalletPublicKey),
-                new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), 1000000);
+            Token usdcToken = ServiceFactory.Resolve<OrcaWhirlpoolService>()
+                .GetToken(new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"));
+            ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.TransferTokenPopup, new TransferTokenPopupUiData(usdcToken));
         }
 
         private async void OnTransferSolButtonClicked()
         {
-            var transactionService = ServiceFactory.Resolve<TransactionService>();
-            // Transfer 0.1Sol 
-            var result = await transactionService.TransferSolanaToPubkey(transactionService.EditorExampleWalletPublicKey,
-                SolanaUtils.SolToLamports / 10);
+            Token wrappedSolToken = ServiceFactory.Resolve<OrcaWhirlpoolService>()
+                .GetToken(new PublicKey("So11111111111111111111111111111111111111112"));
+            ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.TransferTokenPopup, new TransferTokenPopupUiData(wrappedSolToken));
         }
 
         private void OnGetSolPlayTokenButtonClicked()

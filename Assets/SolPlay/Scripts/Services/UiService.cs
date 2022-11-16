@@ -19,7 +19,8 @@ namespace SolPlay.Scripts.Services
         public enum ScreenType
         {
             OrcaSwapPopup,
-            TransferNftPopup
+            TransferNftPopup,
+            TransferTokenPopup
         }
 
         public class UiData

@@ -1,12 +1,13 @@
+using SolPlay.Orca;
 using SolPlay.Scripts.Services;
 
 namespace SolPlay.Scripts.Ui
 {
-    public class TransferPopupUiData : UiService.UiData
+    public class TransferNftPopupUiData : UiService.UiData
     {
         public SolPlayNft NftToTransfer;
-
-        public TransferPopupUiData(SolPlayNft solPlayNft)
+        
+        public TransferNftPopupUiData(SolPlayNft solPlayNft)
         {
             NftToTransfer = solPlayNft;
         }

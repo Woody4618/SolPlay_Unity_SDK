@@ -26,6 +26,8 @@ namespace SolPlay.Scripts.Ui
         public RenderTexture RenderTexture;
         public Camera Camera;
         public int RenderTextureSize = 75;
+        [Tooltip("Loading the 3D nfts from the animation url. Note thought that i can be a bit slow to load and the app may stuck a bit when instantiating ")]
+        public bool Load3DNfts;
         
         private Action<NftItemView> onButtonClickedAction;
 
@@ -41,7 +43,7 @@ namespace SolPlay.Scripts.Ui
             
             if (gameObject.activeInHierarchy)
             {
-                if (!string.IsNullOrEmpty(solPlayNft.MetaplexData.data.json.animation_url))
+                if (Load3DNfts && !string.IsNullOrEmpty(solPlayNft.MetaplexData.data.json.animation_url))
                 {
                     Icon.gameObject.SetActive(true);
                     GltfRoot.SetActive(true);
@@ -57,7 +59,7 @@ namespace SolPlay.Scripts.Ui
                             // In case it was destroyed while loading
                             return;
                         }
-                        LayerUtils.SetGameLayerRecursive(GltfAsset.gameObject, 19);
+                        LayerUtils.SetRenderLayerRecursive(GltfAsset.gameObject, 19);
                     }
                     
                 } else if (solPlayNft.MetaplexData.nftImage != null)
@@ -69,18 +71,28 @@ namespace SolPlay.Scripts.Ui
             var nftService = ServiceFactory.Resolve<NftService>();
 
             SelectionGameObject.gameObject.SetActive(nftService.IsNftSelected(solPlayNft));
-            Headline.text = solPlayNft.MetaplexData.data.name;
-            Description.text = solPlayNft.MetaplexData.data.json.description;
-            var nftPowerLevelService = ServiceFactory.Resolve<HighscoreService>();
-            var highscoreForPubkey = nftPowerLevelService.GetHighscoreForPubkey(solPlayNft.MetaplexData.mint);
-            if (highscoreForPubkey != null)
+            if (solPlayNft.MetaplexData != null)
             {
-                PowerLevel.text =
-                    $"Score: {highscoreForPubkey.Highscore}";
+                if (solPlayNft.MetaplexData.data.json != null)
+                {
+                    Description.text = solPlayNft.MetaplexData.data.json.description;
+                }
+                Headline.text = solPlayNft.MetaplexData.data.name;
+                var nftPowerLevelService = ServiceFactory.Resolve<HighscoreService>();
+                var highscoreForPubkey = nftPowerLevelService.GetHighscoreForPubkey(solPlayNft.MetaplexData.mint);
+                if (highscoreForPubkey != null)
+                {
+                    PowerLevel.text =
+                        $"Score: {highscoreForPubkey.Highscore}";
+                }
+                else
+                {
+                    PowerLevel.text = "Loading";
+                }
             }
             else
             {
-                PowerLevel.text = "Loading";
+                Debug.LogWarning("You have an NFT without meta data for some reason");
             }
 
             Button.onClick.AddListener(OnButtonClicked);

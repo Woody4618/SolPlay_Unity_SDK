@@ -5,29 +5,33 @@ using System.Collections;
 using AllArt.Solana.Example;
 using Frictionless;
 using Solana.Unity.Wallet;
+using SolPlay.DeeplinksNftExample.Scripts;
+using SolPlay.DeeplinksNftExample.Utils;
+using SolPlay.Orca;
 using SolPlay.Scripts;
 using SolPlay.Scripts.Services;
 using SolPlay.Scripts.Ui;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Popup with a QrCode Scanner to scan Solana Addresses.
+/// Popup with a QrCode Scanner to scan Solana Addresses and to send a SPL Token.
 /// </summary>
-public class TransferPopup : BasePopup
+public class TransferTokenPopup : BasePopup
 {
-    public TMP_InputField TextHeader;
-    public RawImage Image;
+    public TMP_InputField AdressInput;
+    public TMP_InputField AmountInput;
+    public RawImage CameraRawImage;
     public AudioSource Audio;
-    public NftItemView NftItemView;
+    public TokenItemView TokenItemView;
     public Button TransferButton;
 
     private float RestartTime;
     private QrCodeData CurrentQrCodeData;
     private IScanner BarcodeScanner;
     private SolPlayNft currentNft;
+    private Token currentToken;
 
     private void Awake()
     {
@@ -42,34 +46,70 @@ public class TransferPopup : BasePopup
         // Screen.autorotateToPortraitUpsideDown = false;
     }
 
-    private void Open(SolPlayNft nft)
+    private void Open(Token token)
     {
-        currentNft = nft;
-        NftItemView.SetData(nft, view => { });
+        currentToken = token;
+        TokenItemView.gameObject.SetActive(true);
+        TokenItemView.SetData(token, view => { });
     }
 
     public override void Open(UiService.UiData uiData)
     {
+        var transferPopupUiData = (uiData as TransferTokenPopupUiData);
+
+        if (transferPopupUiData == null)
+        {
+            Debug.LogError("Wrong ui data for transfer popup");
+            return;
+        }
+
         base.Open(uiData);
-        Open((uiData as TransferPopupUiData)?.NftToTransfer);
-        StartCoroutine(InitScanner());
+
+        if (transferPopupUiData.TokenToTransfer != null)
+        {
+            Open(transferPopupUiData.TokenToTransfer);
+        }
+
+        //StartCoroutine(InitScanner());
     }
 
     public override void Close()
     {
-        StartCoroutine(StopCamera(() =>
-        {
-            base.Close();
-        }));
+        StartCoroutine(StopCamera(() => { base.Close(); }));
     }
-    
+
     private async void OnTransferClicked()
     {
-        string destinationAddress = TextHeader.text;
-        PublicKey address = new PublicKey(destinationAddress);
+        if (!float.TryParse(AmountInput.text, out float amount))
+        {
+            return;
+        }
+
+        if (currentToken != null)
+        {
+            var transactionService = ServiceFactory.Resolve<TransactionService>();
+            Debug.Log($"amount: {amount}");
+            ServiceFactory.Resolve<LoggingService>()
+                .Log($"Start transfer of {amount} {currentToken.symbol} to {AdressInput.text}", true);
+
+            if (currentToken.mint == OrcaWhirlpoolService.NativeMint)
+            {
+                var result = await transactionService.TransferSolanaToPubkey(
+                    new PublicKey(AdressInput.text),
+                    (ulong) (amount * SolanaUtils.SolToLamports));
+            }
+            else
+            {
+                // Transfer one token to to another wallet. USDC has 6 decimals to we need to send 1000000 for 1 USDC. Depends on the token
+                var pow = Mathf.Pow(10, currentToken.decimals);
+                var convertedToTokenAmount = (ulong) (amount * pow);
+                var result = await transactionService.TransferTokenToPubkey(
+                    new PublicKey(AdressInput.text),
+                    new PublicKey(currentToken.mint), convertedToTokenAmount);
+            }
+        }
+
         Close();
-        var result = await ServiceFactory.Resolve<TransactionService>()
-            .TransferTokenToPubkey(address, new PublicKey(currentNft.MetaplexData.mint), 1);
     }
 
     IEnumerator InitScanner()
@@ -77,12 +117,12 @@ public class TransferPopup : BasePopup
         yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
         if (Application.HasUserAuthorization(UserAuthorization.WebCam))
         {
-            Image.gameObject.SetActive(true);
+            CameraRawImage.gameObject.SetActive(true);
             Debug.Log("webcam found");
         }
         else
         {
-            Image.gameObject.SetActive(false);
+            CameraRawImage.gameObject.SetActive(false);
             Debug.Log("webcam not found");
         }
 
@@ -91,20 +131,23 @@ public class TransferPopup : BasePopup
         BarcodeScanner.Camera.Play();
 
         // Display the camera texture through a RawImage
-        BarcodeScanner.OnReady += (sender, arg) =>
-        {
-            // Set Orientation & Texture
-            Image.transform.localEulerAngles = BarcodeScanner.Camera.GetEulerAngles();
-            Image.transform.localScale = BarcodeScanner.Camera.GetScale();
-            Image.texture = BarcodeScanner.Camera.Texture;
+        BarcodeScanner.OnReady += (sender, arg) => { StartCoroutine(InitCameraImageNextFrame()); };
+    }
 
-            // Keep Image Aspect Ratio
-            var rect = Image.GetComponent<RectTransform>();
-            var newHeight = rect.sizeDelta.x * BarcodeScanner.Camera.Height / BarcodeScanner.Camera.Width;
-            rect.sizeDelta = new Vector2(rect.sizeDelta.x, newHeight);
+    private IEnumerator InitCameraImageNextFrame()
+    {
+        yield return null;
+        // Set Orientation & Texture
+        CameraRawImage.transform.localEulerAngles = BarcodeScanner.Camera.GetEulerAngles();
+        CameraRawImage.transform.localScale = BarcodeScanner.Camera.GetScale();
+        CameraRawImage.texture = BarcodeScanner.Camera.Texture;
 
-            RestartTime = Time.realtimeSinceStartup;
-        };
+        // Keep Image Aspect Ratio
+        var rect = CameraRawImage.GetComponent<RectTransform>();
+        var newHeight = rect.sizeDelta.x * BarcodeScanner.Camera.Height / BarcodeScanner.Camera.Width;
+        rect.sizeDelta = new Vector2(rect.sizeDelta.x, newHeight);
+
+        RestartTime = Time.realtimeSinceStartup;
     }
 
     /// <summary>
@@ -115,13 +158,13 @@ public class TransferPopup : BasePopup
         BarcodeScanner.Scan((barCodeType, barCodeValue) =>
         {
             BarcodeScanner.Stop();
-            if (TextHeader.text.Length > 250)
+            if (AdressInput.text.Length > 250)
             {
-                TextHeader.text = "";
+                AdressInput.text = "";
             }
 
             Debug.Log("Found: " + barCodeType + " / " + barCodeValue + "\n");
-            TextHeader.text = barCodeValue;
+            AdressInput.text = barCodeValue;
 
             // You can do this if you want to add extra information in the QR code. 
             // I used this one to put a sol amount in for example and then use this to request an amount, like 
@@ -132,11 +175,10 @@ public class TransferPopup : BasePopup
 
             RestartTime += Time.realtimeSinceStartup + 1f;
 
-            // Feedback
             Audio.Play();
 
 #if UNITY_ANDROID || UNITY_IOS
-			Handheld.Vibrate();
+            Handheld.Vibrate();
 #endif
         });
     }
@@ -150,10 +192,13 @@ public class TransferPopup : BasePopup
         {
             return;
         }
-        if (BarcodeScanner != null)
+
+        if (BarcodeScanner == null)
         {
-            BarcodeScanner.Update();
+            return;
         }
+
+        BarcodeScanner.Update();
 
         // Check if the Scanner need to be started or restarted
         if (RestartTime != 0 && RestartTime < Time.realtimeSinceStartup)
@@ -172,14 +217,16 @@ public class TransferPopup : BasePopup
     public IEnumerator StopCamera(Action callback)
     {
         // Stop Scanning
-        BarcodeScanner.Stop();
-        BarcodeScanner.Camera.Stop();
-        Image.texture = null;
-        
+        if (BarcodeScanner != null)
+        {
+            BarcodeScanner.Stop();
+            BarcodeScanner.Camera.Stop();
+        }
+        CameraRawImage.texture = null;
+
         // Wait a bit
         yield return new WaitForSeconds(0.1f);
 
         callback.Invoke();
     }
-
 }

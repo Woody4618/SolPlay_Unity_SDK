@@ -157,63 +157,19 @@ public class OrcaSwapWidget : MonoBehaviour
                 continue;
             }
 
-            Metaplex metaPlexA = new Metaplex().ParseData(tokenAccountInfoA.Data[0], false);
-            Metaplex metaPlexB = new Metaplex().ParseData(tokenAccountInfoB.Data[0], false);
+            poolData.SymbolA = poolData.TokenA.symbol;
+            poolData.SymbolB = poolData.TokenB.symbol;
 
-            poolData.SymbolA = metaPlexA.data.symbol;
-            poolData.SymbolB = metaPlexB.data.symbol;
-
-            poolData.SpriteA = await GetTokenIconSprite(pool.TokenMintA, poolData.SymbolA);
-            poolData.SpriteB = await GetTokenIconSprite(pool.TokenMintB, poolData.SymbolB);
+            poolData.SpriteA = await OrcaWhirlpoolService.GetTokenIconSprite(pool.TokenMintA, poolData.SymbolA);
+            poolData.SpriteB = await OrcaWhirlpoolService.GetTokenIconSprite(pool.TokenMintB, poolData.SymbolB);
 
             PoolListItem poolListItem = Instantiate(PoolListItemPrefab, PoolListItemRoot.transform);
-           // Debug.Log("set data" + poolData.PoolPda);
 
             poolListItem.SetData(poolData, OpenSwapPopup);
         }
 
     }
-
-    /// <summary>
-    /// For some reason when trying to load the icons from token list I get a cross domain error, so for now
-    /// I just added some token icons on the resources folder. 
-    /// </summary>
-    private static async Task<Sprite> GetTokenIconSprite(string mint, string symbol)
-    {
-        foreach (var token in ServiceFactory.Resolve<OrcaWhirlpoolService>().OrcaApiTokenData.tokens)
-        {
-            var spriteFromResources = SolPlayFileLoader.LoadFromResources(symbol);
-            if (spriteFromResources != null)
-            {
-                return spriteFromResources;
-            }
-
-            if (token.mint == mint)
-            {
-                string tokenIconUrl = token.logoURI;
-                var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
-                Texture2D compressedTexture = Nft.Resize(texture, 75, 75);
-                var sprite = Sprite.Create(compressedTexture,
-                    new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
-                    100.0f);
-                return sprite;
-            }
-        }
-
-
-        return null;
-        /*
-            Deprecated way of loading token icons from the Solana token-list
-         string tokenIconUrl =
-            $"https://github.com/solana-labs/token-list/blob/main/assets/mainnet/{mint}/logo.png?raw=true";
-        var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
-        Texture2D compressedTexture = Nft.Resize(texture, 75, 75);
-        var sprite = Sprite.Create(compressedTexture,
-            new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
-            100.0f);
-        return sprite;*/
-    }
-
+    
     private void OpenSwapPopup(PoolListItem poolListItem)
     {
         var orcaSwapPopup = ServiceFactory.Resolve<OrcaSwapPopup>();

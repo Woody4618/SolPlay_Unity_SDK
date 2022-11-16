@@ -317,7 +317,7 @@ namespace SolPlay.Scripts
         /// <summary>
         /// Resize great textures to small, because of performance
         /// </summary>
-        private static Texture2D Resize(Texture2D texture2D, int targetX, int targetY)
+        public static Texture2D Resize(Texture2D texture2D, int targetX, int targetY)
         {
             RenderTexture rt = new RenderTexture(targetX, targetY, 24);
             RenderTexture.active = rt;

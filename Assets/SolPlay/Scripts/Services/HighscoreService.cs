@@ -159,8 +159,8 @@ namespace SolPlay.Scripts.Services
                         byte[] message = Base64.Decode(entry);
                         uint uInt32 = BitConverter.ToUInt32(message);
                         var highscoreText = "High score of your NFT is: " + uInt32;
-                        MessageRouter
-                            .RaiseMessage(new BlimpSystem.ShowBlimpMessage(highscoreText));
+                        // This will show the high score of the NFT on the screen. If there are many NFTs it can get a bit spammy
+                        // MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage(highscoreText));
                         _allHighscores[seed].Highscore = uInt32;
                         MessageRouter
                             .RaiseMessage(new NewHighScoreLoadedMessage(_allHighscores[seed]));

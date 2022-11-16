@@ -152,6 +152,115 @@ namespace SolPlay.Scripts.Services
             return transactionSignature.Result;
         }
 
+        public async Task<string> AuthorizeAccount(PublicKey accountToUnfreeze, PublicKey mint)
+        {
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            var localWallet = walletHolderService.BaseWallet;
+            
+            var closeInstruction = TokenProgram.ThawAccount(
+                accountToUnfreeze,
+                mint,
+                localWallet.Account.PublicKey,
+                TokenProgram.ProgramIdKey);
+            var blockHash = await localWallet.ActiveRpcClient.GetRecentBlockHashAsync();
+
+            var signers = new List<Account> {localWallet.Account};
+            var transactionBuilder = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(localWallet.Account)
+                .AddInstruction(closeInstruction);
+
+            byte[] transaction = transactionBuilder.Build(signers);
+            Transaction deserializedTransaction = Transaction.Deserialize(transaction);
+            Transaction signedTransaction =
+                await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
+
+            // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
+            // phantom produces
+            signedTransaction.Signatures.RemoveAt(0);
+            Debug.Log("signatures: " + signedTransaction.Signatures);
+            foreach (var sig in signedTransaction.Signatures)
+            {
+                Debug.Log(sig.PublicKey);
+            }
+
+            var transactionSignature =
+                await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
+
+            if (!transactionSignature.WasSuccessful)
+            {
+                ServiceFactory.Resolve<LoggingService>()
+                    .Log("Mint was not successfull: " + transactionSignature.Reason, true);
+            }
+            else
+            {
+                ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(transactionSignature.Result,
+                    () =>
+                    {
+                        ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                        MessageRouter.RaiseMessage(new NftMintFinishedMessage());
+                    });
+            }
+
+            Debug.Log(transactionSignature.Reason);
+            return transactionSignature.Result;
+        }
+ 
+        public async Task<string> CloseAccount(PublicKey accountToClose)
+        {
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            var localWallet = walletHolderService.BaseWallet;
+            var closeInstruction = TokenProgram.CloseAccount(
+                accountToClose,
+                localWallet.Account.PublicKey,
+                localWallet.Account.PublicKey, 
+                TokenProgram.ProgramIdKey);
+            var blockHash = await localWallet.ActiveRpcClient.GetRecentBlockHashAsync();
+
+            var signers = new List<Account> {localWallet.Account};
+            var transactionBuilder = new TransactionBuilder()
+                .SetRecentBlockHash(blockHash.Result.Value.Blockhash)
+                .SetFeePayer(localWallet.Account)
+                .AddInstruction(closeInstruction);
+
+            byte[] transaction = transactionBuilder.Build(signers);
+            Transaction deserializedTransaction = Transaction.Deserialize(transaction);
+            Transaction signedTransaction =
+                await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
+
+            // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
+            // phantom produces
+            signedTransaction.Signatures.RemoveAt(0);
+            Debug.Log("signatures: " + signedTransaction.Signatures);
+            foreach (var sig in signedTransaction.Signatures)
+            {
+                Debug.Log(sig.PublicKey);
+            }
+
+            var transactionSignature =
+                await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
+
+            if (!transactionSignature.WasSuccessful)
+            {
+                ServiceFactory.Resolve<LoggingService>()
+                    .Log("Mint was not successfull: " + transactionSignature.Reason, true);
+            }
+            else
+            {
+                ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(transactionSignature.Result,
+                    () =>
+                    {
+                        ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                        MessageRouter.RaiseMessage(new NftMintFinishedMessage());
+                    });
+            }
+
+            Debug.Log(transactionSignature.Reason);
+            return transactionSignature.Result;
+        }
+        
         public async Task<string> MintNftWithMetaData(string metaDataUri, string name, string symbol)
         {
             var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
@@ -226,12 +335,13 @@ namespace SolPlay.Scripts.Services
                 fromAccount.PublicKey
             );
 
-            var freezeAccount = TokenProgram.FreezeAccount(
+            // If you freeze the account the users will not be able to transfer the NFTs anywhere
+            /*var freezeAccount = TokenProgram.FreezeAccount(
                 tokenAccount,
                 mintAccount,
                 fromAccount,
                 TokenProgram.ProgramIdKey
-            );
+            );*/
 
             // PDA Metadata
             PublicKey metadataAddressPDA;
@@ -289,7 +399,7 @@ namespace SolPlay.Scripts.Services
                 .AddInstruction(createTokenAccount)
                 .AddInstruction(initializeMintAccount)
                 .AddInstruction(mintTo)
-                .AddInstruction(freezeAccount)
+                //.AddInstruction(freezeAccount)
                 .AddInstruction(
                     MetadataProgram.CreateMetadataAccount(
                         metadataAddressPDA, // PDA

@@ -1,4 +1,7 @@
 using Frictionless;
+using Solana.Unity.Programs;
+using Solana.Unity.Wallet;
+using SolPlay.Orca;
 using SolPlay.Scripts.Services;
 using TMPro;
 using UnityEngine;
@@ -32,10 +35,11 @@ namespace SolPlay.Scripts.Ui
 
         private void OnTransferClicked()
         {
-            ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.TransferNftPopup, new TransferPopupUiData(currentNft));
+            ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.TransferNftPopup, new TransferNftPopupUiData(currentNft));
+            Close();
         }
 
-        private void OnSelectClicked()
+        private async void OnSelectClicked()
         {
             ServiceFactory.Resolve<NftService>().SelectNft(currentNft);
             MessageRouter.RaiseMessage(

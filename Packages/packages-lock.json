@@ -2,7 +2,7 @@
   "dependencies": {
     "com.atteneder.gltfast": {
       "version": "4.8.5",
-      "depth": 1,
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.jsonserialize": "1.0.0",
@@ -18,10 +18,9 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.0.2",
-        "com.atteneder.gltfast": "4.8.5"
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
-      "hash": "cf4ac8d9bc2113bb64fce3c2b1515a2481de5fd6"
+      "hash": "6086ea930954dd3ea256bf599ae805b0d191c354"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -31,7 +30,7 @@
     },
     "com.unity.burst": {
       "version": "1.6.6",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {
         "com.unity.mathematics": "1.2.1"
@@ -102,7 +101,7 @@
     },
     "com.unity.mathematics": {
       "version": "1.2.6",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

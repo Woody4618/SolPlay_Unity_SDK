@@ -12,15 +12,18 @@ using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
+using Solana.Unity.SDK.Nft;
 using Solana.Unity.SDK.Utility;
 using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
 using SolPlay.Orca;
+using SolPlay.Scripts;
 using SolPlay.Scripts.Services;
 using UnityEngine;
 using Whirlpool;
 using Whirlpool.Program;
 using Whirlpool.Types;
+using Vector2 = UnityEngine.Vector2;
 
 namespace SolPlay.DeeplinksNftExample.Scripts
 {
@@ -276,6 +279,45 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             }
         }
 
+        /// <summary>
+        /// For some reason when trying to load the icons from token list I get a cross domain error, so for now
+        /// I just added some token icons on the resources folder. 
+        /// </summary>
+        public static async Task<Sprite> GetTokenIconSprite(string mint, string symbol)
+        {
+            foreach (var token in ServiceFactory.Resolve<OrcaWhirlpoolService>().OrcaApiTokenData.tokens)
+            {
+                if (token.mint == mint)
+                {
+                    var spriteFromResources = SolPlayFileLoader.LoadFromResources(symbol);
+                    if (spriteFromResources != null)
+                    {
+                        return spriteFromResources;
+                    }
+
+                    string tokenIconUrl = token.logoURI;
+                    var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
+                    Texture2D compressedTexture = SolPlayNft.Resize(texture, 75, 75);
+                    var sprite = Sprite.Create(compressedTexture,
+                        new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
+                        100.0f);
+                    return sprite;
+                }
+            }
+        
+            return null;
+            /*
+                Deprecated way of loading token icons from the Solana token-list
+             string tokenIconUrl =
+                $"https://github.com/solana-labs/token-list/blob/main/assets/mainnet/{mint}/logo.png?raw=true";
+            var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
+            Texture2D compressedTexture = Nft.Resize(texture, 75, 75);
+            var sprite = Sprite.Create(compressedTexture,
+                new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
+                100.0f);
+            return sprite;*/
+        }
+        
         private static PublicKey CreateAta(WalletBase wallet, PublicKey mint)
         {
             return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, mint);

@@ -125,19 +125,70 @@ namespace SolPlay.Scripts.Services
             }
         }
 
+        public async Task<RequestResult<string>> TransferNftToPubkey(PublicKey destination, SolPlayNft nft, Commitment commitment = Commitment.Confirmed)
+        {
+            var wallHolderService = ServiceFactory.Resolve<WalletHolderService>();
+
+            PublicKey destinationTokenAccount =
+                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, new PublicKey(nft.MetaplexData.mint));
+            var tokenAccounts =
+                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, new PublicKey(nft.MetaplexData.mint));
+            
+            var blockHash = await wallHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
+
+            var transaction = new Transaction
+            {
+                RecentBlockHash = blockHash.Result.Value.Blockhash,
+                FeePayer = wallHolderService.BaseWallet.Account.PublicKey,
+                Instructions = new List<TransactionInstruction>(),
+                Signatures = new List<SignaturePubKeyPair>()
+            };
+
+            // We only need to create the token account for the destination because we cant send anything anyway if 
+            // there is no account yet and we only create it if it does not exist yet.
+            if (tokenAccounts.Result == null || tokenAccounts.Result.Value.Count == 0)
+            {
+                transaction.Instructions.Add(
+                    AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
+                        wallHolderService.BaseWallet.Account.PublicKey,
+                        destination,
+                        new PublicKey(nft.MetaplexData.mint)));
+            }
+
+            transaction.Instructions.Add(
+                TokenProgram.Transfer(
+                    new PublicKey(nft.TokenAccount.PublicKey),
+                    destinationTokenAccount,
+                    1,
+                    wallHolderService.BaseWallet.Account.PublicKey
+                ));
+
+            var signedTransaction = await wallHolderService.BaseWallet.SignTransaction(transaction);
+
+            var transactionSignature =
+                await wallHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
+
+            CheckSignatureStatus(transactionSignature.Result,
+                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
+            
+            MessageRouter.RaiseMessage(new NftMintFinishedMessage());
+            MessageRouter.RaiseMessage(new TokenValueChangedMessage());
+            return transactionSignature;
+        }
+
         public async Task<RequestResult<string>> TransferTokenToPubkey(PublicKey destination, PublicKey tokenMint,
             ulong amount, Commitment commitment = Commitment.Confirmed)
         {
             var wallHolderService = ServiceFactory.Resolve<WalletHolderService>();
 
             PublicKey localTokenAccount = AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(
-                wallHolderService.BaseWallet.Account.PublicKey,
-                tokenMint);
-            PublicKey senderTokenAccount =
+                wallHolderService.BaseWallet.Account.PublicKey, tokenMint);
+            PublicKey destinationTokenAccount =
                 AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
             var tokenAccounts =
                 await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint);
-
+            
             var blockHash = await wallHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
             var transaction = new Transaction
@@ -162,17 +213,23 @@ namespace SolPlay.Scripts.Services
             transaction.Instructions.Add(
                 TokenProgram.Transfer(
                     localTokenAccount,
-                    senderTokenAccount,
+                    destinationTokenAccount,
                     amount,
                     wallHolderService.BaseWallet.Account.PublicKey
                 ));
+            
 
-            var result = await wallHolderService.BaseWallet.SignAndSendTransaction(transaction, commitment);
+            var signedTransaction = await wallHolderService.BaseWallet.SignTransaction(transaction);
 
-            CheckSignatureStatus(result.Result,
+            var transactionSignature =
+                await wallHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
+
+            CheckSignatureStatus(transactionSignature.Result,
                 () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
+            
             MessageRouter.RaiseMessage(new TokenValueChangedMessage());
-            return result;
+            return transactionSignature;
         }
 
         public async Task<RequestResult<string>> TransferSolanaToPubkey(string toPublicKey, ulong lamports)
@@ -190,7 +247,7 @@ namespace SolPlay.Scripts.Services
             var transferSolTransaction = CreateUnsignedTransferSolTransaction(toPublicKey, blockHash, lamports);
 
             RequestResult<string> requestResult =
-                await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction);
+                await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction, Commitment.Confirmed);
 
             CheckSignatureStatus(requestResult.Result,
                 () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
