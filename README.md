@@ -13,7 +13,7 @@ in your unity package manager.
 [GlFAst Installer](https://package-installer.glitch.me/v1/installer/OpenUPM/com.atteneder.gltfast?registry=https%3A%2F%2Fpackage.openupm.com&scope=com.atteneder)
 
 3) Import this unity package 
-[SolPlay_0_5_alpha.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/9896112/SolPlay_0_5_alpha.unitypackage.zip)
+[Solplay_0_0_6_alpha.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10047699/Solplay_0_0_6_alpha.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 
