@@ -115,7 +115,7 @@ public class OrcaSwapPopup : BasePopup
         var signature = await ServiceFactory.Resolve<OrcaWhirlpoolService>()
             .Swap(wallet, currentPoolData.Pool, valueLong, AToB);
         ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature,
-            () => { MessageRouter.RaiseMessage(new TokenValueChangedMessage()); });
+            success => { MessageRouter.RaiseMessage(new TokenValueChangedMessage()); });
     }
 
     private void OnSwapAAndBButtonClicked()

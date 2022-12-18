@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Frictionless;
 using SolPlay.Scripts.Services;
@@ -13,6 +14,7 @@ namespace SolPlay.Scripts.Ui
         public string BlackList;
 
         private List<NftItemView> allNftItemViews = new List<NftItemView>();
+        private Action<SolPlayNft> onNftSelected;
 
         public void OnEnable()
         {
@@ -25,28 +27,25 @@ namespace SolPlay.Scripts.Ui
             MessageRouter.AddHandler<NewHighScoreLoadedMessage>(OnHighscoreLoadedMessage);
         }
 
+        public void SetData(Action<SolPlayNft> onNftSelected)
+        {
+            this.onNftSelected = onNftSelected;
+        }
+
         private void OnHighscoreLoadedMessage(NewHighScoreLoadedMessage message)
         {
             foreach (var itemView in allNftItemViews)
             {
-                if (itemView.CurrentSolPlayNft.MetaplexData.mint.Contains(message.HighscoreEntry.Seed))
+                if (itemView.CurrentSolPlayNft.MetaplexData.mint == message.HighscoreEntry.Seed)
                 {
                     itemView.PowerLevel.text = $"Score: {message.HighscoreEntry.Highscore}";
-                }   
+                }
             }
         }
-        
+
         private void OnNFtSelectedMessage(NftSelectedMessage message)
         {
             UpdateContent();
-        }
-
-        public void Clear()
-        {
-            foreach (Transform trans in ItemRoot.transform)
-            {
-                Destroy(trans.gameObject);
-            }
         }
 
         public void UpdateContent()
@@ -57,16 +56,49 @@ namespace SolPlay.Scripts.Ui
                 return;
             }
 
-            Clear();
-
             foreach (SolPlayNft nft in nftService.MetaPlexNFts)
             {
-                InstantiateListNftItem(nft);
+                AddNFt(nft);
+            }
+
+            List<NftItemView> notExistingNfts = new List<NftItemView>();
+            foreach (NftItemView nftItemView in allNftItemViews)
+            {
+                bool existsInWallet = false;
+                foreach (SolPlayNft walletNft in nftService.MetaPlexNFts)
+                {
+                    if (nftItemView.CurrentSolPlayNft.MetaplexData.mint == walletNft.MetaplexData.mint)
+                    {
+                        existsInWallet = true;
+                        break;
+                    }
+                }
+
+                if (!existsInWallet)
+                {
+                    notExistingNfts.Add(nftItemView);
+                }
+            }
+
+            for (var index = notExistingNfts.Count - 1; index >= 0; index--)
+            {
+                var nftView = notExistingNfts[index];
+                allNftItemViews.Remove(nftView);
+                Destroy(nftView.gameObject);
             }
         }
 
         public void AddNFt(SolPlayNft newSolPlayNft)
         {
+            foreach (var nft in allNftItemViews)
+            {
+                if (nft.CurrentSolPlayNft.MetaplexData.mint == newSolPlayNft.MetaplexData.mint)
+                {
+                    // already exists
+                    return;
+                }
+            }
+
             InstantiateListNftItem(newSolPlayNft);
         }
 
@@ -95,7 +127,7 @@ namespace SolPlay.Scripts.Ui
         private void OnItemClicked(NftItemView itemView)
         {
             Debug.Log("Item Clicked: " + itemView.CurrentSolPlayNft.MetaplexData.data.name);
-            ServiceFactory.Resolve<NftContextMenu>().Open(itemView);
+            ServiceFactory.Resolve<NftContextMenu>().Open(itemView, onNftSelected);
         }
     }
 }

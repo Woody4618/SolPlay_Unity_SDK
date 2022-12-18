@@ -40,7 +40,7 @@ namespace SolPlay.Scripts.Services
             if (blockHash.Result == null)
             {
                 MessageRouter
-                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Block hash null. Connected to internet?"));
+                    .RaiseMessage(new BlimpSystem.ShowLogMessage("Block hash null. Connected to internet?"));
                 return;
             }
 

@@ -1,25 +1,28 @@
 using UnityEngine;
 
-public class TradingParticlesController : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts
 {
-    public ParticleSystem ParticleSystem;
-    
-    private bool IsMovingUp;
-    private Vector3 LastPosition;
-
-    public Color UpColor;
-    public Color DownColor;
-    
-    void Update()
+    public class TradingParticlesController : MonoBehaviour
     {
-        bool isMovingUp = transform.position.y > LastPosition.y;
+        public ParticleSystem ParticleSystem;
+    
+        private bool IsMovingUp;
+        private Vector3 LastPosition;
 
-        if (isMovingUp != IsMovingUp)
+        public Color UpColor;
+        public Color DownColor;
+    
+        void Update()
         {
-            var particleSystemMain = ParticleSystem.main;
-            particleSystemMain.startColor = isMovingUp ? new ParticleSystem.MinMaxGradient(UpColor) : new ParticleSystem.MinMaxGradient(DownColor);
-            IsMovingUp = isMovingUp;
+            bool isMovingUp = transform.position.y > LastPosition.y;
+
+            if (isMovingUp != IsMovingUp)
+            {
+                var particleSystemMain = ParticleSystem.main;
+                particleSystemMain.startColor = isMovingUp ? new ParticleSystem.MinMaxGradient(UpColor) : new ParticleSystem.MinMaxGradient(DownColor);
+                IsMovingUp = isMovingUp;
+            }
+            LastPosition = transform.position;
         }
-        LastPosition = transform.position;
     }
 }

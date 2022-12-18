@@ -8,9 +8,7 @@ using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Bip39;
 using SolPlay.DeeplinksNftExample.Utils;
 using SolPlay.Scripts.Ui;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace SolPlay.Scripts.Services
 {
@@ -21,25 +19,27 @@ namespace SolPlay.Scripts.Services
 
     public class WalletHolderService : MonoBehaviour, IMultiSceneSingleton
     {
-        public RpcCluster InGameWalletCluster = RpcCluster.DevNet;
+        public RpcCluster DevnetWalletCluster = RpcCluster.DevNet;
 
-        [HideIfEnumValue("InGameWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
-        public string InGameWalletCustomRpcUrl = "";
+        [HideIfEnumValue("DevnetWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
+        public string DevnetLoginRPCUrl = "";
 
-        public RpcCluster PhantomWalletCluster = RpcCluster.DevNet;
+        public RpcCluster MainnetWalletCluster = RpcCluster.DevNet;
 
-        [HideIfEnumValue("PhantomWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
-        public string PhantomWalletCustomUrl = "";
+        [HideIfEnumValue("MainnetWalletCluster", HideIf.NotEqual, (int) RpcCluster.Custom)]
+        public string MainNetRpcUrl = "";
 
         public PhantomWalletOptions PhantomWalletOptions;
 
-        [DoNotSerialize] public WalletBase BaseWallet;
+        [NonSerialized] public WalletBase BaseWallet;
 
         public bool IsLoggedIn { get; private set; }
-        public double SolBalance;
+        public long BaseWalletSolBalance;
+        public long InGameWalletSolBalance;
 
-        private PhantomWallet DeeplinkWallet;
-        private InGameWallet InGameWallet;
+        public PhantomWallet DeeplinkWallet;
+        public InGameWallet InGameWallet;
+        public bool IsDevNetLogin;
 
         private void Awake()
         {
@@ -52,60 +52,44 @@ namespace SolPlay.Scripts.Services
             ServiceFactory.RegisterSingleton(this);
         }
 
-        private void Start()
-        {
-            DeeplinkWallet =
-                new PhantomWallet(PhantomWalletOptions, PhantomWalletCluster, PhantomWalletCustomUrl, true);
-
-            if (InGameWalletCluster == RpcCluster.Custom)
-            {
-                InGameWallet = new InGameWallet(InGameWalletCluster, InGameWalletCustomRpcUrl, true);
-            }
-            else
-            {
-                InGameWallet = new InGameWallet(InGameWalletCluster, null, true);
-            }
-        }
-
-        public async void RefreshSolBalance(Commitment commitment = Commitment.Confirmed)
-        {
-            if (!IsLoggedIn)
-            {
-                return;
-            }
-
-            var balance = await BaseWallet.ActiveRpcClient.GetBalanceAsync(BaseWallet.Account.PublicKey, commitment);
-            if (balance.Result == null)
-            {
-                ServiceFactory.Resolve<LoggingService>()
-                    .LogWarning("Could not load SolBalance. RPC slow? No Internet connection?", false);
-                return;
-            }
-
-            SolBalance = (double) balance.Result.Value / SolanaUtils.SolToLamports;
-            MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
-        }
 
         public async Task<Account> Login(bool devNetLogin)
         {
+            string rpcUrl = null;
+            RpcCluster cluster = RpcCluster.DevNet;
+            
             if (devNetLogin)
             {
-                BaseWallet = InGameWallet;
+                rpcUrl = DevnetLoginRPCUrl;
+                cluster = DevnetWalletCluster;
+            }
+            else
+            {
+                rpcUrl = MainNetRpcUrl;
+                cluster = MainnetWalletCluster;
+            }
 
+            DeeplinkWallet = new PhantomWallet(PhantomWalletOptions, cluster, rpcUrl, true);
+            InGameWallet = new InGameWallet(cluster, rpcUrl, true);
+
+            IsDevNetLogin = devNetLogin;
+            
+            if (devNetLogin)
+            {
                 var newMnemonic = new Mnemonic(WordList.English, WordCount.Twelve);
+
                 var account = await InGameWallet.Login("1234") ??
                               await InGameWallet.CreateAccount(newMnemonic.ToString(), "1234");
+
+                BaseWallet = InGameWallet;
+
                 // Copy this private key if you want to import your wallet into phantom. Dont share it with anyone.
                 // var privateKeyString = account.PrivateKey.Key;
                 double sol = await BaseWallet.GetBalance();
 
                 if (sol < 0.8)
                 {
-                    MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Requesting airdrop"));
-                    string result = await BaseWallet.RequestAirdrop(1000000000, Commitment.Confirmed);
-                    ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result,
-                        () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); },
-                        TransactionService.TransactionResult.confirmed);
+                    await RequestAirdrop();
                 }
             }
             else
@@ -115,6 +99,10 @@ namespace SolPlay.Scripts.Services
                 Debug.Log(BaseWallet.ActiveRpcClient.NodeAddress);
                 await BaseWallet.Login();
 #endif
+                var newMnemonic = new Mnemonic(WordList.English, WordCount.Twelve);
+
+                var account = await InGameWallet.Login("1234") ??
+                              await InGameWallet.CreateAccount(newMnemonic.ToString(), "1234");
             }
 
             IsLoggedIn = true;
@@ -122,22 +110,72 @@ namespace SolPlay.Scripts.Services
             {
                 Wallet = BaseWallet
             });
+
+            var solPlayWebSocketService = ServiceFactory.Resolve<SolPlayWebSocketService>();
+            if (solPlayWebSocketService != null)
+            { 
+                solPlayWebSocketService.Connect(BaseWallet.ActiveRpcClient.NodeAddress.ToString());
+            }
+
+            SubscribeToWalletAccountChanges();
+
+            var baseSolBalance = await BaseWallet.ActiveRpcClient.GetBalanceAsync(BaseWallet.Account.PublicKey, Commitment.Confirmed);
+            BaseWalletSolBalance = (long) baseSolBalance.Result.Value;
+            MessageRouter.RaiseMessage(new SolBalanceChangedMessage(BaseWalletSolBalance, false));
             
-            RefreshSolBalance();
-            Debug.Log("Logged in: " + BaseWallet.Account.PublicKey);
-            StartCoroutine(PollSolBalance());
+            var ingameSolBalance = await InGameWallet.ActiveRpcClient.GetBalanceAsync(InGameWallet.Account.PublicKey, Commitment.Confirmed);
+            InGameWalletSolBalance = (long) ingameSolBalance.Result.Value;
+            MessageRouter.RaiseMessage(new SolBalanceChangedMessage(InGameWalletSolBalance, true));
+
+            Debug.Log("Logged in Base: " + BaseWallet.Account.PublicKey + " balance: " + baseSolBalance.Result.Value);
+            Debug.Log("Logged in InGameWallet: " + InGameWallet.Account.PublicKey + " balance: " + ingameSolBalance.Result.Value);
+
             return BaseWallet.Account;
         }
-       
-        private IEnumerator PollSolBalance()
+
+        private void SubscribeToWalletAccountChanges()
         {
-            while (true)
+            if (IsDevNetLogin)
             {
-                yield return new WaitForSeconds(10);
-                RefreshSolBalance();
+                ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToPubKeyData(BaseWallet.Account.PublicKey,
+                    result =>
+                    {
+                        long balanceChange = result.result.value.lamports - BaseWalletSolBalance;
+                        BaseWalletSolBalance = result.result.value.lamports;
+                        InGameWalletSolBalance = result.result.value.lamports;
+                        MessageRouter.RaiseMessage(
+                            new SolBalanceChangedMessage((float) balanceChange / SolanaUtils.SolToLamports, true));
+                        MessageRouter.RaiseMessage(new SolBalanceChangedMessage((float) balanceChange / SolanaUtils.SolToLamports));
+                    });
             }
+            else
+            {
+                ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToPubKeyData(BaseWallet.Account.PublicKey,
+                    result =>
+                    {
+                        long balanceChange = result.result.value.lamports - BaseWalletSolBalance;
+                        BaseWalletSolBalance = result.result.value.lamports;
+                        MessageRouter.RaiseMessage(new SolBalanceChangedMessage((float) balanceChange / SolanaUtils.SolToLamports));
+                    });
+                ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToPubKeyData(InGameWallet.Account.PublicKey,
+                    result =>
+                    {
+                        long balanceChange = result.result.value.lamports - InGameWalletSolBalance;
+                        InGameWalletSolBalance = result.result.value.lamports;
+                        MessageRouter.RaiseMessage(new SolBalanceChangedMessage((float) balanceChange / SolanaUtils.SolToLamports,
+                            true));
+                    });
+            }
+            
         }
-        
+
+        public async Task RequestAirdrop()
+        {
+            MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage("Requesting airdrop"));
+            string result = await BaseWallet.RequestAirdrop(SolanaUtils.SolToLamports, Commitment.Confirmed);
+            ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result, b => {});
+        }
+
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)
         {
             if (BaseWallet.Account == null)
@@ -153,6 +191,29 @@ namespace SolPlay.Scripts.Services
         public IEnumerator HandleNewSceneLoaded()
         {
             yield return null;
+        }
+
+        public bool HasEnoughSol(bool inGameWallet, long requiredLamports)
+        {
+            Debug.Log($"Checking sol balance {inGameWallet} for {requiredLamports}");
+            Debug.Log($"Ingame {InGameWalletSolBalance} Base Wallet {BaseWalletSolBalance}");
+            bool hasEnoughSol = false;
+            if (inGameWallet)
+            {
+                hasEnoughSol = InGameWalletSolBalance >= requiredLamports;
+            }
+            else
+            {
+                hasEnoughSol = BaseWalletSolBalance >= requiredLamports;
+            }
+
+            if (!hasEnoughSol)
+            {
+                ServiceFactory.Resolve<UiService>().OpenPopup(UiService.ScreenType.InGameWalletPopup,
+                    new InGameWalletPopupUiData(requiredLamports));
+            }
+
+            return hasEnoughSol;
         }
     }
 }

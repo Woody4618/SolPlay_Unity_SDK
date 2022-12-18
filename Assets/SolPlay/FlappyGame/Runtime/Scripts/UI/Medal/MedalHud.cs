@@ -1,24 +1,27 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(MedalParamatersHandler))]
-public class MedalHud : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.UI.Medal
 {
-    [SerializeField] MedalParamatersHandler _medalHandler;
-    [SerializeField] Image _renderer;
-
-    public void HandleScore(int score)
+    [RequireComponent(typeof(MedalParamatersHandler))]
+    public class MedalHud : MonoBehaviour
     {
-        Medal medal = _medalHandler.GetMedalWithScore(score);
+        [SerializeField] MedalParamatersHandler _medalHandler;
+        [SerializeField] Image _renderer;
 
-        if(medal != null)
+        public void HandleScore(int score)
         {
-            _renderer.sprite = medal.Renderer;
-            _renderer.gameObject.SetActive(true);
-        }
-        else
-        {
-            _renderer.gameObject.SetActive(false);
+            Medal medal = _medalHandler.GetMedalWithScore(score);
+
+            if(medal != null)
+            {
+                _renderer.sprite = medal.Renderer;
+                _renderer.gameObject.SetActive(true);
+            }
+            else
+            {
+                _renderer.gameObject.SetActive(false);
+            }
         }
     }
 }

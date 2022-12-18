@@ -13,7 +13,6 @@ using Solana.Unity.SDK.Nft;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
 using SolPlay.Scripts.Services;
-using SolPlay.Scripts.Ui;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -41,17 +40,26 @@ namespace SolPlay.Scripts
         public AccountInfo AccountInfo;
         public TokenAccount TokenAccount;
 
+        [NonSerialized] public Task LoadingImageTask;
+        [NonSerialized] public Task JsonImageTask;
+        [NonSerialized] public string LoadingError;
+
+        private static string ImagePrefix = "V1_Image_";
+        private static string JsonPrefix = "V1_Json_";
+
         public SolPlayNft()
         {
         }
 
-        private const string IgnoredTokenListPlayerPrefsKey = "IgnoredTokenList";
+        public SolPlayNft(TokenAccount tokenAccount)
+        {
+            TokenAccount = tokenAccount;
+        }
 
         public SolPlayNft(Metaplex metaplexData)
         {
-            this.MetaplexData = metaplexData;
+            MetaplexData = metaplexData;
         }
-
 
         public static async Task<NFTProData> TryGetNftPro(string mint, IRpcClient connection)
         {
@@ -68,138 +76,109 @@ namespace SolPlay.Scripts
             return null;
         }
 
-        public static async Task<SolPlayNft> TryGetNftData(string mint, IRpcClient connection,
-            bool tryUseLocalContent = true)
+        public async Task LoadData(string mint, IRpcClient connection)
         {
-            if (!tryUseLocalContent)
-            {
-                PlayerPrefs.DeleteKey(IgnoredTokenListPlayerPrefsKey);
-            }
-            
-            // We put broken tokens on an ignore list so we dont need to load the information every time. 
-            if (IsTokenMintIgnored(mint))
-            {
-                return null;
-            }
-
-            //PublicKey metaplexDataPubKey = FindProgramAddress(mint);
-
             var seeds = new List<byte[]>();
             seeds.Add(Encoding.UTF8.GetBytes("metadata"));
             seeds.Add(new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").KeyBytes);
             seeds.Add(new PublicKey(mint).KeyBytes);
 
-            PublicKey.TryFindProgramAddress(
-                seeds, 
-                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
-                out PublicKey metaplexDataPubKey, out var _bump);
-
-            if (metaplexDataPubKey != null)
+            if (!PublicKey.TryFindProgramAddress(
+                    seeds,
+                    new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+                    out PublicKey metaplexDataPubKey, out var _bump))
             {
-                if (tryUseLocalContent)
+                return;
+            }
+
+            AccountInfo accountInfo = await Nft.GetAccountData(metaplexDataPubKey.Key, connection);
+
+            if (accountInfo != null && accountInfo.Data != null && accountInfo.Data.Count > 0)
+            {
+                try
                 {
-                    SolPlayNft solPlayNft = TryLoadNftFromLocal(mint);
-                    if (solPlayNft != null)
-                    {
-                        return solPlayNft;
-                    }
+                    Metaplex metaPlex = new Metaplex().ParseData(accountInfo.Data[0]);
+                    MetaplexData = metaPlex;
+                    AccountInfo = accountInfo;
+                    await LoadJson(metaPlex.mint);
+                    LoadingImageTask = LoadImage(mint, this);
                 }
-
-                AccountInfo accountInfo = await Nft.GetAccountData(metaplexDataPubKey.Key, connection);
-
-                if (accountInfo != null && accountInfo.Data != null && accountInfo.Data.Count > 0)
+                catch (Exception e)
                 {
-                    try
-                    {
-                        Metaplex metaPlex = new Metaplex().ParseData(accountInfo.Data[0]);
-                        MetaplexJsonData jsonData = await SolPlayFileLoader.LoadFile<MetaplexJsonData>(metaPlex.data.url);
-
-                        if (jsonData != null)
-                        {
-                            metaPlex.data.json = jsonData;
-
-                            Texture2D texture = await SolPlayFileLoader.LoadFile<Texture2D>(metaPlex.data.json.image);
-                            var nftImageSize = ServiceFactory.Resolve<NftService>().NftImageSize;
-
-                            Texture2D compressedTexture = Resize(texture, nftImageSize, nftImageSize);
-                            SolPlayFileLoader.SaveToPersistenDataPath(
-                                Path.Combine(Application.persistentDataPath, $"{mint}.png"), compressedTexture);
-
-                            if (compressedTexture)
-                            {
-                                NftImage nftImage = new NftImage();
-                                nftImage.externalUrl = jsonData.image;
-                                nftImage.file = compressedTexture;
-                                metaPlex.nftImage = nftImage;
-                            }
-                        }
-
-                        SolPlayNft newSolPlayNft = new SolPlayNft(metaPlex);
-                        newSolPlayNft.AccountInfo = accountInfo;
-                        SolPlayFileLoader.SaveToPersistenDataPath(Path.Combine(Application.persistentDataPath, $"{mint}.json"),
-                            newSolPlayNft);
-                        return newSolPlayNft;
-                    }
-                    catch (Exception e)
-                    {
-                        AddToIgnoredTokenListAndSave(mint);
-                        Debug.LogWarning($"Nft data could not be parsed: {e} -> Added to ignore list");
-                    }
+                    ServiceFactory.Resolve<NftService>().AddToIgnoredTokenListAndSave(mint);
+                    Debug.LogWarning($"Nft data could not be parsed: {e} -> Added to ignore list");
+                }
+            }
+            else
+            {
+                // Only ignore the nft if account data was actually loaded  
+                if (accountInfo != null)
+                {
+                    ServiceFactory.Resolve<NftService>().AddToIgnoredTokenListAndSave(mint);
+                    Debug.LogWarning($"Token seems to not be an NFT -> Added to ignore list");
                 }
                 else
                 {
-                    AddToIgnoredTokenListAndSave(mint);
-                    Debug.LogWarning($"Token seems to not be an NFT -> Added to ignore list");
+                    Debug.LogWarning($"Could not load token account for {metaplexDataPubKey.Key}");
                 }
             }
-
-            return null;
         }
-        
-        private static bool IsTokenMintIgnored(string mint)
+
+        private async Task LoadJson(string mint)
         {
-            if (GetIgnoreTokenList().TokenList.Contains(mint))
+            MetaplexJsonData jsonData = await SolPlayFileLoader.LoadFile<MetaplexJsonData>(MetaplexData.data.url);
+
+            if (jsonData != null)
             {
-                return true;
+                MetaplexData.data.json = jsonData;
+                SolPlayFileLoader.SaveToPersistenDataPath(
+                    Path.Combine(Application.persistentDataPath, $"{JsonPrefix}{mint}.json"),
+                    this);
+            }
+            else
+            {
+                LoadingError = "Could not load jsonData";
+            }
+        }
+
+        private static async Task LoadImage(string mint, SolPlayNft nft)
+        {
+            if (nft.MetaplexData.data.json == null)
+            {
+                return;
+            }
+            Texture2D texture = await SolPlayFileLoader.LoadFile<Texture2D>(nft.MetaplexData.data.json.image);
+            var nftImageSize = ServiceFactory.Resolve<NftService>().NftImageSize;
+
+            Texture2D compressedTexture = Resize(texture, nftImageSize, nftImageSize);
+
+            if (compressedTexture)
+            {
+                NftImage nftImage = new NftImage();
+                nftImage.externalUrl = nft.MetaplexData.data.json.image;
+                nftImage.file = compressedTexture;
+                nft.MetaplexData.nftImage = nftImage;
+                SolPlayFileLoader.SaveToPersistenDataPath(
+                    Path.Combine(Application.persistentDataPath, $"{ImagePrefix}{mint}.png"), compressedTexture);
+            }
+            else
+            {
+                nft.LoadingError = "Could not load image";
             }
 
-            return false;
-        }
-
-        private static IgnoreTokenList GetIgnoreTokenList()
-        {
-            if (!PlayerPrefs.HasKey(IgnoredTokenListPlayerPrefsKey))
-            {
-                PlayerPrefs.SetString(IgnoredTokenListPlayerPrefsKey, JsonUtility.ToJson(new IgnoreTokenList()));
-            }
-
-            var json = PlayerPrefs.GetString(IgnoredTokenListPlayerPrefsKey);
-            var ignoreTokenList = JsonUtility.FromJson<IgnoreTokenList>(json);
-            return ignoreTokenList;
-        }
-
-        private static void AddToIgnoredTokenListAndSave(string mint)
-        {
-            string blimpMessage = $"Added {mint} to ignore list.";
-            MessageRouter
-                .RaiseMessage(new BlimpSystem.ShowBlimpMessage(blimpMessage));
-
-            var ignoreTokenList = GetIgnoreTokenList();
-            ignoreTokenList.TokenList.Add(mint);
-            PlayerPrefs.SetString(IgnoredTokenListPlayerPrefsKey, JsonUtility.ToJson(ignoreTokenList));
-            PlayerPrefs.Save();
+            MessageRouter.RaiseMessage(new NftImageLoadedMessage(nft));
         }
 
         public static SolPlayNft TryLoadNftFromLocal(string mint)
         {
             SolPlayNft local = SolPlayFileLoader.LoadFileFromLocalPath<SolPlayNft>(
-                $"{Path.Combine(Application.persistentDataPath, mint)}.json");
+                $"{Path.Combine(Application.persistentDataPath, $"{JsonPrefix}{mint}")}.json");
 
             if (local != null)
             {
                 Texture2D tex =
                     SolPlayFileLoader.LoadFileFromLocalPath<Texture2D>(
-                        $"{Path.Combine(Application.persistentDataPath, mint)}.png");
+                        $"{Path.Combine(Application.persistentDataPath, $"{ImagePrefix}{mint}")}.png");
                 if (tex)
                 {
                     local.MetaplexData.nftImage = new NftImage();

@@ -14,13 +14,13 @@
       "url": "https://package.openupm.com"
     },
     "com.solana.unity_sdk": {
-      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git",
+      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git#Remove_WebSocket",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
-      "hash": "6086ea930954dd3ea256bf599ae805b0d191c354"
+      "hash": "c8a6fd85458d1f27195615c40657858d3a3960f3"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -120,37 +120,12 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.purchasing": {
-      "version": "4.4.1",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ugui": "1.0.0",
-        "com.unity.modules.unityanalytics": "1.0.0",
-        "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.androidjni": "1.0.0",
-        "com.unity.services.core": "1.3.1",
-        "com.unity.services.analytics": "4.0.1"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.recorder": {
       "version": "3.0.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.timeline": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.services.analytics": {
-      "version": "4.1.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ugui": "1.0.0",
-        "com.unity.services.core": "1.4.0"
       },
       "url": "https://packages.unity.com"
     },
@@ -222,16 +197,6 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
-    },
-    "com.unity.visualscripting": {
-      "version": "1.7.8",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ugui": "1.0.0",
-        "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

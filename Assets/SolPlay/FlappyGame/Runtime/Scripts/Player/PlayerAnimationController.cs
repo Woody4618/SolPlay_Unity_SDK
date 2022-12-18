@@ -2,20 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class PlayerAnimationKeys
+namespace SolPlay.FlappyGame.Runtime.Scripts.Player
 {
-    public static readonly int VelocityYId = Animator.StringToHash("VelocityY");
-}
-
-public class PlayerAnimationController : MonoBehaviour
-{
-    [SerializeField] Animator _anim;
-    [SerializeField] PlayerController _player;
-
-    public void EnableAnimations(bool value) => _anim.enabled = value;
-
-    private void LateUpdate() 
+    public static class PlayerAnimationKeys
     {
-        _anim.SetFloat(PlayerAnimationKeys.VelocityYId, _player.Velocity.y);
+        public static readonly int VelocityYId = Animator.StringToHash("VelocityY");
+    }
+
+    public class PlayerAnimationController : MonoBehaviour
+    {
+        [SerializeField] Animator _anim;
+        [SerializeField] PlayerController _player;
+
+        public void EnableAnimations(bool value) => _anim.enabled = value;
+
+        private void LateUpdate() 
+        {
+            _anim.SetFloat(PlayerAnimationKeys.VelocityYId, _player.Velocity.y);
+        }
     }
 }

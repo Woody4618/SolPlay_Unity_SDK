@@ -1,10 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
+using SolPlay.FlappyGame.Runtime.Scripts.Core;
 using UnityEngine;
 
-public class PauseScreen : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.UI.Screens
 {
-    [SerializeField] GameMode _gameMode;
+    public class PauseScreen : MonoBehaviour
+    {
+        [SerializeField] GameMode _gameMode;
 
-    public void ResumeGame() => _gameMode.ResumeGame();
+        public void ResumeGame() => _gameMode.ResumeGame();
+    }
 }

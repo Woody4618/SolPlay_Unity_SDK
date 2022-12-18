@@ -1,15 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
+using SolPlay.FlappyGame.Runtime.Scripts.Player;
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-public class DeathTrigger : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Util
 {
-    private void Awake() => GetComponent<Collider2D>().isTrigger = true;
-
-    private void OnTriggerEnter2D(Collider2D other)
+    [RequireComponent(typeof(Collider2D))]
+    public class DeathTrigger : MonoBehaviour
     {
-        if(other.GetComponent<PlayerDeathController>() is PlayerDeathController player)
-            player.Die();    
+        private void Awake() => GetComponent<Collider2D>().isTrigger = true;
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if(other.GetComponent<PlayerDeathController>() is PlayerDeathController player)
+                player.Die();    
+        }
     }
 }

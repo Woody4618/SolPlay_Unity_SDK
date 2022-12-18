@@ -1,3 +1,4 @@
+using System;
 using Frictionless;
 using Solana.Unity.Programs;
 using Solana.Unity.Wallet;
@@ -22,7 +23,8 @@ namespace SolPlay.Scripts.Ui
         public Button SelectButton;
         public Button TransferButton;
         public SolPlayNft currentNft;
- 
+        private Action<SolPlayNft> onNftSelected;
+
         private void Awake()
         {
             ServiceFactory.RegisterSingleton(this);
@@ -43,7 +45,7 @@ namespace SolPlay.Scripts.Ui
         {
             ServiceFactory.Resolve<NftService>().SelectNft(currentNft);
             MessageRouter.RaiseMessage(
-                new BlimpSystem.ShowBlimpMessage($"{currentNft.MetaplexData.data.name} selected"));
+                new BlimpSystem.ShowLogMessage($"{currentNft.MetaplexData.data.name} selected"));
             Close();
             var tabBarComponent = ServiceFactory.Resolve<TabBarComponent>();
             if (tabBarComponent != null)
@@ -52,9 +54,10 @@ namespace SolPlay.Scripts.Ui
             }
             else
             {
+                
                 // In case you want to load another scene please use the SolPlay instance
                 // SolPlay.Instance.LoadScene("FlappyGameExample");
-                ServiceFactory.Resolve<LoggingService>().Log("Add you select logic in NftContextMenu.cs", true);
+                onNftSelected?.Invoke(currentNft);
             }
         }
 
@@ -73,15 +76,18 @@ namespace SolPlay.Scripts.Ui
             Root.gameObject.SetActive(false);
         }
 
-        public void Open(NftItemView nftItemView)
+        public void Open(NftItemView nftItemView, Action<SolPlayNft> onNftSelected)
         {
+            this.onNftSelected = onNftSelected;
             currentNft = nftItemView.CurrentSolPlayNft;
             Root.gameObject.SetActive(true);
             NftNameText.text = nftItemView.CurrentSolPlayNft.MetaplexData.data.name;
             transform.position = nftItemView.transform.position;
             var powerLevelService = ServiceFactory.Resolve<HighscoreService>();
-            PowerLevelText.text =
-                $"High score: {powerLevelService.GetHighscoreForPubkey(nftItemView.CurrentSolPlayNft.MetaplexData.mint).Highscore}";
+            if (powerLevelService.TryGetHighscoreForSeed(nftItemView.CurrentSolPlayNft.MetaplexData.mint, out HighscoreEntry highscoreEntry))
+            {
+                PowerLevelText.text = $"High score: {highscoreEntry.Highscore}";
+            }
         }
     }
 }

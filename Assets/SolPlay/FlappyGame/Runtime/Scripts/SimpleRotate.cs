@@ -1,33 +1,36 @@
 ﻿using UnityEngine;
 
-public class SimpleRotate : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts
 {
-    public enum Axis
+    public class SimpleRotate : MonoBehaviour
     {
-        x,
-        y,
-        z
-    }
-
-    public float speed = 0.1f;
-    public Axis RotationAxis = Axis.x;
-
-    void Update()
-    {
-        var rotationAxis = Vector3.zero;
-        switch (RotationAxis)
+        public enum Axis
         {
-            case Axis.x:
-                rotationAxis = Vector3.forward;
-                break;
-            case Axis.y:
-                rotationAxis = Vector3.up;
-                break;
-            case Axis.z:
-                rotationAxis = Vector3.right;
-                break;
+            x,
+            y,
+            z
         }
 
-        transform.Rotate(rotationAxis * Time.deltaTime, speed);
+        public float speed = 0.1f;
+        public Axis RotationAxis = Axis.x;
+
+        void Update()
+        {
+            var rotationAxis = Vector3.zero;
+            switch (RotationAxis)
+            {
+                case Axis.x:
+                    rotationAxis = Vector3.forward;
+                    break;
+                case Axis.y:
+                    rotationAxis = Vector3.up;
+                    break;
+                case Axis.z:
+                    rotationAxis = Vector3.right;
+                    break;
+            }
+
+            transform.Rotate(rotationAxis * Time.deltaTime, speed);
+        }
     }
 }

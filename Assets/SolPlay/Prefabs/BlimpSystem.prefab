@@ -174,6 +174,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3717849123567025173}
   - component: {fileID: 3717849123567025178}
+  - component: {fileID: 637133573127607113}
   m_Layer: 5
   m_Name: BlimpSystem
   m_TagString: Untagged
@@ -217,4 +218,20 @@ MonoBehaviour:
   TextBlimpPrefab: {fileID: 4142904539953957251, guid: 3494dabdb175c4f49a4d5277b71eef7f, type: 3}
   BoostBlimpPrefab: {fileID: 4142904539953957251, guid: 19592137f4bc845018fa906581257574, type: 3}
   ScoreBlimpPrefab: {fileID: 4142904539953957251, guid: d267fa03265a54f6c841254d42a92c8b, type: 3}
+  LogMessageRoot: {fileID: 557930708646413546}
   BlimpRoot: {fileID: 557930708646413546}
+--- !u!114 &637133573127607113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3717849123567025172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db21dccead92d48f9a566e9132089246, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ConformX: 1
+  ConformY: 1
+  Logging: 0

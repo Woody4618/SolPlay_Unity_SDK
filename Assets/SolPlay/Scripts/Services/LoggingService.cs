@@ -11,7 +11,7 @@ namespace SolPlay.Scripts.Services
             Debug.Log(message);
             if (showBlimpOnScreen)
             {
-                MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage(message));
+                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage(message));
             }
         }
 
@@ -20,7 +20,7 @@ namespace SolPlay.Scripts.Services
             Debug.LogWarning(message);
             if (showBlimpOnScreen)
             {
-                MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage(message));
+                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage(message));
             }
         }
     }

@@ -1,21 +1,24 @@
 using UnityEngine;
 
-public class AudioHandler : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Audio
 {
-    [SerializeField] AudioSource _mainAudio;
-    [SerializeField] AudioSource _sfxAudio;
-
-    private void Awake() 
+    public class AudioHandler : MonoBehaviour
     {
-        _mainAudio.loop = true;
-        _sfxAudio.loop = false;
-    }
+        [SerializeField] AudioSource _mainAudio;
+        [SerializeField] AudioSource _sfxAudio;
 
-    public void PlayMusic(AudioClip clip)
-    {
-        _mainAudio.clip = clip;
-        _mainAudio.Play();
-    } 
+        private void Awake() 
+        {
+            _mainAudio.loop = true;
+            _sfxAudio.loop = false;
+        }
+
+        public void PlayMusic(AudioClip clip)
+        {
+            _mainAudio.clip = clip;
+            _mainAudio.Play();
+        } 
     
-    public void PlaySFX(AudioClip clip) => _sfxAudio.PlayOneShot(clip);
+        public void PlaySFX(AudioClip clip) => _sfxAudio.PlayOneShot(clip);
+    }
 }

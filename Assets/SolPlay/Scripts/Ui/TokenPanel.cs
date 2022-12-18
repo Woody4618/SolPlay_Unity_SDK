@@ -24,7 +24,6 @@ namespace SolPlay.Scripts.Ui
         
         void Start()
         {
-            MessageRouter.AddHandler<TokenArrivedMessage>(OnTokenArrivedMessage);
             MessageRouter.AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
             MessageRouter.AddHandler<TokenValueChangedMessage>(OnTokenValueChangedMessage);
             if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
@@ -69,14 +68,6 @@ namespace SolPlay.Scripts.Ui
                 return;
             }
             TokenAmount.text = tokenBalance.Result.Value.UiAmountString;
-        }
-        
-        private void OnTokenArrivedMessage(TokenArrivedMessage message)
-        {
-            if (message.TokenAccountInfoDetails != null && message.TokenAccountInfoDetails.Mint == TokenMintAdress)
-            {
-                UpdateTokenAmount();
-            }
         }
     }
 }

@@ -1,13 +1,16 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-public class ScoreIncrementTrigger : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Core
 {
-    private void Awake() => GetComponent<Collider2D>().isTrigger = true;
-
-    private void OnTriggerEnter2D(Collider2D other)
+    [RequireComponent(typeof(Collider2D))]
+    public class ScoreIncrementTrigger : MonoBehaviour
     {
-        if(other.GetComponent<ScoreCollisor>() is ScoreCollisor scoreCollisor)
-            scoreCollisor.IncrementScore();
+        private void Awake() => GetComponent<Collider2D>().isTrigger = true;
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if(other.GetComponent<ScoreCollisor>() is ScoreCollisor scoreCollisor)
+                scoreCollisor.IncrementScore();
+        }
     }
 }

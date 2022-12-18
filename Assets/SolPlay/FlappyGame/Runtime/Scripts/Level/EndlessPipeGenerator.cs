@@ -1,72 +1,76 @@
-using UnityEngine;
 using System.Collections.Generic;
+using SolPlay.FlappyGame.Runtime.Scripts.Level.Pipes;
+using UnityEngine;
 
-[RequireComponent(typeof(PipeGroupSpawner))]
-[RequireComponent(typeof(PipeGroupDestroyer))]
-public class EndlessPipeGenerator : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Level
 {
-    [Header("Manager")]
-    [SerializeField] int _spawnOnInit;
-    [SerializeField] int _minPipesOnScreen;
-    [SerializeField] PipeGroupSpawner _spawner;
-    [SerializeField] PipeGroupDestroyer _destroyer;
-
-    private List<PipeGroup> _pipeList;
-    private const int DefaultIndexToDestroy = 0;
-    private bool _enabled;
-
-    public void StartSpawn()
+    [RequireComponent(typeof(PipeGroupSpawner))]
+    [RequireComponent(typeof(PipeGroupDestroyer))]
+    public class EndlessPipeGenerator : MonoBehaviour
     {
-        _pipeList = new List<PipeGroup>();
+        [Header("Manager")]
+        [SerializeField] int _spawnOnInit;
+        [SerializeField] int _minPipesOnScreen;
+        [SerializeField] PipeGroupSpawner _spawner;
+        [SerializeField] PipeGroupDestroyer _destroyer;
 
-        for(int i = 0; i < _spawnOnInit; i++)
-            SpawnPipe();
+        private List<PipeGroup> _pipeList;
+        private const int DefaultIndexToDestroy = 0;
+        private bool _enabled;
 
-        _enabled = true;
-    }
-
-    public void Reset()
-    {
-        _enabled = false;
-        for (int i = _pipeList.Count - 1; i >= 0; i--)
+        public void StartSpawn()
         {
-            _destroyer.Destroy(_pipeList[i]);
-            _pipeList.RemoveAt(i);
+            _pipeList = new List<PipeGroup>();
+
+            for(int i = 0; i < _spawnOnInit; i++)
+                SpawnPipe();
+
+            _enabled = true;
         }
-        _spawner.Reset();
-    }
 
-    private void SpawnPipe()
-    {
-        var pipeGroup = _spawner.SpawnPipes();
-        _pipeList.Add(pipeGroup);
-    }
+        public void Reset()
+        {
+            _enabled = false;
+            for (int i = _pipeList.Count - 1; i >= 0; i--)
+            {
+                _destroyer.Destroy(_pipeList[i]);
+                _pipeList.RemoveAt(i);
+            }
+            _spawner.Reset();
+        }
 
-    private bool CanUnspawn(int index)
-    {
-        if(_pipeList.Count <= index)
-            return false;
+        private void SpawnPipe()
+        {
+            var pipeGroup = _spawner.SpawnPipes();
+            _pipeList.Add(pipeGroup);
+        }
 
-        return _destroyer.CanDestroy(_pipeList[index]);
-    }
+        private bool CanUnspawn(int index)
+        {
+            if(_pipeList.Count <= index)
+                return false;
 
-    private void UnspawnPipe(int index)
-    {
-        if(_pipeList.Count <= index)
-            return;
+            return _destroyer.CanDestroy(_pipeList[index]);
+        }
 
-        _destroyer.Destroy(_pipeList[index]);
-        _pipeList.RemoveAt(index);
-    }
+        private void UnspawnPipe(int index)
+        {
+            if(_pipeList.Count <= index)
+                return;
 
-    private void Update() 
-    {
-        if(!_enabled)
-            return;
+            _destroyer.Destroy(_pipeList[index]);
+            _pipeList.RemoveAt(index);
+        }
 
-        if(_pipeList.Count < _minPipesOnScreen)
-            SpawnPipe();
-        else if(CanUnspawn(DefaultIndexToDestroy))
-            UnspawnPipe(DefaultIndexToDestroy);
+        private void Update() 
+        {
+            if(!_enabled)
+                return;
+
+            if(_pipeList.Count < _minPipesOnScreen)
+                SpawnPipe();
+            else if(CanUnspawn(DefaultIndexToDestroy))
+                UnspawnPipe(DefaultIndexToDestroy);
+        }
     }
 }

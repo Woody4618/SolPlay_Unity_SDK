@@ -1,44 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
+using SolPlay.FlappyGame.Runtime.Scripts.Core;
+using SolPlay.FlappyGame.Runtime.Scripts.Level.Pipes;
 using UnityEngine;
 
-public class PlayerDeathController : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Player
 {
-    [SerializeField] PlayerController _playerController;
-    [SerializeField] PlayerInputs _playerInputs;
-    [SerializeField] PlayerAnimationController _playerAnimation;
-    [SerializeField] GameMode _gameMode;
-
-    private bool _playerIsDied;
-    public bool PlayerIsDead => _playerIsDied;
-    public PlayerController Controller => _playerController;
-
-    public void Reset()
+    public class PlayerDeathController : MonoBehaviour
     {
-        _playerIsDied = false;
-        _playerInputs.EnableInputs(true);
-    }
+        [SerializeField] PlayerController _playerController;
+        [SerializeField] PlayerInputs _playerInputs;
+        [SerializeField] PlayerAnimationController _playerAnimation;
+        [SerializeField] GameMode _gameMode;
 
-    public void Die() 
-    {
-        if(!_playerIsDied)
+        private bool _playerIsDied;
+        public bool PlayerIsDead => _playerIsDied;
+        public PlayerController Controller => _playerController;
+
+        public void Reset()
         {
-            _playerController.Die();
-            _playerAnimation.EnableAnimations(false);
-            _playerInputs.EnableInputs(false);
-            _playerIsDied = true;
-            _gameMode.GameOver();
-        }    
-    }
+            _playerIsDied = false;
+            _playerInputs.EnableInputs(true);
+        }
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if(!_playerIsDied && other.GetComponent<Pipe>() is Pipe pipe)
+        public void Die() 
         {
-            _playerController.Die();
-            _playerAnimation.EnableAnimations(false);
-            _playerInputs.EnableInputs(false);
-            _playerIsDied = true;
-        }    
+            if(!_playerIsDied)
+            {
+                _playerController.Die();
+                _playerAnimation.EnableAnimations(false);
+                _playerInputs.EnableInputs(false);
+                _playerIsDied = true;
+                _gameMode.GameOver();
+            }    
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if(!_playerIsDied && other.GetComponent<Pipe>() is Pipe pipe)
+            {
+                _playerController.Die();
+                _playerAnimation.EnableAnimations(false);
+                _playerInputs.EnableInputs(false);
+                _playerIsDied = true;
+            }    
+        }
     }
 }

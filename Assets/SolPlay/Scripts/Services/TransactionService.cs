@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
+using Org.BouncyCastle.Security;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
+using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
@@ -27,7 +29,11 @@ namespace SolPlay.Scripts.Services
             finalized = 2
         }
 
-        public string EditorExampleWalletPublicKey;
+        // We save this so that we dont use the same block hash twice, because 
+        // multiple moves in the same direction could otherwise result into the 
+        // same transaction hash
+        private string lastUsedBlockhash;
+        public bool ShowBlimpsForTransactions = true;
 
         private void Awake()
         {
@@ -43,13 +49,14 @@ namespace SolPlay.Scripts.Services
         /// <summary>
         /// await Task.Delay() does not work properly on webgl so we use a coroutine instead
         /// </summary>
-        public void CheckSignatureStatus(string signature, Action onSignatureFinalized,
+        public void CheckSignatureStatus(string signature, Action<bool> onSignatureFinalized = null,
             TransactionResult transactionResult = TransactionResult.confirmed)
         {
             if (string.IsNullOrEmpty(signature))
             {
+                onSignatureFinalized?.Invoke(false);
                 MessageRouter.RaiseMessage(
-                    new BlimpSystem.ShowBlimpMessage($"Signature was empty: {signature}."));
+                    new BlimpSystem.ShowLogMessage($"Signature was empty: {signature}."));
             }
             else
             {
@@ -57,7 +64,7 @@ namespace SolPlay.Scripts.Services
             }
         }
 
-        private IEnumerator CheckSignatureStatusRoutine(string signature, Action onSignatureFinalized,
+        private IEnumerator CheckSignatureStatusRoutine(string signature, Action<bool> onSignatureFinalized,
             TransactionResult transactionResult = TransactionResult.confirmed)
         {
             var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
@@ -79,18 +86,20 @@ namespace SolPlay.Scripts.Services
                 if (signatureResult.Result == null)
                 {
                     MessageRouter.RaiseMessage(
-                        new BlimpSystem.ShowBlimpMessage($"There is no transaction for Signature: {signature}."));
+                        new BlimpSystem.ShowLogMessage($"There is no transaction for Signature: {signature}."));
                     yield return new WaitForSeconds(1.5f);
                     continue;
                 }
+
+                yield return new WaitForSeconds(0.5f);
 
                 foreach (var signatureStatusInfo in signatureResult.Result.Value)
                 {
                     if (signatureStatusInfo == null)
                     {
-                        MessageRouter.RaiseMessage(
-                            new BlimpSystem.ShowBlimpMessage(
-                                $"Signature is not yet processed. Try: {counter}. Retry in 2 seconds."));
+                        ServiceFactory.Resolve<LoggingService>()
+                            .Log($"Waiting for signature. Try: {counter}",
+                                ShowBlimpsForTransactions);
                     }
                     else
                     {
@@ -99,41 +108,47 @@ namespace SolPlay.Scripts.Services
                             signatureStatusInfo.ConfirmationStatus == Enum.GetName(typeof(TransactionResult),
                                 TransactionResult.finalized))
                         {
-                            ServiceFactory.Resolve<WalletHolderService>().RefreshSolBalance();
-                            MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage("Transaction finalized"));
+                            ServiceFactory.Resolve<LoggingService>()
+                                .Log("Transaction " + signatureStatusInfo.ConfirmationStatus,
+                                    ShowBlimpsForTransactions);
+
                             MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                             transactionFinalized = true;
-                            onSignatureFinalized();
+                            onSignatureFinalized?.Invoke(true);
                         }
                         else
                         {
-                            MessageRouter.RaiseMessage(
-                                new BlimpSystem.ShowBlimpMessage(
-                                    $"Signature result {signatureStatusInfo.Confirmations}/31 status: {signatureStatusInfo.ConfirmationStatus} target: {Enum.GetName(typeof(TransactionResult), transactionResult)}"));
+                            ServiceFactory.Resolve<LoggingService>().Log(
+                                $"Signature result {signatureStatusInfo.Confirmations}/31 status: {signatureStatusInfo.ConfirmationStatus} target: {Enum.GetName(typeof(TransactionResult), transactionResult)}",
+                                ShowBlimpsForTransactions);
                         }
                     }
                 }
 
-                yield return new WaitForSeconds(1.5f);
+                yield return new WaitForSeconds(0.5f);
             }
 
             if (counter >= maxTries)
             {
+                onSignatureFinalized?.Invoke(false);
                 MessageRouter.RaiseMessage(
-                    new BlimpSystem.ShowBlimpMessage(
+                    new BlimpSystem.ShowLogMessage(
                         $"Tried {counter} times. The transaction probably failed :( "));
             }
         }
 
-        public async Task<RequestResult<string>> TransferNftToPubkey(PublicKey destination, SolPlayNft nft, Commitment commitment = Commitment.Confirmed)
+        public async Task<RequestResult<string>> TransferNftToPubkey(PublicKey destination, SolPlayNft nft,
+            Commitment commitment = Commitment.Confirmed)
         {
             var wallHolderService = ServiceFactory.Resolve<WalletHolderService>();
 
             PublicKey destinationTokenAccount =
-                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, new PublicKey(nft.MetaplexData.mint));
+                AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination,
+                    new PublicKey(nft.MetaplexData.mint));
             var tokenAccounts =
-                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, new PublicKey(nft.MetaplexData.mint));
-            
+                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination,
+                    new PublicKey(nft.MetaplexData.mint));
+
             var blockHash = await wallHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
             var transaction = new Transaction
@@ -169,9 +184,8 @@ namespace SolPlay.Scripts.Services
                 await wallHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
 
-            CheckSignatureStatus(transactionSignature.Result,
-                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
-            
+            CheckSignatureStatus(transactionSignature.Result);
+
             MessageRouter.RaiseMessage(new NftMintFinishedMessage());
             MessageRouter.RaiseMessage(new TokenValueChangedMessage());
             return transactionSignature;
@@ -187,8 +201,9 @@ namespace SolPlay.Scripts.Services
             PublicKey destinationTokenAccount =
                 AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(destination, tokenMint);
             var tokenAccounts =
-                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint);
-            
+                await wallHolderService.BaseWallet.ActiveRpcClient.GetTokenAccountsByOwnerAsync(destination, tokenMint,
+                    null, commitment);
+
             var blockHash = await wallHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
             var transaction = new Transaction
@@ -217,25 +232,158 @@ namespace SolPlay.Scripts.Services
                     amount,
                     wallHolderService.BaseWallet.Account.PublicKey
                 ));
-            
 
             var signedTransaction = await wallHolderService.BaseWallet.SignTransaction(transaction);
 
             var transactionSignature =
                 await wallHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
-                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
+                    Convert.ToBase64String(signedTransaction.Serialize()), true, commitment);
 
-            CheckSignatureStatus(transactionSignature.Result,
-                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
-            
+            CheckSignatureStatus(transactionSignature.Result);
+
             MessageRouter.RaiseMessage(new TokenValueChangedMessage());
             return transactionSignature;
         }
 
-        public async Task<RequestResult<string>> TransferSolanaToPubkey(string toPublicKey, ulong lamports)
+        /// <summary>
+        /// Use to send a single instruction. This function will wrap it in to a transaction and show it
+        /// on screen if the blimp system oder transaction info widget are present. 
+        /// </summary>
+        /// <param name="transactionName"> Will be shown in the ui when the Transaction info widget is present</param>
+        public void SendInstructionInNextBlock(string transactionName, TransactionInstruction instruction,
+            Action<string> onTransactionDone = null)
         {
-            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
+            StartCoroutine(sendInstructionInNextBlock(transactionName, instruction, onTransactionDone));
+        }
+
+        private IEnumerator sendInstructionInNextBlock(string transactionName, TransactionInstruction instruction,
+            Action<string> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+        {
             var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            var wallet = walletHolderService.InGameWallet;
+
+            RequestResult<ResponseValue<BlockHash>> blockHashResult = null;
+            BlockHash blockHash = null;
+
+            TransactionInfoSystem.TransactionInfoObject transactionInfoObject =
+                new TransactionInfoSystem.TransactionInfoObject(wallet, commitment, transactionName);
+            MessageRouter.RaiseMessage(new TransactionInfoSystem.ShowTransactionInfoMessage(transactionInfoObject));
+
+            // In case of rate limits we need to wait longer and longer
+            int tries = 0;
+            while (blockHashResult == null || blockHashResult.Result == null ||
+                   lastUsedBlockhash == blockHashResult.Result.Value.Blockhash)
+            {
+                Task<RequestResult<ResponseValue<BlockHash>>> task =
+                    wallet.ActiveRpcClient.GetRecentBlockHashAsync(Commitment.Confirmed);
+
+                while (!task.IsCompleted)
+                {
+                    yield return null;
+                }
+
+                blockHashResult = task.Result;
+                if (blockHashResult == null || blockHashResult.Result == null)
+                {
+                    tries++;
+                    if (blockHashResult != null)
+                    {
+                        PrintBlockHashError(blockHashResult, transactionInfoObject);
+                    }
+
+                    yield return new WaitForSeconds(0.2f * tries);
+                }
+
+                if (!blockHashResult.WasSuccessful)
+                {
+                    PrintBlockHashError(blockHashResult, transactionInfoObject);
+                    yield break;
+                }
+
+                blockHash = blockHashResult.Result.Value;
+            }
+
+            SendTransaction(transactionName, instruction, transactionInfoObject, onTransactionDone, blockHash);
+        }
+
+        private static void PrintBlockHashError(RequestResult<ResponseValue<BlockHash>> blockHashResult,
+            TransactionInfoSystem.TransactionInfoObject transactionInfoObject)
+        {
+            var message = "";
+            if (blockHashResult.ServerErrorCode == 429)
+            {
+                message = $"Rate limit reached!";
+                ServiceFactory.Resolve<LoggingService>().Log(message, true);
+            }
+            else
+            {
+                message = $"Rpc error: {blockHashResult.ServerErrorCode}";
+            }
+
+            transactionInfoObject.OnError(message);
+        }
+
+        public async void SendTransaction(string transactionName, TransactionInstruction instruction,
+            TransactionInfoSystem.TransactionInfoObject transactionInfoObject,
+            Action<string> onTransactionDone = null, BlockHash blockHashOverride = null,
+            Commitment commitment = Commitment.Confirmed)
+        {
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            var wallet = walletHolderService.InGameWallet;
+
+            BlockHash blockHash = null;
+
+            if (blockHashOverride == null)
+            {
+                var result = await wallet.ActiveRpcClient.GetRecentBlockHashAsync(commitment);
+                if (result.Result == null)
+                {
+                    ServiceFactory.Resolve<LoggingService>().Log($"Block hash null. Ignore {transactionName}", true);
+                    return;
+                }
+
+                blockHash = result.Result.Value;
+            }
+            else
+            {
+                blockHash = blockHashOverride;
+            }
+
+            lastUsedBlockhash = blockHash.Blockhash;
+
+            Transaction transaction = new Transaction();
+            transaction.FeePayer = wallet.Account.PublicKey;
+            transaction.RecentBlockHash = blockHash.Blockhash;
+            transaction.Signatures = new List<SignaturePubKeyPair>();
+            transaction.Instructions = new List<TransactionInstruction>();
+            transaction.Instructions.Add(instruction);
+
+            Transaction signedTransaction = await wallet.SignTransaction(transaction);
+
+            var signature = await wallet.ActiveRpcClient.SendTransactionAsync(
+                Convert.ToBase64String(signedTransaction.Serialize()),
+                true, Commitment.Confirmed);
+
+            Debug.Log(signature.Result);
+            transactionInfoObject.OnSignatureReady?.Invoke(signature.Result);
+
+            if (!signature.WasSuccessful)
+            {
+                ServiceFactory.Resolve<LoggingService>().LogWarning(signature.Reason, true);
+            }
+
+            /*ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature.Result,
+                () =>
+                {
+                    MessageRouter.RaiseMessage(new TokenValueChangedMessage());
+                    onTransactionDone?.Invoke(signature.Result);
+                });*/
+        }
+
+        public async Task<RequestResult<string>> TransferSolanaToPubkey(WalletBase wallet, string toPublicKey,
+            long lamports)
+        {
+            Debug.Log($"From {wallet.Account.PublicKey} to {toPublicKey} {lamports}");
             var blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
 
             if (blockHash.Result == null)
@@ -244,34 +392,35 @@ namespace SolPlay.Scripts.Services
                 return null;
             }
 
-            var transferSolTransaction = CreateUnsignedTransferSolTransaction(toPublicKey, blockHash, lamports);
+            var transferSolTransaction =
+                CreateUnsignedTransferSolTransaction(wallet.Account.PublicKey, toPublicKey, blockHash, lamports);
 
             RequestResult<string> requestResult =
-                await walletHolderService.BaseWallet.SignAndSendTransaction(transferSolTransaction, Commitment.Confirmed);
+                await wallet.SignAndSendTransaction(transferSolTransaction,
+                    Commitment.Confirmed);
 
-            CheckSignatureStatus(requestResult.Result,
-                () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
-            MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
+            Debug.Log(requestResult.RawRpcResponse);
+            CheckSignatureStatus(requestResult.Result);
+
             return requestResult;
         }
-
-        private Transaction CreateUnsignedTransferSolTransaction(string toPublicKey,
-            RequestResult<ResponseValue<BlockHash>> blockHash, ulong lamports)
+        private static byte[] GenerateRandomBytes(int size)
         {
-            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-            if (!walletHolderService.TryGetPhantomPublicKey(out string phantomPublicKey))
-            {
-                return null;
-            }
-
+            var buffer = new byte[size];
+            new SecureRandom().NextBytes(buffer);
+            return buffer;
+        }
+        private Transaction CreateUnsignedTransferSolTransaction(PublicKey from, string toPublicKey,
+            RequestResult<ResponseValue<BlockHash>> blockHash, long lamports)
+        {
             Transaction transaction = new Transaction();
             transaction.Instructions = new List<TransactionInstruction>();
 
-            var transactionInstruction = SystemProgram.Transfer(new PublicKey(phantomPublicKey),
-                new PublicKey(toPublicKey), lamports);
+            var transactionInstruction = SystemProgram.Transfer(from,
+                new PublicKey(toPublicKey), (ulong) lamports);
 
             transaction.Instructions.Add(transactionInstruction);
-            transaction.FeePayer = new PublicKey(phantomPublicKey);
+            transaction.FeePayer = from;
             transaction.RecentBlockHash = blockHash.Result.Value.Blockhash;
             transaction.Signatures = new List<SignaturePubKeyPair>();
             return transaction;
@@ -285,5 +434,13 @@ namespace SolPlay.Scripts.Services
 
     public class SolBalanceChangedMessage
     {
+        public double SolBalanceChange;
+        public bool IsInGameWallet;
+
+        public SolBalanceChangedMessage(double solBalanceChange = 0, bool isInGameWallet = false)
+        {
+            SolBalanceChange = solBalanceChange;
+            IsInGameWallet = isInGameWallet;
+        }
     }
 }

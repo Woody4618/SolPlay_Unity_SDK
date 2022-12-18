@@ -20,7 +20,9 @@ namespace SolPlay.Scripts.Services
         {
             OrcaSwapPopup,
             TransferNftPopup,
-            TransferTokenPopup
+            TransferTokenPopup,
+            InGameWalletPopup,
+            NftListPopup
         }
 
         public class UiData

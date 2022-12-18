@@ -1,38 +1,41 @@
 using UnityEngine;
 
-public class SaveGameData
+namespace SolPlay.FlappyGame.Runtime.Scripts.Core
 {
-    public int HighestScore;
-}
-
-public class GameSaver : MonoBehaviour
-{
-    private const string HighestScoreKey = "HighestScore";
-
-    private SaveGameData _currentSave;
-    public SaveGameData CurrentSave 
-    { 
-        get
-        {
-            if(_currentSave  == null)
-                LoadGame();
-
-            return _currentSave;
-        } 
+    public class SaveGameData
+    {
+        public int HighestScore;
     }
 
-    public void SaveGame(SaveGameData saveData)
+    public class GameSaver : MonoBehaviour
     {
-        _currentSave = saveData;
-        PlayerPrefs.SetInt(HighestScoreKey, CurrentSave.HighestScore);
-        PlayerPrefs.Save();
-    }
+        private const string HighestScoreKey = "HighestScore";
 
-    public void LoadGame()
-    {
-        _currentSave = new SaveGameData
+        private SaveGameData _currentSave;
+        public SaveGameData CurrentSave 
+        { 
+            get
+            {
+                if(_currentSave  == null)
+                    LoadGame();
+
+                return _currentSave;
+            } 
+        }
+
+        public void SaveGame(SaveGameData saveData)
         {
-            HighestScore = PlayerPrefs.GetInt(HighestScoreKey, 0),
-        };
+            _currentSave = saveData;
+            PlayerPrefs.SetInt(HighestScoreKey, CurrentSave.HighestScore);
+            PlayerPrefs.Save();
+        }
+
+        public void LoadGame()
+        {
+            _currentSave = new SaveGameData
+            {
+                HighestScore = PlayerPrefs.GetInt(HighestScoreKey, 0),
+            };
+        }
     }
 }

@@ -167,7 +167,6 @@ public class OrcaSwapWidget : MonoBehaviour
 
             poolListItem.SetData(poolData, OpenSwapPopup);
         }
-
     }
     
     private void OpenSwapPopup(PoolListItem poolListItem)

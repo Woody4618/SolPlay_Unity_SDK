@@ -1,15 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
+using SolPlay.FlappyGame.Runtime.Scripts.Audio;
 using UnityEngine;
 
-public class ScoreCollisor : MonoBehaviour
+namespace SolPlay.FlappyGame.Runtime.Scripts.Core
 {
-    [SerializeField] GameMode _gameMode;
-    [SerializeField] AudioClip _audioOnIncrement;
-
-    public void IncrementScore()
+    public class ScoreCollisor : MonoBehaviour
     {
-        _gameMode.IncrementScore();
-        AudioUtility.PlaySFX(_audioOnIncrement);
+        [SerializeField] GameMode _gameMode;
+        [SerializeField] AudioClip _audioOnIncrement;
+
+        public void IncrementScore()
+        {
+            _gameMode.IncrementScore();
+            AudioUtility.PlaySFX(_audioOnIncrement);
+        }
     }
 }

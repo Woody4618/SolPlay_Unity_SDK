@@ -12,7 +12,6 @@ using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
-using Solana.Unity.SDK.Nft;
 using Solana.Unity.SDK.Utility;
 using Solana.Unity.Wallet;
 using SolPlay.DeeplinksNftExample.Scripts.OrcaWhirlPool;
@@ -36,10 +35,10 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         public OrcaApiPoolsData OrcaApiPoolsData;
         public OrcaApiTokenData OrcaApiTokenData;
-        
+
         const string MAX_SQRT_PRICE = "79226673515401279992447579055";
         const string MIN_SQRT_PRICE = "4295048016";
-        
+
         public TextAsset PoolsAsset;
         public TextAsset TokensAsset;
 
@@ -50,6 +49,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 Destroy(gameObject);
                 return;
             }
+
             ServiceFactory.RegisterSingleton(this);
         }
 
@@ -69,12 +69,13 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         private async void RefreshApiData()
         {
-            OrcaApiPoolsData = await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.mainnet.orca.so/v1/whirlpool/list");
+            OrcaApiPoolsData =
+                await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.mainnet.orca.so/v1/whirlpool/list");
             OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.mainnet.orca.so/v1/token/list");
             //OrcaApiPoolsData = await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.devnet.orca.so/v1/whirlpool/list");
             //OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.devnet.orca.so/v1/token/list");
         }
-        
+
         private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
         {
             Init();
@@ -87,6 +88,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             {
                 return;
             }
+
             var wallet = walletHolderService.BaseWallet;
             _whirlpoolClient = new WhirlpoolClient(wallet.ActiveRpcClient, null, WhirlpoolProgammId);
         }
@@ -97,12 +99,13 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             {
                 Init();
             }
+
             var whirlpoolsAsync =
                 await _whirlpoolClient.GetWhirlpoolAsync(poolPDA);
             var pool = whirlpoolsAsync.ParsedResult;
             return pool;
         }
-        
+
         public async Task<List<Whirlpool.Accounts.Whirlpool>> GetPools()
         {
             ProgramAccountsResultWrapper<List<Whirlpool.Accounts.Whirlpool>> whirlpoolsAsync =
@@ -142,7 +145,8 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
             var signedTransaction = await wallet.SignTransaction(swapOrcaTokenTransaction);
             var signature =
-                await wallet.ActiveRpcClient.SendTransactionAsync(Convert.ToBase64String(signedTransaction.Serialize()), false,
+                await wallet.ActiveRpcClient.SendTransactionAsync(Convert.ToBase64String(signedTransaction.Serialize()),
+                    false,
                     Commitment.Confirmed);
             Debug.Log(signature.Result + signature.RawRpcResponse);
 
@@ -153,9 +157,6 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             bool aToB = true)
         {
             RequestResult<ResponseValue<BlockHash>> blockHash = await wallet.ActiveRpcClient.GetRecentBlockHashAsync();
-
-            // var whirlPoolConfigResult = await _whirlpoolClient.GetWhirlpoolsConfigAsync(pool.WhirlpoolsConfig);
-            // WhirlpoolsConfig whirlPoolConfig = whirlPoolConfigResult.ParsedResult;
 
             PublicKey whirlPoolPda = OrcaPDAUtils.GetWhirlpoolPda(WhirlpoolProgammId, pool.WhirlpoolsConfig,
                 pool.TokenMintA, pool.TokenMintB, pool.TickSpacing);
@@ -176,8 +177,10 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             swapOrcaTokenTransaction.Signatures = new List<SignaturePubKeyPair>();
             swapOrcaTokenTransaction.Instructions = new List<TransactionInstruction>();
 
-            var tokenOwnerAccountA = await CreateAtaInstruction(wallet, pool.TokenMintA, swapOrcaTokenTransaction, amount);
-            var tokenOwnerAccountB = await CreateAtaInstruction(wallet, pool.TokenMintB, swapOrcaTokenTransaction, amount);
+            var tokenOwnerAccountA =
+                await CreateAtaInstruction(wallet, pool.TokenMintA, swapOrcaTokenTransaction, amount);
+            var tokenOwnerAccountB =
+                await CreateAtaInstruction(wallet, pool.TokenMintB, swapOrcaTokenTransaction, amount);
 
             int startTickIndex = TickUtils.GetStartTickIndex(pool.TickCurrentIndex, pool.TickSpacing, 0);
             var swapAccountsTickArray0 = OrcaPDAUtils.GetTickArray(WhirlpoolProgammId, whirlPoolPda, startTickIndex);
@@ -185,10 +188,10 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             SwapAccounts swapAccounts = new SwapAccounts();
             swapAccounts.TokenProgram = TokenProgram.ProgramIdKey;
             swapAccounts.TokenAuthority = wallet.Account.PublicKey;
-            swapAccounts.TokenOwnerAccountA = true ? tokenOwnerAccountA.PublicKey : tokenOwnerAccountB;
-            swapAccounts.TokenVaultA = true ? pool.TokenVaultA : pool.TokenVaultB;
-            swapAccounts.TokenVaultB = true ? pool.TokenVaultB : pool.TokenVaultA;
-            swapAccounts.TokenOwnerAccountB = true ? tokenOwnerAccountB.PublicKey : tokenOwnerAccountA;
+            swapAccounts.TokenOwnerAccountA = tokenOwnerAccountA.PublicKey;
+            swapAccounts.TokenVaultA = pool.TokenVaultA;
+            swapAccounts.TokenVaultB = pool.TokenVaultB;
+            swapAccounts.TokenOwnerAccountB = tokenOwnerAccountB.PublicKey;
             swapAccounts.TickArray0 = swapAccountsTickArray0;
             swapAccounts.TickArray1 = swapAccounts.TickArray0;
             swapAccounts.TickArray2 = swapAccounts.TickArray0;
@@ -198,7 +201,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var srqtPrice = BigInteger.Parse(aToB ? MIN_SQRT_PRICE : MAX_SQRT_PRICE);
             TransactionInstruction swapInstruction = WhirlpoolProgram.Swap(swapAccounts, amount, 0, srqtPrice,
                 true, aToB, WhirlpoolProgammId);
-            
+
             swapOrcaTokenTransaction.Instructions.Add(swapInstruction);
 
             if (pool.TokenMintA == NativeMint)
@@ -210,6 +213,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                     TokenProgram.ProgramIdKey);
                 swapOrcaTokenTransaction.Instructions.Add(closeAccount);
             }
+
             if (pool.TokenMintB == NativeMint)
             {
                 var closeAccount = TokenProgram.CloseAccount(
@@ -221,11 +225,11 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             }
 
             Transaction signedTransaction = await wallet.SignTransaction(swapOrcaTokenTransaction);
-            
+
             var signature = await wallet.ActiveRpcClient.SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
                 true, Commitment.Confirmed);
-            
+
             if (!signature.WasSuccessful)
             {
                 ServiceFactory.Resolve<LoggingService>().LogWarning(signature.Reason, true);
@@ -234,12 +238,14 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             return signature.Result;
         }
 
-        private static async Task<Account> CreateAtaInstruction(WalletBase wallet, PublicKey tokenMint, 
+        private static async Task<Account> CreateAtaInstruction(WalletBase wallet, PublicKey tokenMint,
             Transaction swapOrcaTokenTransaction, ulong wrappedSolIn = 0)
         {
             if (tokenMint == NativeMint)
             {
-                var minimumRent = await wallet.ActiveRpcClient.GetMinimumBalanceForRentExemptionAsync(TokenProgram.MintAccountDataSize);
+                var minimumRent =
+                    await wallet.ActiveRpcClient.GetMinimumBalanceForRentExemptionAsync(
+                        TokenProgram.MintAccountDataSize);
                 PublicKey tokenOwnerAccount = CreateAta(wallet, tokenMint);
 
                 var accountInfo = await wallet.ActiveRpcClient.GetAccountInfoAsync(tokenOwnerAccount);
@@ -248,13 +254,14 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 {
                     var createWrappedSolTokenAccount = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
                         wallet.Account.PublicKey,
-                        wallet.Account.PublicKey, 
+                        wallet.Account.PublicKey,
                         tokenMint);
                     swapOrcaTokenTransaction.Instructions.Add(createWrappedSolTokenAccount);
                 }
-                
-                var transfer = SystemProgram.Transfer(wallet.Account.PublicKey, tokenOwnerAccount, wrappedSolIn + minimumRent.Result);
-                var nativeSync=TokenProgram.SyncNative(tokenOwnerAccount);
+
+                var transfer = SystemProgram.Transfer(wallet.Account.PublicKey, tokenOwnerAccount,
+                    wrappedSolIn + minimumRent.Result);
+                var nativeSync = TokenProgram.SyncNative(tokenOwnerAccount);
 
                 swapOrcaTokenTransaction.Instructions.Add(transfer);
                 swapOrcaTokenTransaction.Instructions.Add(nativeSync);
@@ -270,8 +277,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 if (accountInfo.Result.Value == null)
                 {
                     var associatedTokenAccountA = AssociatedTokenAccountProgram.CreateAssociatedTokenAccount(
-                        wallet.Account.PublicKey,
-                        wallet.Account.PublicKey, tokenMint);
+                        wallet.Account.PublicKey, wallet.Account.PublicKey, tokenMint);
                     swapOrcaTokenTransaction.Instructions.Add(associatedTokenAccountA);
                 }
 
@@ -299,12 +305,13 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                     var texture = await SolPlayFileLoader.LoadFile<Texture2D>(tokenIconUrl);
                     Texture2D compressedTexture = SolPlayNft.Resize(texture, 75, 75);
                     var sprite = Sprite.Create(compressedTexture,
-                        new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height), new Vector2(0.5f, 0.5f),
+                        new Rect(0.0f, 0.0f, compressedTexture.width, compressedTexture.height),
+                        new Vector2(0.5f, 0.5f),
                         100.0f);
                     return sprite;
                 }
             }
-        
+
             return null;
             /*
                 Deprecated way of loading token icons from the Solana token-list
@@ -317,7 +324,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
                 100.0f);
             return sprite;*/
         }
-        
+
         private static PublicKey CreateAta(WalletBase wallet, PublicKey mint)
         {
             return AssociatedTokenAccountProgram.DeriveAssociatedTokenAccount(wallet.Account.PublicKey, mint);

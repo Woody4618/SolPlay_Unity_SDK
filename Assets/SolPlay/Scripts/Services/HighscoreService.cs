@@ -51,6 +51,8 @@ namespace SolPlay.Scripts.Services
 
         private const string ScoreSeed = "score";
 
+        public bool LoadHighscoresForAllNFtsAutomatically = false;
+
         public void Awake()
         {
             if (ServiceFactory.Resolve<HighscoreService>() != null)
@@ -65,12 +67,16 @@ namespace SolPlay.Scripts.Services
         private void Start()
         {
             MessageRouter.AddHandler<NftLoadingFinishedMessage>(OnAllNftsLoadedMessage);
-            MessageRouter.AddHandler<NftArrivedMessage>(OnNftArrivedMessage);
+            MessageRouter.AddHandler<NftJsonLoadedMessage>(OnNftArrivedMessage);
         }
 
-        private void OnNftArrivedMessage(NftArrivedMessage message)
+        private void OnNftArrivedMessage(NftJsonLoadedMessage message)
         {
-            var seedFromPubkey = GetSeedFromPubkey(message.NewNFt.MetaplexData.mint);
+            if (!LoadHighscoresForAllNFtsAutomatically)
+            {
+                return;
+            }
+            var seedFromPubkey = GetSeedFromPubkey(message.Nft.MetaplexData.mint);
 
             var highscoreEntry = new HighscoreEntry()
             {
@@ -81,7 +87,7 @@ namespace SolPlay.Scripts.Services
             _allHighscores[seedFromPubkey] = highscoreEntry;
 
             // Taking some work from the RPC nodes and delay the high score requests.
-            StartCoroutine(GetHighScoreDataDelayed(message.NewNFt, Random.Range(0, 3)));
+            StartCoroutine(GetHighScoreDataDelayed(message.Nft, Random.Range(0, 3)));
         }
 
         private IEnumerator GetHighScoreDataDelayed(SolPlayNft messageNewNFt, int range)
@@ -112,17 +118,18 @@ namespace SolPlay.Scripts.Services
             return GetSeedFromPubkey(walletHolderService.BaseWallet.Account.PublicKey);
         }
 
-        public HighscoreEntry GetHighscoreForPubkey(string seed)
+        public bool TryGetHighscoreForSeed(string seed, out HighscoreEntry highscoreEntry)
         {
             foreach (var entry in _allHighscores)
             {
                 if (entry.Value.Seed == GetSeedFromPubkey(seed))
                 {
-                    return entry.Value;
+                    highscoreEntry = entry.Value; 
+                    return true;
                 }
             }
-
-            return null;
+            highscoreEntry = null;
+            return false;
         }
 
         public bool TryGetCurrentHighscore(out HighscoreEntry highscoreEntry)
@@ -226,8 +233,7 @@ namespace SolPlay.Scripts.Services
                         return;
                     }
 
-                    ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result,
-                        () => { MessageRouter.RaiseMessage(new SolBalanceChangedMessage()); });
+                    ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result);
 
                     sol = await wallet.GetBalance() * SolanaUtils.SolToLamports;
                     MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
@@ -305,8 +311,8 @@ namespace SolPlay.Scripts.Services
                 var checkingSignatureNow = "Signed via BaseWallet: " + transactionSignature.Result +
                                            " checking signature now. ";
                 ServiceFactory.Resolve<LoggingService>().Log(checkingSignatureNow, true);
-
-                CheckSignature(transactionSignature.Result, () =>
+                ServiceFactory.Resolve<TransactionService>()
+                    .CheckSignatureStatus(transactionSignature.Result, b =>
                 {
                     GetHighscoreAccountData(nft);
                     MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
@@ -317,12 +323,6 @@ namespace SolPlay.Scripts.Services
                 var error = $"There was an error: {transactionSignature.Reason} {transactionSignature.RawRpcResponse} ";
                 ServiceFactory.Resolve<LoggingService>().LogWarning(error, true);
             }
-        }
-
-        private void CheckSignature(string signature, Action onSignatureFinalized)
-        {
-            ServiceFactory.Resolve<TransactionService>()
-                .CheckSignatureStatus(signature, onSignatureFinalized);
         }
 
         private async Task<bool> CheckIfProgramIsDeployed(IRpcClient activeRpcClient)

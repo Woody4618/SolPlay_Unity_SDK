@@ -4,15 +4,16 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Programs;
+using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
+using Solana.Unity.Wallet;
 using SolPlay.Scripts.Ui;
 using UnityEngine;
-using NftImage = SolPlay.Scripts.NftImage;
 
 namespace SolPlay.Scripts.Services
 {
@@ -22,12 +23,14 @@ namespace SolPlay.Scripts.Services
     public class NftService : MonoBehaviour, IMultiSceneSingleton
     {
         public List<SolPlayNft> MetaPlexNFts = new List<SolPlayNft>();
-        public List<TokenAccount> TokenAccounts = new List<TokenAccount>();
         public int NftImageSize = 75;
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
         public SolPlayNft SelectedNft { get; private set; }
         public Texture2D LocalDummyNft;
+        public bool LoadNftsOnStartUp = true;
+
+        private const string IgnoredTokenListPlayerPrefsKey = "IgnoredTokenList";
 
         public void Awake()
         {
@@ -40,61 +43,96 @@ namespace SolPlay.Scripts.Services
             ServiceFactory.RegisterSingleton(this);
         }
 
-        public async Task RequestNftsFromPublicKey(string publicKey, bool tryUseLocalContent = true)
+        private async void Start()
+        {
+            if (LoadNftsOnStartUp)
+            {
+                if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
+                {
+                    var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+                    await RequestNfts(walletHolderService.BaseWallet);
+                }
+                else
+                {
+                    MessageRouter.AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
+                }
+            }
+        }
+
+        private async Task RequestNfts(WalletBase wallet)
+        {
+            await RequestNftsFromWallet(wallet);
+        }
+
+        private async void OnWalletLoggedInMessage(WalletLoggedInMessage message)
+        {
+            await RequestNfts(message.Wallet);
+        }
+
+        public async Task RequestNftsFromWallet(WalletBase wallet, bool tryUseLocalContent = true)
         {
             if (IsLoadingTokenAccounts)
             {
                 MessageRouter
-                    .RaiseMessage(new BlimpSystem.ShowBlimpMessage("Loading in progress."));
+                    .RaiseMessage(new BlimpSystem.ShowLogMessage("Loading in progress."));
                 return;
             }
-
-            var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
 
             MessageRouter.RaiseMessage(new NftLoadingStartedMessage());
 
             IsLoadingTokenAccounts = true;
 
-            TokenAccount[] tokenAccounts = await GetOwnedTokenAccounts(publicKey);
+            TokenAccount[] tokenAccounts = await GetOwnedTokenAccounts(wallet.Account.PublicKey);
 
             if (tokenAccounts == null)
             {
                 string error = $"Could not load Token Accounts, are you connected to the internet?";
-                MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage(error));
+                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage(error));
                 IsLoadingTokenAccounts = false;
                 return;
             }
 
             MetaPlexNFts.Clear();
 
-            var dummyLocalNft = CreateDummyLocalNft(wallet);
+            var dummyLocalNft = CreateDummyLocalNft(wallet.Account.PublicKey);
 
             MetaPlexNFts.Add(dummyLocalNft);
-            MessageRouter
-                .RaiseMessage(new NftArrivedMessage(dummyLocalNft));
 
             string result = $"{tokenAccounts.Length} token accounts loaded. Getting data now.";
-            MessageRouter.RaiseMessage(new BlimpSystem.ShowBlimpMessage(result));
+            MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage(result));
 
-            foreach (TokenAccount item in tokenAccounts)
+            int counter = 0;
+            foreach (TokenAccount tokenAccount in tokenAccounts)
             {
-                if (float.Parse(item.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
+                if (float.Parse(tokenAccount.Account.Data.Parsed.Info.TokenAmount.Amount) > 0)
                 {
-                    SolPlayNft solPlayNft = await SolPlayNft.TryGetNftData(item.Account.Data.Parsed.Info.Mint,
-                        wallet.ActiveRpcClient, tryUseLocalContent);
-
-                    if (solPlayNft != null)
+                    SolPlayNft solPlayNft = SolPlayNft.TryLoadNftFromLocal(tokenAccount.Account.Data.Parsed.Info.Mint);
+                    if (solPlayNft != null && tryUseLocalContent)
                     {
-                        solPlayNft.TokenAccount = item;
+                        solPlayNft.TokenAccount = tokenAccount;
                         MetaPlexNFts.Add(solPlayNft);
-                        MessageRouter
-                            .RaiseMessage(new NftArrivedMessage(solPlayNft));
                     }
                     else
                     {
-                        TokenAccounts.Add(item);
-                        MessageRouter
-                            .RaiseMessage(new TokenArrivedMessage(item.Account.Data.Parsed.Info));
+                        // We put broken tokens on an ignore list so we dont need to load the information every time. 
+                        if (IsTokenMintIgnored(tokenAccount.Account.Data.Parsed.Info.Mint))
+                        {
+                            continue;
+                        }
+
+                        solPlayNft = new SolPlayNft(tokenAccount);
+
+                        await solPlayNft.LoadData(solPlayNft.TokenAccount.Account.Data.Parsed.Info.Mint,
+                            wallet.ActiveRpcClient);
+                        if (solPlayNft.MetaplexData != null)
+                        {
+                            MetaPlexNFts.Add(solPlayNft);
+                            MessageRouter.RaiseMessage(new NftJsonLoadedMessage(solPlayNft));
+                        }
+
+                        // We need to do this because of rate limits
+                        //StartCoroutine(StartNftLoadingDelayed(solPlayNft, wallet.ActiveRpcClient, counter));
+                        counter++;
                     }
                 }
             }
@@ -112,18 +150,56 @@ namespace SolPlay.Scripts.Services
             IsLoadingTokenAccounts = false;
         }
 
-        private SolPlayNft CreateDummyLocalNft(WalletBase wallet)
+        private static bool IsTokenMintIgnored(string mint)
+        {
+            if (GetIgnoreTokenList().TokenList.Contains(mint))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static IgnoreTokenList GetIgnoreTokenList()
+        {
+            if (!PlayerPrefs.HasKey(IgnoredTokenListPlayerPrefsKey))
+            {
+                PlayerPrefs.SetString(IgnoredTokenListPlayerPrefsKey, JsonUtility.ToJson(new IgnoreTokenList()));
+            }
+
+            var json = PlayerPrefs.GetString(IgnoredTokenListPlayerPrefsKey);
+            var ignoreTokenList = JsonUtility.FromJson<IgnoreTokenList>(json);
+            return ignoreTokenList;
+        }
+
+        public void AddToIgnoredTokenListAndSave(string mint)
+        {
+            string blimpMessage = $"Added {mint} to ignore list.";
+            ServiceFactory.Resolve<LoggingService>().Log(blimpMessage, false);
+
+            var ignoreTokenList = GetIgnoreTokenList();
+            ignoreTokenList.TokenList.Add(mint);
+            PlayerPrefs.SetString(IgnoredTokenListPlayerPrefsKey, JsonUtility.ToJson(ignoreTokenList));
+            PlayerPrefs.Save();
+        }
+
+        private IEnumerator StartNftLoadingDelayed(SolPlayNft nft, IRpcClient connection, int counter)
+        {
+            yield return new WaitForSeconds(counter * 0.4f);
+        }
+
+        public SolPlayNft CreateDummyLocalNft(string publicKey)
         {
             SolPlayNft dummyLocalNft = new SolPlayNft();
             dummyLocalNft.TokenAccount = new TokenAccount();
-            dummyLocalNft.TokenAccount.PublicKey = wallet.Account.PublicKey;
+            dummyLocalNft.TokenAccount.PublicKey = publicKey;
             dummyLocalNft.MetaplexData = new Metaplex();
             dummyLocalNft.MetaplexData.nftImage = new NftImage()
             {
                 name = "DummyNft",
                 file = LocalDummyNft
             };
-            dummyLocalNft.MetaplexData.mint = wallet.Account.PublicKey;
+            dummyLocalNft.MetaplexData.mint = publicKey;
             dummyLocalNft.MetaplexData.data = new MetaplexData();
             dummyLocalNft.MetaplexData.data.symbol = "dummy";
             dummyLocalNft.MetaplexData.data.name = "Dummy Nft";
@@ -135,7 +211,12 @@ namespace SolPlay.Scripts.Services
 
         public bool IsNftSelected(SolPlayNft nft)
         {
-            return nft.TokenAccount?.PublicKey == GetSelectedNftPubKey();
+            if (nft.TokenAccount == null)
+            {
+                return false;
+            }
+
+            return nft.TokenAccount.PublicKey == GetSelectedNftPubKey();
         }
 
         private string GetSelectedNftPubKey()
@@ -218,19 +299,54 @@ namespace SolPlay.Scripts.Services
             MessageRouter.RaiseMessage(new NftSelectedMessage(SelectedNft));
         }
 
+        public void ResetSelectedNft()
+        {
+            SelectedNft = null;
+            PlayerPrefs.DeleteKey("SelectedNft");
+            MessageRouter.RaiseMessage(new NftSelectedMessage(SelectedNft));
+        }
+
         public IEnumerator HandleNewSceneLoaded()
         {
             yield return null;
         }
+
+        public SolPlayNft GetNftByMintAddress(PublicKey nftMintAddress)
+        {
+            if (nftMintAddress == null)
+            {
+                return null;
+            }
+
+            foreach (var nft in MetaPlexNFts)
+            {
+                if (nftMintAddress == nft.MetaplexData.mint)
+                {
+                    return nft;
+                }
+            }
+
+            return null;
+        }
     }
 
-    public class NftArrivedMessage
+    public class NftImageLoadedMessage
     {
-        public SolPlayNft NewNFt;
+        public SolPlayNft Nft;
 
-        public NftArrivedMessage(SolPlayNft newNFt)
+        public NftImageLoadedMessage(SolPlayNft nft)
         {
-            NewNFt = newNFt;
+            Nft = nft;
+        }
+    }
+
+    public class NftJsonLoadedMessage
+    {
+        public SolPlayNft Nft;
+
+        public NftJsonLoadedMessage(SolPlayNft nft)
+        {
+            Nft = nft;
         }
     }
 
@@ -258,15 +374,5 @@ namespace SolPlay.Scripts.Services
 
     public class NftMintFinishedMessage
     {
-    }
-
-    public class TokenArrivedMessage
-    {
-        public TokenAccountInfoDetails TokenAccountInfoDetails;
-
-        public TokenArrivedMessage(TokenAccountInfoDetails tokenAccountInfoDetails)
-        {
-            TokenAccountInfoDetails = tokenAccountInfoDetails;
-        }
     }
 }

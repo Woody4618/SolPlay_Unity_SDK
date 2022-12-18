@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: SolPlay
-  productName: Solana Jump
+  companyName: JonasHahn
+  productName: Tiny Adventure
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -277,7 +277,7 @@ PlayerSettings:
   - m_BuildTarget: 
     m_Icons:
     - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: 5ea2c7c560d274d2fbeaf8659a21724b, type: 3}
+      m_Icon: {fileID: 2800000, guid: d3dca9b8f9c34483d8fd1f9e48087aa3, type: 3}
       m_Width: 128
       m_Height: 128
       m_Kind: 0
@@ -817,7 +817,7 @@ PlayerSettings:
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
-    Android: 1
+    Android: 0
   il2cppCompilerConfiguration: {}
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}

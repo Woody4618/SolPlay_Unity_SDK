@@ -94,9 +94,10 @@ public class TransferTokenPopup : BasePopup
 
             if (currentToken.mint == OrcaWhirlpoolService.NativeMint)
             {
-                var result = await transactionService.TransferSolanaToPubkey(
+                var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+                var result = await transactionService.TransferSolanaToPubkey(walletHolderService.BaseWallet,
                     new PublicKey(AdressInput.text),
-                    (ulong) (amount * SolanaUtils.SolToLamports));
+                     (long) (amount * SolanaUtils.SolToLamports));
             }
             else
             {

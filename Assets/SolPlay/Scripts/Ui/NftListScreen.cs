@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace SolPlay.Scripts.Ui
 {
     /// <summary>
-    /// The main screen of the deeplinks example. Handles the login and different application states.
+    /// Screen that loads all NFTs when opened
     /// </summary>
     public class NftListScreen : MonoBehaviour
     {
@@ -21,6 +21,7 @@ namespace SolPlay.Scripts.Ui
         public GameObject YouDontOwnABeaverRoot;
         public GameObject YouOwnABeaverRoot;
         public GameObject LoadingSpinner;
+        public GameObject InteractionBlockerRoot;
 
         async void Start()
         {
@@ -34,7 +35,7 @@ namespace SolPlay.Scripts.Ui
             //GetBeaverButton.gameObject.SetActive(false);
 // #endif
 
-            MessageRouter.AddHandler<NftArrivedMessage>(OnNftArrivedMessage);
+            MessageRouter.AddHandler<NftJsonLoadedMessage>(OnNftLoadedMessage);
             MessageRouter
                 .AddHandler<NftLoadingStartedMessage>(OnNftLoadingStartedMessage);
             MessageRouter
@@ -63,20 +64,41 @@ namespace SolPlay.Scripts.Ui
 
         private async void OnMintInApp3DButtonClicked()
         {
+            if (InteractionBlockerRoot != null)
+            {
+                InteractionBlockerRoot.gameObject.SetActive(true);
+            }
             var signature = await ServiceFactory.Resolve<NftMintingService>()
                 .MintNftWithMetaData(
                     "https://arweave.net/x-NmscUWB6zzdROsLsX1-CfRVVlYcuBL2rQ5vk8Fslo",
-                    "Alpha Racing Dummy", "Test3D");
+                    "Alpha Racing Dummy", "Test3D", b =>
+                    {
+                        if (InteractionBlockerRoot != null)
+                        {
+                            InteractionBlockerRoot.gameObject.SetActive(false);
+                        }
+                    });
         }
 
         private async void OnMintInAppButtonClicked()
         {
+            if (InteractionBlockerRoot != null)
+            {
+                InteractionBlockerRoot.gameObject.SetActive(true);
+            }
+            
             // Mint a baloon beaver
             var signature = await ServiceFactory.Resolve<NftMintingService>()
                 .MintNftWithMetaData(
                     "https://shdw-drive.genesysgo.net/2TvgCDMEcSGnfuSUZNHvKpHL9Z5hLn19YqvgeUpS6rSs/manifest.json",
-                    "Balloon Beaver", "Beaver");
-            
+                    "Balloon Beaver", "Beaver", b =>
+                    {
+                        if (InteractionBlockerRoot != null)
+                        {
+                            InteractionBlockerRoot.gameObject.SetActive(false);
+                        }
+                    });
+
             // Mint a solandy
             /*ServiceFactory.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
             var signature = await ServiceFactory.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
@@ -86,7 +108,7 @@ namespace SolPlay.Scripts.Ui
                     RequestNfts(true);
                     ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
                 });*/
-            
+
             // Mint from a candy machine (This one is from zen republic, i only used it for testing)
             //var signature = await ServiceFactory.Resolve<NftMintingService>()
             //    .MintNFTFromCandyMachineV2(new PublicKey("3eqPffoeSj7e2ZkyHJHyYPc7qm8rbGDZFwM9oYSW4Z5w"));
@@ -98,9 +120,9 @@ namespace SolPlay.Scripts.Ui
             PhantomUtils.OpenUrlInWalletBrowser("https://beavercrush.com");
         }
 
-        private void OnNftArrivedMessage(NftArrivedMessage message)
+        private void OnNftLoadedMessage(NftJsonLoadedMessage message)
         {
-            NftItemListView.AddNFt(message.NewNFt);
+            NftItemListView.AddNFt(message.Nft);
             UpdateBeaverStatus();
         }
 
@@ -125,7 +147,6 @@ namespace SolPlay.Scripts.Ui
 
         private void OnNftLoadingStartedMessage(NftLoadingStartedMessage message)
         {
-            NftItemListView.Clear();
             GetNFtsDataButton.interactable = false;
             GetNFtsNotCachedButton.interactable = false;
         }
@@ -153,12 +174,9 @@ namespace SolPlay.Scripts.Ui
 
         private async Task RequestNfts(bool tryUseLocalCache)
         {
-            var phantomDeeplinkService = ServiceFactory.Resolve<WalletHolderService>();
-            if (phantomDeeplinkService.TryGetPhantomPublicKey(out string phantomPublicKey))
-            {
-                await ServiceFactory.Resolve<NftService>()
-                    .RequestNftsFromPublicKey(phantomPublicKey, tryUseLocalCache);
-            }
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            await ServiceFactory.Resolve<NftService>()
+                .RequestNftsFromWallet(walletHolderService.BaseWallet, tryUseLocalCache);
         }
     }
 }
