@@ -100,13 +100,13 @@ namespace SolPlay.Scripts.Ui
                     });
 
             // Mint a solandy
-            /*ServiceFactory.Resolve<LoggingService>().Log("Start minting a 'SolAndy' nft", true);
+            /*LoggingService.Log("Start minting a 'SolAndy' nft", true);
             var signature = await ServiceFactory.Resolve<NftMintingService>().MintNftWithMetaData("https://shdw-drive.genesysgo.net/4JaYMUSY8f56dFzmdhuzE1QUqhkJYhsC6wZPaWg9Zx7f/manifest.json", "SolAndy", "SolPlay");
             ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature,
                 () =>
                 {
                     RequestNfts(true);
-                    ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                    LoggingService.Log("Mint Successfull! Woop woop!", true);
                 });*/
 
             // Mint from a candy machine (This one is from zen republic, i only used it for testing)

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 987599041}
   - component: {fileID: 987599040}
+  - component: {fileID: 9150608678410764111}
   m_Layer: 0
   m_Name: WebSocketService
   m_TagString: Untagged
@@ -45,6 +46,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   socketUrl: 
+--- !u!114 &9150608678410764111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987599039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a24bde54894d52abc6badf8a31808b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1665109046477389277
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,6 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MetaPlexNFts: []
   NftImageSize: 75
+  RateLimitTimeBetweenNftLoads: 0.1
   LocalDummyNft: {fileID: 2800000, guid: b00ee92b032968a42bfcb4bb760de2e9, type: 3}
   LoadNftsOnStartUp: 1
 --- !u!1 &1665109047377900278

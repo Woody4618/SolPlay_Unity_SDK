@@ -1,8 +1,10 @@
 using System;
+using Cysharp.Threading.Tasks;
 using Frictionless;
+#if GLTFAST
 using GLTFast;
+#endif
 using SolPlay.Scripts.Services;
-using SolPlay.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +27,9 @@ namespace SolPlay.Scripts.Ui
         public GameObject GltfRoot;
         public GameObject IsLoadingDataRoot;
         public GameObject LoadingErrorRoot;
+#if GLTFAST
         public GltfAsset GltfAsset;
+#endif
         public RenderTexture RenderTexture;
         public Camera Camera;
         public int RenderTextureSize = 75;
@@ -50,11 +54,11 @@ namespace SolPlay.Scripts.Ui
             IsLoadingDataRoot.gameObject.SetActive(true);
             PowerLevel.text = "Loading Image";
 
-            if (solPlayNft.LoadingImageTask != null)
+            if (solPlayNft.LoadingImageTask.Status == UniTaskStatus.Pending)
             {
                 await solPlayNft.LoadingImageTask;
             }
-
+            
             if (!string.IsNullOrEmpty(solPlayNft.LoadingError))
             {
                 ErrorText.text = solPlayNft.LoadingError;
@@ -72,6 +76,7 @@ namespace SolPlay.Scripts.Ui
                 Camera.targetTexture = RenderTexture;
                 Camera.cullingMask = (1 << 19);
                 Icon.texture = RenderTexture;
+#if GLTFAST
                 var isLoaded = await GltfAsset.Load(solPlayNft.MetaplexData.data.json.animation_url);
                 if (isLoaded)
                 {
@@ -83,6 +88,7 @@ namespace SolPlay.Scripts.Ui
 
                     LayerUtils.SetRenderLayerRecursive(GltfAsset.gameObject, 19);
                 }
+#endif
             }
             else if (solPlayNft.MetaplexData.nftImage != null)
             {

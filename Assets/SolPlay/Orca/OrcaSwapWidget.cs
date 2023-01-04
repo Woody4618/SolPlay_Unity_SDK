@@ -92,7 +92,7 @@ public class OrcaSwapWidget : MonoBehaviour
             pools = await ServiceFactory.Resolve<OrcaWhirlpoolService>().GetPools();
             if (pools == null)
             {
-                ServiceFactory.Resolve<LoggingService>()
+                LoggingService
                     .LogWarning("Could not load pools. Are you connected to the internet?", true);
             }
         }
@@ -174,7 +174,7 @@ public class OrcaSwapWidget : MonoBehaviour
         var orcaSwapPopup = ServiceFactory.Resolve<OrcaSwapPopup>();
         if (orcaSwapPopup == null)
         {
-            ServiceFactory.Resolve<LoggingService>()
+            LoggingService
                 .Log("You need to add the OrcaSwapPopup to the scene.", true);
             return;
         }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using ThreeDISevenZeroR.UnityGifDecoder;
 using ThreeDISevenZeroR.UnityGifDecoder.Model;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace SolPlay.Scripts
     /// </summary>
     public static class SolPlayFileLoader
     {
-        public static async Task<T> LoadFile<T>(string path, string optionalName = "")
+        public static async UniTask<T> LoadFile<T>(string path, string optionalName = "")
         {
             if (typeof(T) == typeof(Texture2D))
             {
@@ -37,7 +38,7 @@ namespace SolPlay.Scripts
 #endif
         }
 
-        private static async Task<T> LoadTexture<T>(string filePath, CancellationToken token = default)
+        private static async UniTask<T> LoadTexture<T>(string filePath, CancellationToken token = default)
         {
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
             {
@@ -67,7 +68,7 @@ namespace SolPlay.Scripts
             return Resources.Load<Sprite>(fileName);
         }
         
-        private static async Task<T> LoadGif<T>(string filePath, CancellationToken token = default)
+        private static async UniTask<T> LoadGif<T>(string filePath, CancellationToken token = default)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(filePath))
             {
@@ -147,7 +148,7 @@ namespace SolPlay.Scripts
             return result;
         }
 
-        private static async Task<T> LoadJsonWebRequest<T>(string path)
+        private static async UniTask<T> LoadJsonWebRequest<T>(string path)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(path))
             {
@@ -179,7 +180,7 @@ namespace SolPlay.Scripts
             }
         }
 
-        private static async Task<T> LoadJson<T>(string path)
+        private static async UniTask<T> LoadJson<T>(string path)
         {
             HttpClient client = new HttpClient();
 

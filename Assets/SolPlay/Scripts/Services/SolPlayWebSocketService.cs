@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Frictionless;
 using UnityEngine;
@@ -15,7 +14,7 @@ namespace SolPlay.Scripts.Services
 {
     public class SolPlayWebSocketService : MonoBehaviour
     {
-        WebSocket websocket;
+        IWebSocket websocket;
 
         private Dictionary<PublicKey, SocketSubscription> subscriptions =
             new Dictionary<PublicKey, SocketSubscription>();
@@ -106,12 +105,12 @@ namespace SolPlay.Scripts.Services
             return websocket.State;
         }
 
-        public void SetSocketUrl(string rpcUrl)
+        private void SetSocketUrl(string rpcUrl)
         {
             socketUrl = rpcUrl.Replace("https://", "wss://");
         }
 
-        public async Task Connect(string rpcUrl)
+        public void Connect(string rpcUrl)
         {
             System.Net.ServicePointManager.ServerCertificateValidationCallback = (message, cert, chain, sslPolicyErrors) => true;
             
@@ -121,19 +120,24 @@ namespace SolPlay.Scripts.Services
                 websocket.OnError -= websocketOnOnError();
                 websocket.OnClose -= OnWebSocketClosed;
                 websocket.OnMessage -= websocketOnOnMessage();
-                await websocket.Close();
+                websocket.Close();
             }
 
             SetSocketUrl(rpcUrl);
             Debug.Log("Connect Socket: " + socketUrl);
             
+#if UNITY_WEBGL 
             websocket = new WebSocket(socketUrl);
+#else 
+            websocket = new SharpWebSockets(socketUrl);
+#endif
 
             websocket.OnOpen += websocketOnOnOpen();
             websocket.OnError += websocketOnOnError();
             websocket.OnClose += OnWebSocketClosed;
             websocket.OnMessage += websocketOnOnMessage();
-            await websocket.Connect();
+            websocket.Connect();
+            
             Debug.Log("Socket connect done");
         }
 

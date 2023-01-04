@@ -135,7 +135,7 @@ namespace SolPlay.Scripts.Services
 
             if (!transactionSignature.WasSuccessful)
             {
-                ServiceFactory.Resolve<LoggingService>()
+                LoggingService
                     .Log("Mint was not successfull: " + transactionSignature.Reason, true);
             }
             else
@@ -145,11 +145,11 @@ namespace SolPlay.Scripts.Services
                     {
                         if (success)
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                            LoggingService.Log("Mint Successfull! Woop woop!", true);
                         }
                         else
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint failed!", true);
+                            LoggingService.Log("Mint failed!", true);
                         }
                         MessageRouter.RaiseMessage(new NftMintFinishedMessage());
                     });
@@ -197,7 +197,7 @@ namespace SolPlay.Scripts.Services
 
             if (!transactionSignature.WasSuccessful)
             {
-                ServiceFactory.Resolve<LoggingService>()
+                LoggingService
                     .Log("Mint was not successfull: " + transactionSignature.Reason, true);
             }
             else
@@ -207,11 +207,11 @@ namespace SolPlay.Scripts.Services
                     {
                         if (success)
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                            LoggingService.Log("Mint Successfull! Woop woop!", true);
                         }
                         else
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint failed!", true);
+                            LoggingService.Log("Mint failed!", true);
                         }
                         MessageRouter.RaiseMessage(new NftMintFinishedMessage());
                     });
@@ -258,7 +258,7 @@ namespace SolPlay.Scripts.Services
 
             if (!transactionSignature.WasSuccessful)
             {
-                ServiceFactory.Resolve<LoggingService>()
+                LoggingService
                     .Log("Mint was not successfull: " + transactionSignature.Reason, true);
             }
             else
@@ -268,11 +268,11 @@ namespace SolPlay.Scripts.Services
                     {
                         if (success)
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                            LoggingService.Log("Mint Successfull! Woop woop!", true);
                         }
                         else
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log("Mint failed!", true);
+                            LoggingService.Log("Mint failed!", true);
                         }
                         MessageRouter.RaiseMessage(new NftMintFinishedMessage());
                     });
@@ -304,7 +304,7 @@ namespace SolPlay.Scripts.Services
             // TODO: Check if there is enough sol in the wallet to mint. 
             if (balance.Result != null && balance.Result.Value < SolanaUtils.SolToLamports / 10)
             {
-                ServiceFactory.Resolve<LoggingService>().Log("Sol balance is low. Minting may fail", true);
+                LoggingService.Log("Sol balance is low. Minting may fail", true);
             }
 
             Debug.Log($"Balance: {balance.Result.Value} ");
@@ -482,7 +482,7 @@ namespace SolPlay.Scripts.Services
             if (!transactionSignature.WasSuccessful)
             {
                 mintDone?.Invoke(false);
-                ServiceFactory.Resolve<LoggingService>()
+                LoggingService
                     .Log("Mint was not successfull: " + transactionSignature.Reason, true);
             }
             else
@@ -491,7 +491,7 @@ namespace SolPlay.Scripts.Services
                     success =>
                     {
                         mintDone?.Invoke(success);
-                        ServiceFactory.Resolve<LoggingService>().Log("Mint Successfull! Woop woop!", true);
+                        LoggingService.Log("Mint Successfull! Woop woop!", true);
                         MessageRouter.RaiseMessage(new NftMintFinishedMessage());
                     }, TransactionService.TransactionResult.finalized);
             }

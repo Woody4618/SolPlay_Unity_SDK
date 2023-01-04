@@ -200,7 +200,7 @@ namespace SolPlay.Scripts.Services
 
             if (blockHash.Result == null)
             {
-                ServiceFactory.Resolve<LoggingService>().Log("Block hash null. Connected to internet?", true);
+                LoggingService.Log("Block hash null. Connected to internet?", true);
                 return;
             }
 
@@ -213,14 +213,14 @@ namespace SolPlay.Scripts.Services
                 fees += costPerAccount.Result;
             }
 
-            ServiceFactory.Resolve<LoggingService>().Log(
+            LoggingService.Log(
                 $"Pubkey: {wallet.Account.PublicKey} - SolAmount = " + sol + " needed for account: " + fees, true);
 
             if (sol <= fees)
             {
                 if (wallet.RpcCluster == RpcCluster.MainNet)
                 {
-                    ServiceFactory.Resolve<LoggingService>().Log(
+                    LoggingService.Log(
                         $"You dont have enough sol to pay for account creation. Need at least: {fees} ", true);
                 }
                 else
@@ -228,7 +228,7 @@ namespace SolPlay.Scripts.Services
                     string result = await wallet.RequestAirdrop(1000000000);
                     if (string.IsNullOrEmpty(result))
                     {
-                        ServiceFactory.Resolve<LoggingService>()
+                        LoggingService
                             .Log("Air drop request failed. Are connected to the internet?", true);
                         return;
                     }
@@ -297,7 +297,7 @@ namespace SolPlay.Scripts.Services
             increasePlayerLevelTransaction.Instructions.Add(highscoreInstruction);
 
             var sendingTransactionUsing = "Sending transaction using: " + walletHolderService.BaseWallet.GetType();
-            ServiceFactory.Resolve<LoggingService>().Log(sendingTransactionUsing, true);
+            LoggingService.Log(sendingTransactionUsing, true);
 
             var signedTransaction =
                 await walletHolderService.BaseWallet.SignTransaction(increasePlayerLevelTransaction);
@@ -310,7 +310,7 @@ namespace SolPlay.Scripts.Services
             {
                 var checkingSignatureNow = "Signed via BaseWallet: " + transactionSignature.Result +
                                            " checking signature now. ";
-                ServiceFactory.Resolve<LoggingService>().Log(checkingSignatureNow, true);
+                LoggingService.Log(checkingSignatureNow, true);
                 ServiceFactory.Resolve<TransactionService>()
                     .CheckSignatureStatus(transactionSignature.Result, b =>
                 {
@@ -321,7 +321,7 @@ namespace SolPlay.Scripts.Services
             else
             {
                 var error = $"There was an error: {transactionSignature.Reason} {transactionSignature.RawRpcResponse} ";
-                ServiceFactory.Resolve<LoggingService>().LogWarning(error, true);
+                LoggingService.LogWarning(error, true);
             }
         }
 

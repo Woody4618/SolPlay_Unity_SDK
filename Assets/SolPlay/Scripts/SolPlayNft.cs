@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Rpc;
 using Solana.Unity.Rpc.Models;
@@ -40,12 +41,11 @@ namespace SolPlay.Scripts
         public AccountInfo AccountInfo;
         public TokenAccount TokenAccount;
 
-        [NonSerialized] public Task LoadingImageTask;
-        [NonSerialized] public Task JsonImageTask;
+        [NonSerialized] public UniTask LoadingImageTask;
         [NonSerialized] public string LoadingError;
 
-        private static string ImagePrefix = "V1_Image_";
-        private static string JsonPrefix = "V1_Json_";
+        private static string ImagePrefix = "V2_Image_";
+        private static string JsonPrefix = "V2_Json_";
 
         public SolPlayNft()
         {
@@ -76,7 +76,7 @@ namespace SolPlay.Scripts
             return null;
         }
 
-        public async Task LoadData(string mint, IRpcClient connection)
+        public async UniTask LoadData(string mint, IRpcClient connection)
         {
             var seeds = new List<byte[]>();
             seeds.Add(Encoding.UTF8.GetBytes("metadata"));
@@ -102,6 +102,14 @@ namespace SolPlay.Scripts
                     AccountInfo = accountInfo;
                     await LoadJson(metaPlex.mint);
                     LoadingImageTask = LoadImage(mint, this);
+                                        
+                    if (MetaplexData != null)
+                    {
+                        var nftService = ServiceFactory.Resolve<NftService>();
+                        nftService.MetaPlexNFts.Add(this);
+                        MessageRouter.RaiseMessage(new NftJsonLoadedMessage(this));
+                    }
+
                 }
                 catch (Exception e)
                 {
@@ -124,7 +132,7 @@ namespace SolPlay.Scripts
             }
         }
 
-        private async Task LoadJson(string mint)
+        private async UniTask LoadJson(string mint)
         {
             MetaplexJsonData jsonData = await SolPlayFileLoader.LoadFile<MetaplexJsonData>(MetaplexData.data.url);
 
@@ -141,7 +149,7 @@ namespace SolPlay.Scripts
             }
         }
 
-        private static async Task LoadImage(string mint, SolPlayNft nft)
+        private static async UniTask LoadImage(string mint, SolPlayNft nft)
         {
             if (nft.MetaplexData.data.json == null)
             {

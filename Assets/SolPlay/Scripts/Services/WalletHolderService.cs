@@ -34,6 +34,7 @@ namespace SolPlay.Scripts.Services
         [NonSerialized] public WalletBase BaseWallet;
 
         public bool IsLoggedIn { get; private set; }
+        public bool AutomaticallyConnectWebSocket = true;
         public long BaseWalletSolBalance;
         public long InGameWalletSolBalance;
 
@@ -111,13 +112,16 @@ namespace SolPlay.Scripts.Services
                 Wallet = BaseWallet
             });
 
-            var solPlayWebSocketService = ServiceFactory.Resolve<SolPlayWebSocketService>();
-            if (solPlayWebSocketService != null)
-            { 
-                solPlayWebSocketService.Connect(BaseWallet.ActiveRpcClient.NodeAddress.ToString());
-            }
+            if (AutomaticallyConnectWebSocket)
+            {
+                var solPlayWebSocketService = ServiceFactory.Resolve<SolPlayWebSocketService>();
+                if (solPlayWebSocketService != null)
+                { 
+                    solPlayWebSocketService.Connect(BaseWallet.ActiveRpcClient.NodeAddress.ToString());
+                }
 
-            SubscribeToWalletAccountChanges();
+                SubscribeToWalletAccountChanges();
+            }
 
             var baseSolBalance = await BaseWallet.ActiveRpcClient.GetBalanceAsync(BaseWallet.Account.PublicKey, Commitment.Confirmed);
             BaseWalletSolBalance = (long) baseSolBalance.Result.Value;

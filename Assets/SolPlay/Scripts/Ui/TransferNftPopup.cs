@@ -30,7 +30,7 @@ public class TransferNftPopup : BasePopup
     private SolPlayNft currentNft;
     private Token currentToken;
 
-    private void Awake()
+    private new void Awake()
     {
         TransferButton.onClick.AddListener(OnTransferClicked);
         base.Awake();

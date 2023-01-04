@@ -39,7 +39,7 @@ public class OrcaSwapPopup : BasePopup
     {
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Resolve<LoggingService>()
+            LoggingService
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -65,7 +65,7 @@ public class OrcaSwapPopup : BasePopup
 
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Resolve<LoggingService>()
+            LoggingService
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -93,7 +93,7 @@ public class OrcaSwapPopup : BasePopup
     {
         if (!float.TryParse(AmountInput.text, out float value))
         {
-            ServiceFactory.Resolve<LoggingService>()
+            LoggingService
                 .LogWarning($"Wrong input value {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}", true);
             return;
         }
@@ -110,7 +110,7 @@ public class OrcaSwapPopup : BasePopup
                 ? $"Swapping {value} {currentPoolData.SymbolA} to {currentPoolData.SymbolB}"
                 : $"Swapping {value} {currentPoolData.SymbolB} to {currentPoolData.SymbolA}";
 
-        ServiceFactory.Resolve<LoggingService>().Log(fromToMessage, true);
+        LoggingService.Log(fromToMessage, true);
         var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
         var signature = await ServiceFactory.Resolve<OrcaWhirlpoolService>()
             .Swap(wallet, currentPoolData.Pool, valueLong, AToB);

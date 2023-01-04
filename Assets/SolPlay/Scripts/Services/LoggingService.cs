@@ -6,7 +6,7 @@ namespace SolPlay.Scripts.Services
 {
     public class LoggingService
     {
-        public void Log(string message, bool showBlimpOnScreen)
+        public static void Log(string message, bool showBlimpOnScreen)
         {
             Debug.Log(message);
             if (showBlimpOnScreen)
@@ -15,7 +15,7 @@ namespace SolPlay.Scripts.Services
             }
         }
 
-        public void LogWarning(string message, bool showBlimpOnScreen)
+        public static void LogWarning(string message, bool showBlimpOnScreen)
         {
             Debug.LogWarning(message);
             if (showBlimpOnScreen)

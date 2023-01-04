@@ -33,7 +33,7 @@ public class TransferTokenPopup : BasePopup
     private SolPlayNft currentNft;
     private Token currentToken;
 
-    private void Awake()
+    private new void Awake()
     {
         TransferButton.onClick.AddListener(OnTransferClicked);
         base.Awake();
@@ -89,7 +89,7 @@ public class TransferTokenPopup : BasePopup
         {
             var transactionService = ServiceFactory.Resolve<TransactionService>();
             Debug.Log($"amount: {amount}");
-            ServiceFactory.Resolve<LoggingService>()
+            LoggingService
                 .Log($"Start transfer of {amount} {currentToken.symbol} to {AdressInput.text}", true);
 
             if (currentToken.mint == OrcaWhirlpoolService.NativeMint)

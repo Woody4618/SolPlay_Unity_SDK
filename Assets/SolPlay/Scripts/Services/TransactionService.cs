@@ -97,7 +97,7 @@ namespace SolPlay.Scripts.Services
                 {
                     if (signatureStatusInfo == null)
                     {
-                        ServiceFactory.Resolve<LoggingService>()
+                        LoggingService
                             .Log($"Waiting for signature. Try: {counter}",
                                 ShowBlimpsForTransactions);
                     }
@@ -108,7 +108,7 @@ namespace SolPlay.Scripts.Services
                             signatureStatusInfo.ConfirmationStatus == Enum.GetName(typeof(TransactionResult),
                                 TransactionResult.finalized))
                         {
-                            ServiceFactory.Resolve<LoggingService>()
+                            LoggingService
                                 .Log("Transaction " + signatureStatusInfo.ConfirmationStatus,
                                     ShowBlimpsForTransactions);
 
@@ -118,7 +118,7 @@ namespace SolPlay.Scripts.Services
                         }
                         else
                         {
-                            ServiceFactory.Resolve<LoggingService>().Log(
+                            LoggingService.Log(
                                 $"Signature result {signatureStatusInfo.Confirmations}/31 status: {signatureStatusInfo.ConfirmationStatus} target: {Enum.GetName(typeof(TransactionResult), transactionResult)}",
                                 ShowBlimpsForTransactions);
                         }
@@ -303,7 +303,7 @@ namespace SolPlay.Scripts.Services
                 blockHash = blockHashResult.Result.Value;
             }
 
-            SendTransaction(transactionName, instruction, transactionInfoObject, onTransactionDone, blockHash);
+            SendSingleInstruction(transactionName, instruction, transactionInfoObject, onTransactionDone, blockHash);
         }
 
         private static void PrintBlockHashError(RequestResult<ResponseValue<BlockHash>> blockHashResult,
@@ -313,7 +313,7 @@ namespace SolPlay.Scripts.Services
             if (blockHashResult.ServerErrorCode == 429)
             {
                 message = $"Rate limit reached!";
-                ServiceFactory.Resolve<LoggingService>().Log(message, true);
+                LoggingService.Log(message, true);
             }
             else
             {
@@ -323,7 +323,7 @@ namespace SolPlay.Scripts.Services
             transactionInfoObject.OnError(message);
         }
 
-        public async void SendTransaction(string transactionName, TransactionInstruction instruction,
+        public async void SendSingleInstruction(string transactionName, TransactionInstruction instruction,
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject,
             Action<string> onTransactionDone = null, BlockHash blockHashOverride = null,
             Commitment commitment = Commitment.Confirmed)
@@ -338,7 +338,7 @@ namespace SolPlay.Scripts.Services
                 var result = await wallet.ActiveRpcClient.GetRecentBlockHashAsync(commitment);
                 if (result.Result == null)
                 {
-                    ServiceFactory.Resolve<LoggingService>().Log($"Block hash null. Ignore {transactionName}", true);
+                    LoggingService.Log($"Block hash null. Ignore {transactionName}", true);
                     return;
                 }
 
@@ -369,15 +369,17 @@ namespace SolPlay.Scripts.Services
 
             if (!signature.WasSuccessful)
             {
-                ServiceFactory.Resolve<LoggingService>().LogWarning(signature.Reason, true);
+                LoggingService.LogWarning(signature.Reason, true);
             }
 
-            /*ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature.Result,
-                () =>
+            if (onTransactionDone != null)
+            {
+                ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature.Result, b =>
                 {
                     MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                     onTransactionDone?.Invoke(signature.Result);
-                });*/
+                });    
+            }
         }
 
         public async Task<RequestResult<string>> TransferSolanaToPubkey(WalletBase wallet, string toPublicKey,
@@ -388,7 +390,7 @@ namespace SolPlay.Scripts.Services
 
             if (blockHash.Result == null)
             {
-                ServiceFactory.Resolve<LoggingService>().Log("Block hash null. Connected to internet?", true);
+                LoggingService.Log("Block hash null. Connected to internet?", true);
                 return null;
             }
 

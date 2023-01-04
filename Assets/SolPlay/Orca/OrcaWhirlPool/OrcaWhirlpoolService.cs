@@ -60,7 +60,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             OrcaApiTokenData = JsonConvert.DeserializeObject<OrcaApiTokenData>(TokensAsset.text);
             // Its faster to cache it directly in unity in text assets. But the data may be out of date, so we calculate the
             // prices from the on chain data sqrt price directly.
-            //RefreshApiData();
+            RefreshApiData();
             if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
             {
                 Init();
@@ -69,9 +69,9 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
         private async void RefreshApiData()
         {
-            OrcaApiPoolsData =
-                await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.mainnet.orca.so/v1/whirlpool/list");
-            OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.mainnet.orca.so/v1/token/list");
+            //OrcaApiPoolsData =
+            //    await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.mainnet.orca.so/v1/whirlpool/list");
+            //OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.mainnet.orca.so/v1/token/list");
             //OrcaApiPoolsData = await FileLoader.LoadFile<OrcaApiPoolsData>("https://api.devnet.orca.so/v1/whirlpool/list");
             //OrcaApiTokenData = await FileLoader.LoadFile<OrcaApiTokenData>("https://api.devnet.orca.so/v1/token/list");
         }
@@ -164,8 +164,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
             var getWhirlpool = await _whirlpoolClient.GetWhirlpoolAsync(whirlPoolPda);
             if (getWhirlpool.ParsedResult == null)
             {
-                ServiceFactory.Resolve<LoggingService>()
-                    .LogWarning($"Could not load whirlpool {whirlPoolPda}", true);
+                LoggingService.LogWarning($"Could not load whirlpool {whirlPoolPda}", true);
                 return null;
             }
 
@@ -232,7 +231,7 @@ namespace SolPlay.DeeplinksNftExample.Scripts
 
             if (!signature.WasSuccessful)
             {
-                ServiceFactory.Resolve<LoggingService>().LogWarning(signature.Reason, true);
+                LoggingService.LogWarning(signature.Reason, true);
             }
 
             return signature.Result;

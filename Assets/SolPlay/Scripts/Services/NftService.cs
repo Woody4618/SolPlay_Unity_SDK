@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc;
@@ -24,11 +25,13 @@ namespace SolPlay.Scripts.Services
     {
         public List<SolPlayNft> MetaPlexNFts = new List<SolPlayNft>();
         public int NftImageSize = 75;
+        public float RateLimitTimeBetweenNftLoads = 0.1f;
         public bool IsLoadingTokenAccounts { get; private set; }
         public const string BeaverNftMintAuthority = "GsfNSuZFrT2r4xzSndnCSs9tTXwt47etPqU8yFVnDcXd";
         public SolPlayNft SelectedNft { get; private set; }
         public Texture2D LocalDummyNft;
         public bool LoadNftsOnStartUp = true;
+        public bool AddDummyNft = true;
 
         private const string IgnoredTokenListPlayerPrefsKey = "IgnoredTokenList";
 
@@ -69,7 +72,7 @@ namespace SolPlay.Scripts.Services
             await RequestNfts(message.Wallet);
         }
 
-        public async Task RequestNftsFromWallet(WalletBase wallet, bool tryUseLocalContent = true)
+        public async UniTask RequestNftsFromWallet(WalletBase wallet, bool tryUseLocalContent = true)
         {
             if (IsLoadingTokenAccounts)
             {
@@ -94,12 +97,16 @@ namespace SolPlay.Scripts.Services
 
             MetaPlexNFts.Clear();
 
-            var dummyLocalNft = CreateDummyLocalNft(wallet.Account.PublicKey);
-
-            MetaPlexNFts.Add(dummyLocalNft);
+            if (AddDummyNft)
+            {
+                var dummyLocalNft = CreateDummyLocalNft(wallet.Account.PublicKey);
+                MetaPlexNFts.Add(dummyLocalNft);
+            }
 
             string result = $"{tokenAccounts.Length} token accounts loaded. Getting data now.";
             MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage(result));
+
+            List<UniTask> loadingTasks = new List<UniTask>();
 
             int counter = 0;
             foreach (TokenAccount tokenAccount in tokenAccounts)
@@ -122,13 +129,10 @@ namespace SolPlay.Scripts.Services
 
                         solPlayNft = new SolPlayNft(tokenAccount);
 
-                        await solPlayNft.LoadData(solPlayNft.TokenAccount.Account.Data.Parsed.Info.Mint,
-                            wallet.ActiveRpcClient);
-                        if (solPlayNft.MetaplexData != null)
-                        {
-                            MetaPlexNFts.Add(solPlayNft);
-                            MessageRouter.RaiseMessage(new NftJsonLoadedMessage(solPlayNft));
-                        }
+                        loadingTasks.Add(solPlayNft.LoadData(solPlayNft.TokenAccount.Account.Data.Parsed.Info.Mint,
+                            wallet.ActiveRpcClient));
+
+                        await UniTask.Delay(TimeSpan.FromSeconds(RateLimitTimeBetweenNftLoads), ignoreTimeScale: false);
 
                         // We need to do this because of rate limits
                         //StartCoroutine(StartNftLoadingDelayed(solPlayNft, wallet.ActiveRpcClient, counter));
@@ -137,10 +141,13 @@ namespace SolPlay.Scripts.Services
                 }
             }
 
+            await UniTask.WhenAll(loadingTasks);
+
             foreach (var nft in MetaPlexNFts)
             {
                 var lastSelectedNft = GetSelectedNftPubKey();
-                if (!string.IsNullOrEmpty(lastSelectedNft) && lastSelectedNft == nft.TokenAccount.PublicKey)
+                if (!string.IsNullOrEmpty(lastSelectedNft) && nft.TokenAccount != null &&
+                    lastSelectedNft == nft.TokenAccount.PublicKey)
                 {
                     SelectNft(nft);
                 }
@@ -148,6 +155,12 @@ namespace SolPlay.Scripts.Services
 
             MessageRouter.RaiseMessage(new NftLoadingFinishedMessage());
             IsLoadingTokenAccounts = false;
+        }
+
+        public static async Task DelayAsync(float secondsDelay)
+        {
+            float startTime = Time.time;
+            while (Time.time < startTime + secondsDelay) await Task.Yield();
         }
 
         private static bool IsTokenMintIgnored(string mint)
@@ -175,7 +188,7 @@ namespace SolPlay.Scripts.Services
         public void AddToIgnoredTokenListAndSave(string mint)
         {
             string blimpMessage = $"Added {mint} to ignore list.";
-            ServiceFactory.Resolve<LoggingService>().Log(blimpMessage, false);
+            LoggingService.Log(blimpMessage, false);
 
             var ignoreTokenList = GetIgnoreTokenList();
             ignoreTokenList.TokenList.Add(mint);
@@ -240,7 +253,7 @@ namespace SolPlay.Scripts.Services
             }
             catch (Exception ex)
             {
-                ServiceFactory.Resolve<LoggingService>().Log($"Token loading error: {ex}", true);
+                LoggingService.Log($"Token loading error: {ex}", true);
                 Debug.LogError(ex);
                 IsLoadingTokenAccounts = false;
             }

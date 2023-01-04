@@ -8,9 +8,7 @@ namespace SolPlay.Scripts
     public class SolPlay : MonoBehaviour
     {
         public static SolPlay Instance;
-
-        private LoggingService _loggingService;
-
+        
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -22,8 +20,6 @@ namespace SolPlay.Scripts
             Instance = this;
             DontDestroyOnLoad(gameObject);
             ServiceFactory.RegisterSingleton(this);
-            _loggingService = new LoggingService();
-            ServiceFactory.RegisterSingleton(_loggingService);
         }
 
         public void LoadScene(string newSceneName)
