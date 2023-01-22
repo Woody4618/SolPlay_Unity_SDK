@@ -279,13 +279,13 @@ namespace SolPlay.Scripts.Services
         /// </summary>
         /// <param name="transactionName"> Will be shown in the ui when the Transaction info widget is present</param>
         public void SendInstructionInNextBlock(string transactionName, TransactionInstruction instruction, WalletBase wallet,
-            Action<string> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+            Action<RequestResult<string>> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
         {
             SendInstructionInNextBlockInternal(transactionName, instruction, wallet, onTransactionDone, commitment);
         }
 
         private async void SendInstructionInNextBlockInternal(string transactionName, TransactionInstruction instruction,
-            WalletBase wallet, Action<string> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+            WalletBase wallet, Action<RequestResult<string>> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
         {
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject =
                 new TransactionInfoSystem.TransactionInfoObject(wallet, commitment, transactionName);
@@ -315,7 +315,7 @@ namespace SolPlay.Scripts.Services
                 }
             }
 
-            SendSingleInGameWalletInstruction(transactionName, instruction, transactionInfoObject, onTransactionDone,
+            SendSingleInstruction(transactionName, instruction, transactionInfoObject, wallet, onTransactionDone,
                 latestBlockHash);
         }
 
@@ -336,14 +336,11 @@ namespace SolPlay.Scripts.Services
             transactionInfoObject.OnError(message);
         }
 
-        public async void SendSingleInGameWalletInstruction(string transactionName, TransactionInstruction instruction,
-            TransactionInfoSystem.TransactionInfoObject transactionInfoObject,
-            Action<string> onTransactionDone = null, string blockHashOverride = null,
+        public async void SendSingleInstruction(string transactionName, TransactionInstruction instruction,
+            TransactionInfoSystem.TransactionInfoObject transactionInfoObject, WalletBase wallet,
+            Action<RequestResult<string>> onTransactionDone = null, string blockHashOverride = null,
             Commitment commitment = Commitment.Confirmed)
         {
-            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-            var wallet = walletHolderService.InGameWallet;
-
             string blockHash = null;
 
             if (blockHashOverride == null)
@@ -352,6 +349,7 @@ namespace SolPlay.Scripts.Services
                 if (result.Result == null)
                 {
                     LoggingService.Log($"Block hash null. Ignore {transactionName}", true);
+                    onTransactionDone?.Invoke(null);
                     return;
                 }
 
@@ -371,7 +369,7 @@ namespace SolPlay.Scripts.Services
 
             Transaction signedTransaction = await wallet.SignTransaction(transaction);
 
-            var signature = await wallet.ActiveRpcClient.SendTransactionAsync(
+            RequestResult<string> signature = await wallet.ActiveRpcClient.SendTransactionAsync(
                 Convert.ToBase64String(signedTransaction.Serialize()),
                 true, Commitment.Confirmed);
 
@@ -388,7 +386,7 @@ namespace SolPlay.Scripts.Services
                 ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature.Result, b =>
                 {
                     MessageRouter.RaiseMessage(new TokenValueChangedMessage());
-                    onTransactionDone?.Invoke(signature.Result);
+                    onTransactionDone?.Invoke(signature);
                 });
             }
         }
