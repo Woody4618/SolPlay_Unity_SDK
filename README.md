@@ -30,6 +30,7 @@ Release notes:
 0.0.12 Alpha
 - Source code for the Realtime Multiplayer Battle Royal game SolHunter
 - Bug fixes
+
 0.0.9 Alpha
 - Faster NFt loading by seperating Json from the Image loading and using UniTasks to yield tasks in WebGL
 - Socket connection now works with all RPC providers I know. Check out the SolPlaySocketService
