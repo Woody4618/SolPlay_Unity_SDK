@@ -6,11 +6,11 @@ Follow me on Twitter for more frequent updates: @SolPlay_jonas
 1) To use it in your game just include in the Unity Package manager: 
 https://github.com/Woody4618/Solana.Unity-SDK.git (maybe a few commits ahead or behind the garbles SDK) 
 or 
-https://github.com/garbles-labs/Solana.Unity-SDK.git
+https://github.com/garbles-labs/Solana.Unity-SDK.git (Currently no WebSocket support, but coming soon!)
 in your unity package manager.
 
-2) Import this unity package (Version 0.0.9 alpha)
-[SolPlay_0_0_9.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10287656/SolPlay_0_0_9.unitypackage.zip)
+2) Import this unity package (Version 0.0.12 alpha)
+[solplay_0_12.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10474948/solplay_0_12.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 Some function may not work with the standart MainNet RPC. 
@@ -27,6 +27,9 @@ Here is a Video which explains the process step by step: (A bit out dated, you c
 [https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
 
 Release notes:
+0.0.12 Alpha
+- Source code for the Realtime Multiplayer Battle Royal game SolHunter
+- Bug fixes
 0.0.9 Alpha
 - Faster NFt loading by seperating Json from the Image loading and using UniTasks to yield tasks in WebGL
 - Socket connection now works with all RPC providers I know. Check out the SolPlaySocketService
@@ -87,6 +90,7 @@ https://github.com/bmresearch/Solnet.Anchor/
 So far the repository is only tested in IOS mobile, Android and WebGL.
 
 Done:
+- Realtime Multiplayer Battle Royal game in the examples including Anchor code
 - Login and getting Public key from phantom
 - Loading and caching NFTs
 - Nft meta data parsing + power level calculation
