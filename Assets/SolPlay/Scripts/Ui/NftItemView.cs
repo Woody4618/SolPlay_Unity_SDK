@@ -54,7 +54,7 @@ namespace SolPlay.Scripts.Ui
             IsLoadingDataRoot.gameObject.SetActive(true);
             PowerLevel.text = "Loading Image";
 
-            if (solPlayNft.LoadingImageTask.Status == UniTaskStatus.Pending)
+            if (solPlayNft.LoadingImageTask != null)
             {
                 await solPlayNft.LoadingImageTask;
             }

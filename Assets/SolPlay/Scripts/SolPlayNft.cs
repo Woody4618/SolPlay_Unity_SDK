@@ -13,6 +13,7 @@ using Solana.Unity.SDK;
 using Solana.Unity.SDK.Nft;
 using Solana.Unity.Wallet;
 using Solana.Unity.Wallet.Utilities;
+using Solnet.Metaplex;
 using SolPlay.Scripts.Services;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -41,7 +42,7 @@ namespace SolPlay.Scripts
         public AccountInfo AccountInfo;
         public TokenAccount TokenAccount;
 
-        [NonSerialized] public UniTask LoadingImageTask;
+        [NonSerialized] public Task LoadingImageTask;
         [NonSerialized] public string LoadingError;
 
         private static string ImagePrefix = "V2_Image_";
@@ -149,7 +150,7 @@ namespace SolPlay.Scripts
             }
         }
 
-        private static async UniTask LoadImage(string mint, SolPlayNft nft)
+        private static async Task LoadImage(string mint, SolPlayNft nft)
         {
             if (nft.MetaplexData.data.json == null)
             {

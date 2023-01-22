@@ -251,6 +251,15 @@ namespace SolPlay.Scripts.Services
 #endif
         }
 
+        public async void SubscribeToBlocks()
+        {
+            if (websocket.State == WebSocketState.Open)
+            {
+                string accountSubscribeParams ="{ \"jsonrpc\": \"2.0\", \"id\": \"22\", \"method\": \"blockSubscribe\", \"params\": [\"all\"] }";
+                await websocket.Send(System.Text.Encoding.UTF8.GetBytes(accountSubscribeParams));
+            }
+        }
+
         public async void SubscribeToPubKeyData(PublicKey pubkey, Action<MethodResult> onMethodResult)
         {
             var subscriptionsCount = subcriptionCounter++;

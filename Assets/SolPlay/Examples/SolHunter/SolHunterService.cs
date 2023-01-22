@@ -23,9 +23,6 @@ public class SolHunterService : MonoBehaviour
         Left = 3,
     }
 
-    private PublicKey levelAccount;
-    private PublicKey chestVaultAccount;
-
     public static byte STATE_EMPTY = 0;
     public static byte STATE_PLAYER = 1;
     public static byte STATE_CHEST = 2;
@@ -34,6 +31,15 @@ public class SolHunterService : MonoBehaviour
     public static int TILE_COUNT_Y = 4;
 
     public SolHunter.Accounts.GameDataAccount CurrentGameData;
+
+    private PublicKey levelAccount;
+
+    private PublicKey chestVaultAccount;
+
+    // This is a little trick to not get the same transaction hash when there are multiple of the same transactions in the 
+    // with the same block hash. Since the would result in the same hash one would be dropped. So we just increase this byte 
+    // and send it the with instruction. 
+    private int InstructionBump;
 
     public class SolHunterGameDataChangedMessage
     {
@@ -119,30 +125,35 @@ public class SolHunterService : MonoBehaviour
 
     public void Initialize()
     {
-        if (!ServiceFactory.Resolve<WalletHolderService>().HasEnoughSol(true, 300000000))
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+        if (!walletHolderService.HasEnoughSol(true, 300000000))
         {
             return;
         }
+
         TransactionInstruction initializeInstruction = InitializeInstruction();
-        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Initialize", initializeInstruction);
+        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Initialize", initializeInstruction,
+            walletHolderService.InGameWallet);
     }
 
     public void Move(Direction direction)
     {
-        if (!ServiceFactory.Resolve<WalletHolderService>().HasEnoughSol(true, 10000))
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+        if (!walletHolderService.HasEnoughSol(true, 10000))
         {
             return;
         }
 
         TransactionInstruction initializeInstruction = GetMovePlayerInstruction((byte) direction);
         ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock($"Move{direction}",
-            initializeInstruction);
+            initializeInstruction, walletHolderService.InGameWallet);
     }
 
     public void SpawnPlayerAndChest()
     {
-        long costForSpawn = (long) (0.11f * SolanaUtils.SolToLamports); 
-        if (!ServiceFactory.Resolve<WalletHolderService>().HasEnoughSol(true, costForSpawn))
+        long costForSpawn = (long) (0.11f * SolanaUtils.SolToLamports);
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+        if (!walletHolderService.HasEnoughSol(true, costForSpawn))
         {
             return;
         }
@@ -151,6 +162,7 @@ public class SolHunterService : MonoBehaviour
 
         TransactionInstruction initializeInstruction = GetSpawnPlayerAndChestInstruction();
         ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Spawn player", initializeInstruction,
+            walletHolderService.InGameWallet,
             s =>
             {
                 //GetGameData(); not needed since we rely on the socket connection
@@ -159,14 +171,20 @@ public class SolHunterService : MonoBehaviour
 
     private TransactionInstruction GetMovePlayerInstruction(byte direction)
     {
-        MovePlayerAccounts accounts = new MovePlayerAccounts();
+        MovePlayerV2Accounts accounts = new MovePlayerV2Accounts();
         accounts.GameDataAccount = levelAccount;
         accounts.ChestVault = chestVaultAccount;
         accounts.SystemProgram = SystemProgram.ProgramIdKey;
         accounts.Player = ServiceFactory.Resolve<WalletHolderService>().InGameWallet.Account.PublicKey;
 
-        TransactionInstruction initializeInstruction = SolHunterProgram.MovePlayer(accounts, direction, ProgramId);
+        TransactionInstruction initializeInstruction =
+            SolHunterProgram.MovePlayerV2(accounts, direction, GetInstructionBump(), ProgramId);
         return initializeInstruction;
+    }
+
+    private byte GetInstructionBump()
+    {
+        return (byte) (InstructionBump++ % 127);
     }
 
     private TransactionInstruction InitializeInstruction()
@@ -192,6 +210,7 @@ public class SolHunterService : MonoBehaviour
             LoggingService.Log("Nft is still loading...", true);
             return null;
         }
+
         SpawnPlayerAccounts accounts = new SpawnPlayerAccounts();
         accounts.GameDataAccount = levelAccount;
         accounts.ChestVault = chestVaultAccount;

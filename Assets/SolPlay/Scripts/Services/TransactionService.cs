@@ -29,11 +29,10 @@ namespace SolPlay.Scripts.Services
             finalized = 2
         }
 
-        // We save this so that we dont use the same block hash twice, because 
-        // multiple moves in the same direction could otherwise result into the 
-        // same transaction hash
-        private string lastUsedBlockhash;
         public bool ShowBlimpsForTransactions = true;
+
+        public bool PollLatestBlockHash;
+        private string latestBlockHash;
 
         private void Awake()
         {
@@ -44,6 +43,35 @@ namespace SolPlay.Scripts.Services
             }
 
             ServiceFactory.RegisterSingleton(this);
+            MessageRouter.AddHandler<WalletLoggedInMessage>(OnLoggedInMessage);
+        }
+
+        private void OnLoggedInMessage(WalletLoggedInMessage message)
+        {
+            if (PollLatestBlockHash)
+            {
+                StartCoroutine(PollRecentBlockHash());
+            }
+        }
+
+        private IEnumerator PollRecentBlockHash()
+        {
+            while (true)
+            {
+                UpdateRecentBlockHash();
+                yield return new WaitForSeconds(2.5f);
+            }
+        }
+
+        private async void UpdateRecentBlockHash()
+        {
+            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+            var blockHash = await walletHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync();
+            if (blockHash.WasSuccessful)
+            {
+                latestBlockHash = blockHash.Result.Value.Blockhash;
+                Debug.Log("Latest block hash " + latestBlockHash);
+            }
         }
 
         /// <summary>
@@ -250,60 +278,45 @@ namespace SolPlay.Scripts.Services
         /// on screen if the blimp system oder transaction info widget are present. 
         /// </summary>
         /// <param name="transactionName"> Will be shown in the ui when the Transaction info widget is present</param>
-        public void SendInstructionInNextBlock(string transactionName, TransactionInstruction instruction,
-            Action<string> onTransactionDone = null)
-        {
-            StartCoroutine(sendInstructionInNextBlock(transactionName, instruction, onTransactionDone));
-        }
-
-        private IEnumerator sendInstructionInNextBlock(string transactionName, TransactionInstruction instruction,
+        public void SendInstructionInNextBlock(string transactionName, TransactionInstruction instruction, WalletBase wallet,
             Action<string> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
         {
-            var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-            var wallet = walletHolderService.InGameWallet;
+            SendInstructionInNextBlockInternal(transactionName, instruction, wallet, onTransactionDone, commitment);
+        }
 
-            RequestResult<ResponseValue<BlockHash>> blockHashResult = null;
-            BlockHash blockHash = null;
-
+        private async void SendInstructionInNextBlockInternal(string transactionName, TransactionInstruction instruction,
+            WalletBase wallet, Action<string> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+        {
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject =
                 new TransactionInfoSystem.TransactionInfoObject(wallet, commitment, transactionName);
             MessageRouter.RaiseMessage(new TransactionInfoSystem.ShowTransactionInfoMessage(transactionInfoObject));
 
-            // In case of rate limits we need to wait longer and longer
-            int tries = 0;
-            while (blockHashResult == null || blockHashResult.Result == null ||
-                   lastUsedBlockhash == blockHashResult.Result.Value.Blockhash)
+            if (!PollLatestBlockHash)
             {
-                Task<RequestResult<ResponseValue<BlockHash>>> task =
-                    wallet.ActiveRpcClient.GetRecentBlockHashAsync(Commitment.Confirmed);
+                RequestResult<ResponseValue<BlockHash>> blockHashResult =
+                    await wallet.ActiveRpcClient.GetRecentBlockHashAsync(Commitment.Confirmed);
 
-                while (!task.IsCompleted)
+                if (blockHashResult != null)
                 {
-                    yield return null;
-                }
-
-                blockHashResult = task.Result;
-                if (blockHashResult == null || blockHashResult.Result == null)
-                {
-                    tries++;
-                    if (blockHashResult != null)
+                    if (blockHashResult.Result != null)
+                    {
+                        latestBlockHash = blockHashResult.Result.Value.Blockhash;
+                    }
+                    else
                     {
                         PrintBlockHashError(blockHashResult, transactionInfoObject);
+                        return;
                     }
-
-                    yield return new WaitForSeconds(0.2f * tries);
                 }
-
-                if (!blockHashResult.WasSuccessful)
+                else
                 {
-                    PrintBlockHashError(blockHashResult, transactionInfoObject);
-                    yield break;
+                    LoggingService.Log("Could not load latest block hash. Skipping", true);
+                    return;
                 }
-
-                blockHash = blockHashResult.Result.Value;
             }
 
-            SendSingleInstruction(transactionName, instruction, transactionInfoObject, onTransactionDone, blockHash);
+            SendSingleInGameWalletInstruction(transactionName, instruction, transactionInfoObject, onTransactionDone,
+                latestBlockHash);
         }
 
         private static void PrintBlockHashError(RequestResult<ResponseValue<BlockHash>> blockHashResult,
@@ -323,15 +336,15 @@ namespace SolPlay.Scripts.Services
             transactionInfoObject.OnError(message);
         }
 
-        public async void SendSingleInstruction(string transactionName, TransactionInstruction instruction,
+        public async void SendSingleInGameWalletInstruction(string transactionName, TransactionInstruction instruction,
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject,
-            Action<string> onTransactionDone = null, BlockHash blockHashOverride = null,
+            Action<string> onTransactionDone = null, string blockHashOverride = null,
             Commitment commitment = Commitment.Confirmed)
         {
             var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
             var wallet = walletHolderService.InGameWallet;
 
-            BlockHash blockHash = null;
+            string blockHash = null;
 
             if (blockHashOverride == null)
             {
@@ -342,18 +355,16 @@ namespace SolPlay.Scripts.Services
                     return;
                 }
 
-                blockHash = result.Result.Value;
+                blockHash = result.Result.Value.Blockhash;
             }
             else
             {
                 blockHash = blockHashOverride;
             }
 
-            lastUsedBlockhash = blockHash.Blockhash;
-
             Transaction transaction = new Transaction();
             transaction.FeePayer = wallet.Account.PublicKey;
-            transaction.RecentBlockHash = blockHash.Blockhash;
+            transaction.RecentBlockHash = blockHash;
             transaction.Signatures = new List<SignaturePubKeyPair>();
             transaction.Instructions = new List<TransactionInstruction>();
             transaction.Instructions.Add(instruction);
@@ -364,7 +375,7 @@ namespace SolPlay.Scripts.Services
                 Convert.ToBase64String(signedTransaction.Serialize()),
                 true, Commitment.Confirmed);
 
-            Debug.Log(signature.Result);
+            Debug.Log("Signature: " + signature + " result:" + signature.Result);
             transactionInfoObject.OnSignatureReady?.Invoke(signature.Result);
 
             if (!signature.WasSuccessful)
@@ -378,7 +389,7 @@ namespace SolPlay.Scripts.Services
                 {
                     MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                     onTransactionDone?.Invoke(signature.Result);
-                });    
+                });
             }
         }
 
@@ -406,12 +417,14 @@ namespace SolPlay.Scripts.Services
 
             return requestResult;
         }
+
         private static byte[] GenerateRandomBytes(int size)
         {
             var buffer = new byte[size];
             new SecureRandom().NextBytes(buffer);
             return buffer;
         }
+
         private Transaction CreateUnsignedTransferSolTransaction(PublicKey from, string toPublicKey,
             RequestResult<ResponseValue<BlockHash>> blockHash, long lamports)
         {

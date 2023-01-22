@@ -155,6 +155,7 @@ MonoBehaviour:
     phantomApiVersion: v1
     appMetaDataUrl: https://solplay.de
     deeplinkUrlScheme: solplay
+  AutomaticallyConnectWebSocket: 1
   BaseWalletSolBalance: 0
   InGameWalletSolBalance: 0
   IsDevNetLogin: 0
@@ -207,6 +208,7 @@ MonoBehaviour:
   RateLimitTimeBetweenNftLoads: 0.1
   LocalDummyNft: {fileID: 2800000, guid: b00ee92b032968a42bfcb4bb760de2e9, type: 3}
   LoadNftsOnStartUp: 1
+  AddDummyNft: 1
 --- !u!1 &1665109047377900278
 GameObject:
   m_ObjectHideFlags: 0
@@ -478,6 +480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowBlimpsForTransactions: 1
+  PollLatestBlockHash: 0
 --- !u!1 &1665109048261681710
 GameObject:
   m_ObjectHideFlags: 0

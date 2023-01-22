@@ -14,13 +14,13 @@
       "url": "https://package.openupm.com"
     },
     "com.solana.unity_sdk": {
-      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git#Remove_WebSocket",
+      "version": "https://github.com/Woody4618/Solana.Unity-SDK.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       },
-      "hash": "c8a6fd85458d1f27195615c40657858d3a3960f3"
+      "hash": "084cd60f39392a53ae896d2d48af2650acfde589"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

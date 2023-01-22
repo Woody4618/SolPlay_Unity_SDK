@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 using Frictionless;
+using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
@@ -139,6 +140,7 @@ namespace SolPlay.Scripts.Services
 
         private void SubscribeToWalletAccountChanges()
         {
+            //ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToBlocks();
             if (IsDevNetLogin)
             {
                 ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToPubKeyData(BaseWallet.Account.PublicKey,
@@ -170,14 +172,20 @@ namespace SolPlay.Scripts.Services
                             true));
                     });
             }
-            
         }
 
         public async Task RequestAirdrop()
         {
             MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage("Requesting airdrop"));
-            string result = await BaseWallet.RequestAirdrop(SolanaUtils.SolToLamports, Commitment.Confirmed);
-            ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result, b => {});
+            RequestResult<string> result = await BaseWallet.ActiveRpcClient.RequestAirdropAsync(BaseWallet.Account.PublicKey, SolanaUtils.SolToLamports, Commitment.Confirmed);
+            if (result.WasSuccessful)
+            {
+                ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result.Result, b => {});
+            }
+            else
+            {
+                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage("Airdrop failed: " + result.Reason));
+            }
         }
 
         public bool TryGetPhantomPublicKey(out string phantomPublicKey)

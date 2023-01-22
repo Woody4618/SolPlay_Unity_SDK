@@ -42,7 +42,7 @@ namespace SolPlay.Scripts
         {
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
             {
-                uwr.SendWebRequest();
+                await uwr.SendWebRequest();
 
                 while (!uwr.isDone && !token.IsCancellationRequested)
                 {
