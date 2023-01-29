@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Frictionless;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Security;
 using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Core.Http;
@@ -75,9 +76,12 @@ namespace SolPlay.Scripts.Services
         }
 
         /// <summary>
-        /// await Task.Delay() does not work properly on webgl so we use a coroutine instead
+        /// await Task.Delay() does not work properly on webgl so we have to use a coroutine instead
+        /// TODO: Switch this function to use UniTask. Will work in WebGL and can be delayed then
         /// </summary>
-        public void CheckSignatureStatus(string signature, Action<bool> onSignatureFinalized = null,
+        public void CheckSignatureStatus(string signature, 
+            Action<bool> onSignatureFinalized = null,
+            Action<TransactionMetaSlotInfo> onError = null,
             TransactionResult transactionResult = TransactionResult.confirmed)
         {
             if (string.IsNullOrEmpty(signature))
@@ -88,11 +92,13 @@ namespace SolPlay.Scripts.Services
             }
             else
             {
-                StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized, transactionResult));
+                StartCoroutine(CheckSignatureStatusRoutine(signature, onSignatureFinalized,onError, transactionResult));
             }
         }
 
-        private IEnumerator CheckSignatureStatusRoutine(string signature, Action<bool> onSignatureFinalized,
+        private IEnumerator CheckSignatureStatusRoutine(string signature, 
+            Action<bool> onSignatureFinalized,
+            Action<TransactionMetaSlotInfo> onError = null,
             TransactionResult transactionResult = TransactionResult.confirmed)
         {
             var wallet = ServiceFactory.Resolve<WalletHolderService>().BaseWallet;
@@ -140,6 +146,14 @@ namespace SolPlay.Scripts.Services
                                 .Log("Transaction " + signatureStatusInfo.ConfirmationStatus,
                                     ShowBlimpsForTransactions);
 
+                            if (signatureStatusInfo.Error != null)
+                            {
+                                LoggingService
+                                    .LogWarning("Transaction Error" + signatureStatusInfo.Error.InstructionError.Type,
+                                        true);
+                                ParseAndCheckError(wallet, signature, onError);
+                            }
+
                             MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                             transactionFinalized = true;
                             onSignatureFinalized?.Invoke(true);
@@ -162,6 +176,16 @@ namespace SolPlay.Scripts.Services
                 MessageRouter.RaiseMessage(
                     new BlimpSystem.ShowLogMessage(
                         $"Tried {counter} times. The transaction probably failed :( "));
+            }
+        }
+
+        private async void ParseAndCheckError(WalletBase wallet, string signature, Action<TransactionMetaSlotInfo> onError = null)
+        {
+            RequestResult<TransactionMetaSlotInfo> metaSlot =
+                await wallet.ActiveRpcClient.GetTransactionAsync(signature, Commitment.Confirmed);
+            if (metaSlot.Result != null)
+            {
+                onError?.Invoke(metaSlot.Result);
             }
         }
 
@@ -278,14 +302,22 @@ namespace SolPlay.Scripts.Services
         /// on screen if the blimp system oder transaction info widget are present. 
         /// </summary>
         /// <param name="transactionName"> Will be shown in the ui when the Transaction info widget is present</param>
-        public void SendInstructionInNextBlock(string transactionName, TransactionInstruction instruction, WalletBase wallet,
-            Action<RequestResult<string>> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+        public void SendInstructionInNextBlock(string transactionName, 
+            TransactionInstruction instruction,
+            WalletBase wallet,
+            Action<RequestResult<string>> onTransactionDone = null, 
+            Action<TransactionMetaSlotInfo> onError = null, 
+            Commitment commitment = Commitment.Confirmed)
         {
-            SendInstructionInNextBlockInternal(transactionName, instruction, wallet, onTransactionDone, commitment);
+            SendInstructionInNextBlockInternal(transactionName, instruction, wallet, onTransactionDone, onError, commitment);
         }
 
-        private async void SendInstructionInNextBlockInternal(string transactionName, TransactionInstruction instruction,
-            WalletBase wallet, Action<RequestResult<string>> onTransactionDone = null, Commitment commitment = Commitment.Confirmed)
+        private async void SendInstructionInNextBlockInternal(string transactionName,
+            TransactionInstruction instruction,
+            WalletBase wallet, 
+            Action<RequestResult<string>> onTransactionDone = null,
+            Action<TransactionMetaSlotInfo> onError = null,
+            Commitment commitment = Commitment.Confirmed)
         {
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject =
                 new TransactionInfoSystem.TransactionInfoObject(wallet, commitment, transactionName);
@@ -301,6 +333,7 @@ namespace SolPlay.Scripts.Services
                     if (blockHashResult.Result != null)
                     {
                         latestBlockHash = blockHashResult.Result.Value.Blockhash;
+                        Debug.LogWarning(latestBlockHash);
                     }
                     else
                     {
@@ -315,7 +348,7 @@ namespace SolPlay.Scripts.Services
                 }
             }
 
-            SendSingleInstruction(transactionName, instruction, transactionInfoObject, wallet, onTransactionDone,
+            SendSingleInstruction(transactionName, instruction, transactionInfoObject, wallet, onTransactionDone, onError,
                 latestBlockHash);
         }
 
@@ -338,7 +371,9 @@ namespace SolPlay.Scripts.Services
 
         public async void SendSingleInstruction(string transactionName, TransactionInstruction instruction,
             TransactionInfoSystem.TransactionInfoObject transactionInfoObject, WalletBase wallet,
-            Action<RequestResult<string>> onTransactionDone = null, string blockHashOverride = null,
+            Action<RequestResult<string>> onTransactionDone = null, 
+            Action<TransactionMetaSlotInfo> onError = null,
+            string blockHashOverride = null,
             Commitment commitment = Commitment.Confirmed)
         {
             string blockHash = null;
@@ -374,6 +409,7 @@ namespace SolPlay.Scripts.Services
                 true, Commitment.Confirmed);
 
             Debug.Log("Signature: " + signature + " result:" + signature.Result);
+            Debug.LogWarning(JsonConvert.SerializeObject(signature, Formatting.Indented));
             transactionInfoObject.OnSignatureReady?.Invoke(signature.Result);
 
             if (!signature.WasSuccessful)
@@ -381,13 +417,13 @@ namespace SolPlay.Scripts.Services
                 LoggingService.LogWarning(signature.Reason, true);
             }
 
-            if (onTransactionDone != null)
+            if (onTransactionDone != null || onError != null)
             {
                 ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(signature.Result, b =>
                 {
                     MessageRouter.RaiseMessage(new TokenValueChangedMessage());
                     onTransactionDone?.Invoke(signature);
-                });
+                }, onError);
             }
         }
 
@@ -442,18 +478,6 @@ namespace SolPlay.Scripts.Services
         public IEnumerator HandleNewSceneLoaded()
         {
             yield return null;
-        }
-    }
-
-    public class SolBalanceChangedMessage
-    {
-        public double SolBalanceChange;
-        public bool IsInGameWallet;
-
-        public SolBalanceChangedMessage(double solBalanceChange = 0, bool isInGameWallet = false)
-        {
-            SolBalanceChange = solBalanceChange;
-            IsInGameWallet = isInGameWallet;
         }
     }
 }

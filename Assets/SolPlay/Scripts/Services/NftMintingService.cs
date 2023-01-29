@@ -493,7 +493,7 @@ namespace SolPlay.Scripts.Services
                         mintDone?.Invoke(success);
                         LoggingService.Log("Mint Successfull! Woop woop!", true);
                         MessageRouter.RaiseMessage(new NftMintFinishedMessage());
-                    }, TransactionService.TransactionResult.finalized);
+                    }, null, TransactionService.TransactionResult.finalized);
             }
 
             Debug.Log(transactionSignature.Reason);

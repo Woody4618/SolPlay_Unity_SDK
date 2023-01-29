@@ -18,6 +18,17 @@ namespace SolPlay.Scripts.Services
         public WalletBase Wallet;
     }
 
+    public class SolBalanceChangedMessage
+    {
+        public double SolBalanceChange;
+        public bool IsInGameWallet;
+
+        public SolBalanceChangedMessage(double solBalanceChange = 0, bool isInGameWallet = false)
+        {
+            SolBalanceChange = solBalanceChange;
+            IsInGameWallet = isInGameWallet;
+        }
+    }
     public class WalletHolderService : MonoBehaviour, IMultiSceneSingleton
     {
         public RpcCluster DevnetWalletCluster = RpcCluster.DevNet;

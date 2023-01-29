@@ -21,8 +21,8 @@ public class TinyAdventureService : MonoBehaviour
     {
         public GameDataAccount GameDataAccount;
     }
-    
-    public void OnEnable()
+
+    private void Awake()
     {
         ServiceFactory.RegisterSingleton(this);
         PublicKey.TryFindProgramAddress(new[]
@@ -51,7 +51,8 @@ public class TinyAdventureService : MonoBehaviour
 
     public async Task<GameDataAccount> GetGameData()
     {
-        var gameData = await ServiceFactory.Resolve<WalletHolderService>().BaseWallet.ActiveRpcClient
+        var baseWalletActiveRpcClient = ServiceFactory.Resolve<WalletHolderService>().BaseWallet.ActiveRpcClient;
+        var gameData = await baseWalletActiveRpcClient
             .GetAccountInfoAsync(this.gameDataAccount, Commitment.Confirmed, BinaryEncoding.JsonParsed);
         GameDataAccount gameDataAccount = TinyAdventure.Accounts.GameDataAccount.Deserialize(Convert.FromBase64String(gameData.Result.Value.Data[0]));
         Debug.Log(gameDataAccount.PlayerPosition);
@@ -64,7 +65,7 @@ public class TinyAdventureService : MonoBehaviour
 
     public void Initialize()
     {
-        TransactionInstruction initializeInstruction = InitializeInstruction();
+        TransactionInstruction initializeInstruction = GetInitializeInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Initializes",initializeInstruction, walletHolderService.BaseWallet);
     }
@@ -101,7 +102,7 @@ public class TinyAdventureService : MonoBehaviour
         return initializeInstruction;
     }
 
-    private TransactionInstruction InitializeInstruction()
+    private TransactionInstruction GetInitializeInstruction()
     {
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         var wallet = walletHolderService.BaseWallet;

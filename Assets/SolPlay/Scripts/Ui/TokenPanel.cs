@@ -25,11 +25,24 @@ namespace SolPlay.Scripts.Ui
         void Start()
         {
             MessageRouter.AddHandler<WalletLoggedInMessage>(OnWalletLoggedInMessage);
+            MessageRouter.AddHandler<SocketServerConnectedMessage>(OnSocketConnectedMessage);
             MessageRouter.AddHandler<TokenValueChangedMessage>(OnTokenValueChangedMessage);
             if (ServiceFactory.Resolve<WalletHolderService>().IsLoggedIn)
             {
                 UpdateTokenAmount();
             }
+        }
+
+        private void OnSocketConnectedMessage(SocketServerConnectedMessage obj)
+        {
+            // TODO: instead of only updating the token on the Token value updated message it would be better to subscribe to the 
+            // associated token account for live updates. 
+            /*
+            ServiceFactory.Resolve<SolPlayWebSocketService>().SubscribeToPubKeyData(new PublicKey("CsEhX6bJDwaPZ9on7fFw6rdK44mRpeiVwe2oZ3uBfk8j"),
+                result =>
+                {
+                    Debug.Log(result);
+                });*/
         }
 
         private void OnTokenValueChangedMessage(TokenValueChangedMessage message)
@@ -40,6 +53,7 @@ namespace SolPlay.Scripts.Ui
         private void OnWalletLoggedInMessage(WalletLoggedInMessage message)
         {
             UpdateTokenAmount();
+
         }
 
         private async void UpdateTokenAmount()

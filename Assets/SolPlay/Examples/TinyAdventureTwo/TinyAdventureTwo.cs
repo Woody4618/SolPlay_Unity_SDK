@@ -70,6 +70,7 @@ namespace TinyAdventureTwo
     {
         public enum TinyAdventureTwoErrorKind : uint
         {
+            WrongPassword = 6000U
         }
     }
 
@@ -155,15 +156,15 @@ namespace TinyAdventureTwo
             return await SignAndSendTransaction(instr, feePayer, signingCallback);
         }
 
-        public async Task<RequestResult<string>> SendMoveRightAsync(MoveRightAccounts accounts, PublicKey feePayer, Func<byte[], PublicKey, byte[]> signingCallback, PublicKey programId)
+        public async Task<RequestResult<string>> SendMoveRightAsync(MoveRightAccounts accounts, string password, PublicKey feePayer, Func<byte[], PublicKey, byte[]> signingCallback, PublicKey programId)
         {
-            Solana.Unity.Rpc.Models.TransactionInstruction instr = Program.TinyAdventureTwoProgram.MoveRight(accounts, programId);
+            Solana.Unity.Rpc.Models.TransactionInstruction instr = Program.TinyAdventureTwoProgram.MoveRight(accounts, password, programId);
             return await SignAndSendTransaction(instr, feePayer, signingCallback);
         }
 
         protected override Dictionary<uint, ProgramError<TinyAdventureTwoErrorKind>> BuildErrorsDictionary()
         {
-            return new Dictionary<uint, ProgramError<TinyAdventureTwoErrorKind>>{};
+            return new Dictionary<uint, ProgramError<TinyAdventureTwoErrorKind>>{{6000U, new ProgramError<TinyAdventureTwoErrorKind>(TinyAdventureTwoErrorKind.WrongPassword, "Password was wrong")}, };
         }
     }
 
@@ -230,7 +231,7 @@ namespace TinyAdventureTwo
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
             }
 
-            public static Solana.Unity.Rpc.Models.TransactionInstruction MoveRight(MoveRightAccounts accounts, PublicKey programId)
+            public static Solana.Unity.Rpc.Models.TransactionInstruction MoveRight(MoveRightAccounts accounts, string password, PublicKey programId)
             {
                 List<Solana.Unity.Rpc.Models.AccountMeta> keys = new()
                 {Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.GameDataAccount, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.ChestVault, false), Solana.Unity.Rpc.Models.AccountMeta.Writable(accounts.Signer, true), Solana.Unity.Rpc.Models.AccountMeta.ReadOnly(accounts.SystemProgram, false)};
@@ -238,6 +239,7 @@ namespace TinyAdventureTwo
                 int offset = 0;
                 _data.WriteU64(10990983061962034633UL, offset);
                 offset += 8;
+                offset += _data.WriteBorshString(password, offset);
                 byte[] resultData = new byte[offset];
                 Array.Copy(_data, resultData, offset);
                 return new Solana.Unity.Rpc.Models.TransactionInstruction{Keys = keys, ProgramId = programId.KeyBytes, Data = resultData};
