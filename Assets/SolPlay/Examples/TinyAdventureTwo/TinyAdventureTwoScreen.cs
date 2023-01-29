@@ -68,16 +68,16 @@ namespace TinyAdventure
             switch ((int) gameData.PlayerPosition)
             {
                 case 0:
-                    GameText.text = "o.........";
+                    GameText.text = "o.........💎";
                     break;
                 case 1:
-                    GameText.text = "..o.......";
+                    GameText.text = "..o.......💎";
                     break;
                 case 2:
-                    GameText.text = ".....o....";
+                    GameText.text = ".....o....💎";
                     break;
                 case 3:
-                    GameText.text = "........\\o/";
+                    GameText.text = "........\\o/💎";
                     break;
             }
         }

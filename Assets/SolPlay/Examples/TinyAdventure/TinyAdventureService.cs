@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Programs;
+using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
@@ -54,7 +56,7 @@ public class TinyAdventureService : MonoBehaviour
         var baseWalletActiveRpcClient = ServiceFactory.Resolve<WalletHolderService>().BaseWallet.ActiveRpcClient;
         var gameData = await baseWalletActiveRpcClient
             .GetAccountInfoAsync(this.gameDataAccount, Commitment.Confirmed, BinaryEncoding.JsonParsed);
-        GameDataAccount gameDataAccount = TinyAdventure.Accounts.GameDataAccount.Deserialize(Convert.FromBase64String(gameData.Result.Value.Data[0]));
+        GameDataAccount gameDataAccount = GameDataAccount.Deserialize(Convert.FromBase64String(gameData.Result.Value.Data[0]));
         Debug.Log(gameDataAccount.PlayerPosition);
         MessageRouter.RaiseMessage(new GameDataChangedMessage()
         {
@@ -84,6 +86,31 @@ public class TinyAdventureService : MonoBehaviour
         ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Move Left", initializeInstruction, walletHolderService.BaseWallet);
     }
 
+    /// <summary>
+    /// This is how you can build a transaction without using the transaction service.
+    /// The transaction service just removes some code duplication and does error handling and checks the
+    /// signature
+    /// </summary>
+    public async void MoveLeftManual()
+    {
+        TransactionInstruction moveLeftInstruction = GetMoveLeftInstruction();
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+        var result = await walletHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync(Commitment.Confirmed);
+        
+        Transaction transaction = new Transaction();
+        transaction.FeePayer = walletHolderService.BaseWallet.Account.PublicKey;
+        transaction.RecentBlockHash = result.Result.Value.Blockhash;
+        transaction.Signatures = new List<SignaturePubKeyPair>();
+        transaction.Instructions = new List<TransactionInstruction>();
+        transaction.Instructions.Add(moveLeftInstruction);
+
+        Transaction signedTransaction = await walletHolderService.BaseWallet.SignTransaction(transaction);
+
+        RequestResult<string> signature = await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+            Convert.ToBase64String(signedTransaction.Serialize()),
+            true, Commitment.Confirmed);
+    }
+    
     private TransactionInstruction GetMoveLeftInstruction()
     {
         MoveLeftAccounts account = new MoveLeftAccounts();

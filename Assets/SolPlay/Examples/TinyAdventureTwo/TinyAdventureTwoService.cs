@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Frictionless;
 using Solana.Unity.Programs;
+using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
@@ -81,23 +83,23 @@ public class TinyAdventureTwoService : MonoBehaviour
         TransactionInstruction initializeInstruction = GetInitializeInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         ServiceFactory.Resolve<TransactionService>()
-            .SendInstructionInNextBlock("Initializes", initializeInstruction, walletHolderService.BaseWallet);
+            .SendInstructionInNextBlock("Initialize", initializeInstruction, walletHolderService.BaseWallet);
     }
 
     public void ResetLevelAndSpawnChest()
     {
-        TransactionInstruction initializeInstruction = GetResetLevelAndSpawnChestInstruction();
+        TransactionInstruction resetLevelAndSpawnChestInstruction = GetResetLevelAndSpawnChestInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         ServiceFactory.Resolve<TransactionService>()
-            .SendInstructionInNextBlock("Move Right", initializeInstruction, walletHolderService.BaseWallet);
+            .SendInstructionInNextBlock("Reset Level", resetLevelAndSpawnChestInstruction, walletHolderService.BaseWallet);
     }
 
     public void MoveRight(string password, Action onWrongPassword)
     {
-        TransactionInstruction initializeInstruction = GetMoveRightInstruction(password);
+        TransactionInstruction moveRightInstruction = GetMoveRightInstruction(password);
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         ServiceFactory.Resolve<TransactionService>()
-            .SendInstructionInNextBlock("Move Right", initializeInstruction, walletHolderService.BaseWallet, onError:
+            .SendInstructionInNextBlock("Move Right", moveRightInstruction, walletHolderService.BaseWallet, onError:
                 transactionMetaSlotInfo =>
                 {
                     if (transactionMetaSlotInfo.Meta.Error.InstructionError.CustomError ==
@@ -106,6 +108,30 @@ public class TinyAdventureTwoService : MonoBehaviour
                         onWrongPassword();
                     }
                 });
+    }
+
+    /// <summary>
+    /// This is how you can build a transaction without using the transaction service.
+    /// The transaction service, 
+    /// </summary>
+    public async void MoveRightManual(string password, Action onWrongPassword)
+    {
+        TransactionInstruction moveRightInstruction = GetMoveRightInstruction(password);
+        var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
+        var result = await walletHolderService.BaseWallet.ActiveRpcClient.GetRecentBlockHashAsync(Commitment.Confirmed);
+        
+        Transaction transaction = new Transaction();
+        transaction.FeePayer = walletHolderService.BaseWallet.Account.PublicKey;
+        transaction.RecentBlockHash = result.Result.Value.Blockhash;
+        transaction.Signatures = new List<SignaturePubKeyPair>();
+        transaction.Instructions = new List<TransactionInstruction>();
+        transaction.Instructions.Add(moveRightInstruction);
+
+        Transaction signedTransaction = await walletHolderService.BaseWallet.SignTransaction(transaction);
+
+        RequestResult<string> signature = await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
+            Convert.ToBase64String(signedTransaction.Serialize()),
+            true, Commitment.Confirmed);
     }
 
     private TransactionInstruction GetMoveRightInstruction(string password)
