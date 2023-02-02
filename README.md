@@ -4,17 +4,15 @@ An example project to show how to use Phantom deeplinks to login and use Solana 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
 
 1) To use it in your game just include in the Unity Package manager: 
-https://github.com/Woody4618/Solana.Unity-SDK.git (maybe a few commits ahead or behind the garbles SDK) 
-or 
-https://github.com/garbles-labs/Solana.Unity-SDK.git (Currently no WebSocket support, but coming soon!)
+https://github.com/garbles-labs/Solana.Unity-SDK.git#v0.0.5
 in your unity package manager.
 
 2) Import this unity package (Version 0.0.12 alpha)
-[solplay_0_12.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10474948/solplay_0_12.unitypackage.zip)
+[solplay_0_13.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10570401/solplay_0_13.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 Some function may not work with the standart MainNet RPC. 
-You may want to get a free RPC from quicknode. 
+You may want to get a free RPC from quicknode or helius.xyz. 
 Also currently its hard to get DevNet sol, so if the automatic airdrops fail you may need to try a few times, try different RPC in the WalletHolderService or transfer dev net sol to your Wallet. (The publickey will be logged in the console on login) 
 
 
@@ -27,6 +25,11 @@ Here is a Video which explains the process step by step: (A bit out dated, you c
 [https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
 
 Release notes:
+0.0.13 Alpha
+- Examples tiny adventure and tiny adventure two
+- Bug fixes
+- Removed the SolPlay fork since the unity sdk now has WebSockets as well
+
 0.0.12 Alpha
 - Source code for the Realtime Multiplayer Battle Royal game SolHunter
 - Bug fixes
