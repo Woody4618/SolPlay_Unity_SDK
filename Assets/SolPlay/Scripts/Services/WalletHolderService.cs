@@ -82,8 +82,8 @@ namespace SolPlay.Scripts.Services
                 cluster = MainnetWalletCluster;
             }
 
-            DeeplinkWallet = new PhantomWallet(PhantomWalletOptions, cluster, rpcUrl, true);
-            InGameWallet = new InGameWallet(cluster, rpcUrl, true);
+            DeeplinkWallet = new PhantomWallet(PhantomWalletOptions, cluster, rpcUrl, null, true);
+            InGameWallet = new InGameWallet(cluster, rpcUrl, null, true);
 
             IsDevNetLogin = devNetLogin;
             
@@ -195,7 +195,7 @@ namespace SolPlay.Scripts.Services
             }
             else
             {
-                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage("Airdrop failed: " + result.Reason));
+                MessageRouter.RaiseMessage(new BlimpSystem.ShowLogMessage("Airdrop failed: " + result.ErrorData));
             }
         }
 
