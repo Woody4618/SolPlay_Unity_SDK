@@ -27,10 +27,12 @@ Playground here: https://beta.solpg.io/tutorials/
 
 - Tiny Adventure
 Simple on chain game moving a character left and right: https://solplay.de/TinyAdventure/index.html
+Tutorial: https://www.youtube.com/watch?v=_vQ3bSs3svs
 
 - Tiny Adventure Two
 Using a PDA as a chest vault and pay it out to the winner of the game. 
 The chest is guarded by a password. https://solplay.de/TinyAdventureTwo/index.html
+Tutorial: https://www.youtube.com/watch?v=gILXyWvXu7M
 
 - Flappy Game
 Use an NFT as character for a Flappy Bird like game. Nfts are cached in the client and the loading of the Image and the meta data are seperated.
