@@ -1,25 +1,45 @@
-# SolPlay - Unity - SDK
-An example project to show how to use Phantom deeplinks to login and use Solana NFTs in Unity games and apps.
+# Solana Unity Game Examples
+A unity frame work build on top of the Solana Unity SDK with 4 example games. 
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
 
 1) To use it in your game just include in the Unity Package manager: 
-https://github.com/garbles-labs/Solana.Unity-SDK.git#v0.0.5
+https://github.com/garbles-labs/Solana.Unity-SDK.git#v0.0.6
 in your unity package manager.
 
-2) Import this unity package (Version 0.0.12 alpha)
+2) Import this unity package (Version 0.0.13 alpha)
 [solplay_0_13.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10570401/solplay_0_13.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 Some function may not work with the standart MainNet RPC. 
 You may want to get a free RPC from quicknode or helius.xyz. 
-Also currently its hard to get DevNet sol, so if the automatic airdrops fail you may need to try a few times, try different RPC in the WalletHolderService or transfer dev net sol to your Wallet. (The publickey will be logged in the console on login) 
-
+Also currently its hard to get DevNet sol, so if the automatic airdrops fail you may need to try a few times, try different RPC in the WalletHolderService or transfer dev net sol to your Wallet or use solfaucet.com. (The publickey will be logged in the console on login) 
 
 3) Optional: Import Glftfast for 3D NFT support
 [GlFAst Installer](https://package-installer.glitch.me/v1/installer/OpenUPM/com.atteneder.gltfast?registry=https%3A%2F%2Fpackage.openupm.com&scope=com.atteneder)
 Also add the precompiler flag #GLTFAST
 
+Here are the live versions for the example games: 
+
+All game examples work in WebGL using the Phantom browser extension and an mobile using phantom deeplinks. 
+They all come with the Anchor code and Tiny Adventure one and two are also available as tutorials in the Solana 
+Playground here: https://beta.solpg.io/tutorials/
+
+- Tiny Adventure
+Simple on chain game moving a character left and right: https://solplay.de/TinyAdventure/index.html
+
+- Tiny Adventure Two
+Using a PDA as a chest vault and pay it out to the winner of the game. 
+The chest is guarded by a password. https://solplay.de/TinyAdventureTwo/index.html
+
+- Flappy Game
+Use an NFT as character for a Flappy Bird like game. Nfts are cached in the client and the loading of the Image and the meta data are seperated.
+https://solplay.de/
+
+- Sol Hunter 
+Realtime Multplayer PvP game where players collect chests and kill other players for sol token.
+Uses an auto approve wallet by asking the player to deposit sol into an ingame wallet. 
+https://solplay.de/SolHunter/index.html
 
 Here is a Video which explains the process step by step: (A bit out dated, you can now skip the step 3) 
 [https://www.youtube.com/channel/UC517QSv61gMaABWIJ412_Lw/videos](https://youtu.be/mS5Fx_yzcHw)
