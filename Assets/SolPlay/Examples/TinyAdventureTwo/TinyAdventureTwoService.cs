@@ -91,7 +91,7 @@ public class TinyAdventureTwoService : MonoBehaviour
         TransactionInstruction resetLevelAndSpawnChestInstruction = GetResetLevelAndSpawnChestInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
         ServiceFactory.Resolve<TransactionService>()
-            .SendInstructionInNextBlock("Reset Level", resetLevelAndSpawnChestInstruction, walletHolderService.BaseWallet);
+            .SendInstructionInNextBlock("Reset Level", resetLevelAndSpawnChestInstruction, walletHolderService.BaseWallet,result => {});
     }
 
     public void MoveRight(string password, Action onWrongPassword)

@@ -148,9 +148,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DevnetWalletCluster: 3
-  DevnetLoginRPCUrl: https://devnet.genesysgo.net/
-  MainnetWalletCluster: 0
-  MainNetRpcUrl: 
+  DevnetLoginRPCUrl: https://rpc-devnet.helius.xyz/?api-key=dcee9dad-fb42-4a26-b394-41b53e81d913
+  MainnetWalletCluster: 3
+  MainNetRpcUrl: https://rpc.helius.xyz/?api-key=dcee9dad-fb42-4a26-b394-41b53e81d913
   PhantomWalletOptions:
     phantomApiVersion: v1
     appMetaDataUrl: https://solplay.de

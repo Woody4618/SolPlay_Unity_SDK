@@ -69,21 +69,21 @@ public class TinyAdventureService : MonoBehaviour
     {
         TransactionInstruction initializeInstruction = GetInitializeInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Initializes",initializeInstruction, walletHolderService.BaseWallet);
+        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Initializes",initializeInstruction, walletHolderService.BaseWallet, result => {});
     }
 
     public void MoveRight()
     {
         TransactionInstruction initializeInstruction = GetMoveRightInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Move Right", initializeInstruction, walletHolderService.BaseWallet);
+        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Move Right", initializeInstruction, walletHolderService.BaseWallet, result => {});
     }
 
     public void MoveLeft()
     {
         TransactionInstruction initializeInstruction = GetMoveLeftInstruction();
         var walletHolderService = ServiceFactory.Resolve<WalletHolderService>();
-        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Move Left", initializeInstruction, walletHolderService.BaseWallet);
+        ServiceFactory.Resolve<TransactionService>().SendInstructionInNextBlock("Move Left", initializeInstruction, walletHolderService.BaseWallet, result => {});
     }
 
     /// <summary>

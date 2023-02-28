@@ -10,12 +10,13 @@ using Solana.Unity.Programs;
 using Solana.Unity.Rpc.Builders;
 using Solana.Unity.Rpc.Core.Http;
 using Solana.Unity.Rpc.Messages;
-using Solana.Unity.Rpc.Models;
 using Solana.Unity.Rpc.Types;
 using Solana.Unity.Wallet;
 using Solnet.Metaplex;
 using SolPlay.DeeplinksNftExample.Utils;
 using UnityEngine;
+using PublicKey = Solana.Unity.Wallet.PublicKey;
+using Transaction = Solana.Unity.Rpc.Models.Transaction;
 
 namespace SolPlay.Scripts.Services
 {
@@ -51,7 +52,6 @@ namespace SolPlay.Scripts.Services
             var candyMachineClient = new CandyMachineClient(baseWallet.ActiveRpcClient, null);
             var candyMachineWrap = await candyMachineClient.GetCandyMachineAsync(candyMachineKey);
             var candyMachine = candyMachineWrap.ParsedResult;
-
 
             var (candyMachineCreator, creatorBump) = CandyMachineUtils.getCandyMachineCreator(candyMachineKey);
 
@@ -122,13 +122,6 @@ namespace SolPlay.Scripts.Services
 
             var signedTransaction = await baseWallet.SignTransaction(deserializedTransaction);
 
-            // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
-            // phantom produces
-            signedTransaction.Signatures[0] = signedTransaction.Signatures[2];
-            signedTransaction.Signatures.RemoveAt(2);
-            // var simulation = await baseWallet.ActiveRpcClient.SimulateTransactionAsync(Convert.ToBase64String(signedTransaction.Serialize()));
-
-            //return simulation.Reason;
             var transactionSignature =
                 await baseWallet.ActiveRpcClient.SendTransactionAsync(
                     Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Confirmed);
@@ -295,7 +288,7 @@ namespace SolPlay.Scripts.Services
 
             // To be able to sign the transaction while using the transaction builder we need to have a private key set in the signing account. 
             // TODO: I will try to make this nicer later. 
-            fromAccount = new Account(new Account().PrivateKey.KeyBytes,
+            fromAccount = new Account(walletHolderService.BaseWallet.Account.PrivateKey.KeyBytes,
                 walletHolderService.BaseWallet.Account.PublicKey.KeyBytes);
 
             RequestResult<ResponseValue<ulong>> balance =
@@ -356,7 +349,7 @@ namespace SolPlay.Scripts.Services
                 fromAccount.PublicKey
             );
 
-            // If you freeze the account the users will not be able to transfer the NFTs anywhere
+            // If you freeze the account the users will not be able to transfer the NFTs anywhere or burn them
             /*var freezeAccount = TokenProgram.FreezeAccount(
                 tokenAccount,
                 mintAccount,
@@ -461,23 +454,9 @@ namespace SolPlay.Scripts.Services
             Transaction signedTransaction =
                 await walletHolderService.BaseWallet.SignTransaction(deserializedTransaction);
 
-            // This is a bit hacky, but in case of phantom wallet we need to replace the signature with the one that 
-            // phantom produces
-            Debug.Log("signatures: " + signedTransaction.Signatures);
-            foreach (var sig in signedTransaction.Signatures)
-            {
-                Debug.Log(sig.PublicKey);
-            }
-
-            if (signedTransaction.Signatures.Count > signers.Count)
-            {
-                signedTransaction.Signatures[0] = signedTransaction.Signatures[3];
-                signedTransaction.Signatures.RemoveAt(3);
-            }
-            
             var transactionSignature =
                 await walletHolderService.BaseWallet.ActiveRpcClient.SendTransactionAsync(
-                    Convert.ToBase64String(signedTransaction.Serialize()), true, Commitment.Finalized);
+                    Convert.ToBase64String(signedTransaction.Serialize()), false, Commitment.Finalized);
 
             if (!transactionSignature.WasSuccessful)
             {

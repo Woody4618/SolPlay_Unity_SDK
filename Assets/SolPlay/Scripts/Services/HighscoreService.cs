@@ -225,17 +225,19 @@ namespace SolPlay.Scripts.Services
                 }
                 else
                 {
-                    string result = await wallet.RequestAirdrop(1000000000);
-                    if (string.IsNullOrEmpty(result))
+                    var result = await wallet.RequestAirdrop(1000000000);
+                    if (string.IsNullOrEmpty(result.Result))
                     {
                         LoggingService
                             .Log("Air drop request failed. Are connected to the internet?", true);
                         return;
                     }
 
-                    ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result);
+                    ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result.Result);
 
-                    sol = await wallet.GetBalance() * SolanaUtils.SolToLamports;
+                    var balance = await wallet.GetBalance();
+                    
+                    sol = balance * SolanaUtils.SolToLamports;
                     MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
                     if (sol <= fees)
                     {

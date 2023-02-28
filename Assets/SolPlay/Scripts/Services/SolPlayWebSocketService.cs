@@ -185,7 +185,7 @@ namespace SolPlay.Scripts.Services
         {
             return (e) =>
             {
-                Debug.LogError("Error! " + e);
+                Debug.LogError("Socket Error! " + e + " maybe you need to use a different RPC node. For example helius or quicknode");
             };
         }
 

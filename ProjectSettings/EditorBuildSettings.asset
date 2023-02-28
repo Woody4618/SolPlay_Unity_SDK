@@ -6,6 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/SolPlay/Examples/ExamplePicker.unity
+    guid: f902bed8fa55f4a81ae25be033c93a70
+  - enabled: 1
+    path: Assets/SolPlay/Examples/FlappyGame/FlappyGameExample.unity
+    guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/SolPlay/Examples/TinyAdventureTwo/TinyAdventureTwo.unity
+    guid: bd40029f9be354689a951f249d4b08ba
+  - enabled: 1
     path: Assets/SolPlay/Examples/SolHunter/SolHunter.unity
     guid: 6f61575f6f3464b04aead34be4d89430
+  - enabled: 1
+    path: Assets/SolPlay/Examples/TinyAdventure/TinyAdventure.unity
+    guid: 70b81db668d85478ab0e4325776df049
   m_configObjects: {}
