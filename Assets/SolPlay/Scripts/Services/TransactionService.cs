@@ -366,7 +366,7 @@ namespace SolPlay.Scripts.Services
                 message = $"Rpc error: {blockHashResult.ServerErrorCode}";
             }
 
-            transactionInfoObject.OnError(message);
+            transactionInfoObject.OnError?.Invoke(message);
         }
 
         public async void SendSingleInstruction(string transactionName, TransactionInstruction instruction,
