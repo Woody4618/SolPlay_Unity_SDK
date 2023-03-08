@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace SolPlay.Scripts.Services
 {
+    public enum WalletType { Phantom, Backpack }
     public class WalletLoggedInMessage
     {
         public WalletBase Wallet;
@@ -49,8 +50,10 @@ namespace SolPlay.Scripts.Services
         public bool AutomaticallyConnectWebSocket = true;
         public long BaseWalletSolBalance;
         public long InGameWalletSolBalance;
+        public WalletType walletType;
 
         public PhantomWallet DeeplinkWallet;
+        public XNFTWallet xnftWallet;
         public InGameWallet InGameWallet;
         public bool IsDevNetLogin;
 
@@ -66,7 +69,7 @@ namespace SolPlay.Scripts.Services
         }
 
 
-        public async Task<Account> Login(bool devNetLogin)
+        public async Task<Account> Login(WalletType walletType,bool devNetLogin)
         {
             string rpcUrl = null;
             RpcCluster cluster = RpcCluster.DevNet;
@@ -83,6 +86,7 @@ namespace SolPlay.Scripts.Services
             }
 
             DeeplinkWallet = new PhantomWallet(PhantomWalletOptions, cluster, rpcUrl, null, true);
+            xnftWallet = new XNFTWallet(cluster, rpcUrl, null, true);
             InGameWallet = new InGameWallet(cluster, rpcUrl, null, true);
 
             IsDevNetLogin = devNetLogin;
@@ -108,7 +112,16 @@ namespace SolPlay.Scripts.Services
             else
             {
 #if (UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL)
-                BaseWallet = DeeplinkWallet;
+                switch (walletType)
+                {
+                    case WalletType.Phantom:
+                        BaseWallet = DeeplinkWallet;
+                        break;
+                    case WalletType.Backpack:
+                        BaseWallet = xnftWallet;
+                        break;
+                }
+                //BaseWallet = DeeplinkWallet;
                 Debug.Log(BaseWallet.ActiveRpcClient.NodeAddress);
                 await BaseWallet.Login();
 #endif

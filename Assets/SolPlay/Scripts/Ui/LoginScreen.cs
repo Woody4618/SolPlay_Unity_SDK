@@ -32,14 +32,14 @@ namespace SolPlay.Scripts.Ui
         private async void OnDevnetInGameWalletButtonClicked()
         {
             SetLoadingRoot(true);
-            await ServiceFactory.Resolve<WalletHolderService>().Login(true);
+            await ServiceFactory.Resolve<WalletHolderService>().Login(WalletType.Phantom,true);
             UpdateContent();
         }
 
         private async void OnPhantomButtonClicked()
         {
             SetLoadingRoot(true);
-            await ServiceFactory.Resolve<WalletHolderService>().Login(false);
+            await ServiceFactory.Resolve<WalletHolderService>().Login(WalletType.Phantom,false);
             UpdateContent();
         }
 

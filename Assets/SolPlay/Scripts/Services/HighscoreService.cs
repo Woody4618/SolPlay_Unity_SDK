@@ -225,7 +225,7 @@ namespace SolPlay.Scripts.Services
                 }
                 else
                 {
-                    var result = await wallet.RequestAirdrop(1000000000);
+                    RequestResult<string> result = await wallet.RequestAirdrop(1000000000);
                     if (string.IsNullOrEmpty(result.Result))
                     {
                         LoggingService
@@ -236,7 +236,7 @@ namespace SolPlay.Scripts.Services
                     ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result.Result);
 
                     var balance = await wallet.GetBalance();
-                    
+
                     sol = balance * SolanaUtils.SolToLamports;
                     MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
                     if (sol <= fees)
