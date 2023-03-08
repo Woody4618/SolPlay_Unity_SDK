@@ -78,7 +78,7 @@ namespace SolPlay.Scripts.Ui
             var tokenBalance = await wallet.ActiveRpcClient.GetTokenAccountBalanceAsync(_associatedTokenAddress, Commitment.Confirmed);
             if (tokenBalance.Result == null || tokenBalance.Result.Value == null)
             {
-                TokenAmount.text = "0 (No Account)";
+                TokenAmount.text = "0";
                 return;
             }
             TokenAmount.text = tokenBalance.Result.Value.UiAmountString;
