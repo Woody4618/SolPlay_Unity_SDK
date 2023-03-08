@@ -7,8 +7,8 @@ Follow me on Twitter for more frequent updates: @SolPlay_jonas
 https://github.com/garbles-labs/Solana.Unity-SDK.git#v0.0.6
 in your unity package manager.
 
-2) Import this unity package (Version 0.0.13 alpha)
-[solplay_0_13.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10570401/solplay_0_13.unitypackage.zip)
+2) Import this unity package (Version 0.0.14 alpha)
+[solplay_0_14.unitypackage.zip](https://github.com/Woody4618/SolPlay_Unity_SDK/files/10919481/solplay_0_14.unitypackage.zip)
 and then import it in Unity Assets->importPackage.
 
 Some function may not work with the standart MainNet RPC. 
