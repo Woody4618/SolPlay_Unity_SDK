@@ -235,7 +235,9 @@ namespace SolPlay.Scripts.Services
 
                     ServiceFactory.Resolve<TransactionService>().CheckSignatureStatus(result.Result);
 
-                    sol = await wallet.GetBalance() * SolanaUtils.SolToLamports;
+                    var balance = await wallet.GetBalance();
+
+                    sol = balance * SolanaUtils.SolToLamports;
                     MessageRouter.RaiseMessage(new SolBalanceChangedMessage());
                     if (sol <= fees)
                     {
