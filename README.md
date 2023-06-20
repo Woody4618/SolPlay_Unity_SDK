@@ -1,4 +1,9 @@
 # Solana Unity Game Examples
+
+SolPlay sdk is deprecated. Please use the https://github.com/magicblock-labs/Solana.Unity-SDK by magic block instead. 
+You can find a working and up to data implementation of SolPlay sdk using wallet adapter and all the examples here: 
+https://github.com/solana-developers/solana-game-starter-kits/tree/main/seven-seas/unity
+
 A unity frame work build on top of the Solana Unity SDK with 4 example games. 
 
 Follow me on Twitter for more frequent updates: @SolPlay_jonas
